@@ -15,7 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { CalendarIcon, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { dummyBackend, Position } from "@/services/dummyBackend";
+import { dummyBackend } from "@/services/dummyBackend";
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +52,117 @@ export default function CreateElectionPage() {
   const [newCandidates, setNewCandidates] = useState<Record<string, string>>({});
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [voterEmails, setVoterEmails] = useState<string[]>([]);
+  const [emailInput, setEmailInput] = useState("");
 
+  // Checks if a string is a valid email format
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!email.trim()) {
+      return false;
+    } else {
+      return emailRegex.test(email);
+    }
+  };
+
+  // Reads emails from the input text area and adds valid ones to the whitelist
+  const addEmails = () => {
+    // Split the string by commas and newlines
+    const emailList = emailInput
+      .split(/[,\n\r\s]+/)
+      .filter(email => email.length > 0);
+
+    // Get valid emails
+    const validEmails: string[] = [];
+    const invalidEmails: string[] = [];
+    for (const email of emailList) {
+      if (isValidEmail(email)) {
+        // Don't include duplicates
+        if (!voterEmails.includes(email)) {
+          validEmails.push(email);
+        }
+      } else {
+        invalidEmails.push(email);
+      }
+    }
+
+    // Add all valid emails to voterEmails
+    if (validEmails.length > 0) {
+      setVoterEmails([...voterEmails, ...validEmails]);
+    }
+
+    setEmailInput(invalidEmails.join('\n'));
+  };
+
+  // Remove an email from the whitelist by its index
+  const removeEmail = (index: number) => {
+    const removedEmail = voterEmails[index];
+    console.log(voterEmails);
+    setVoterEmails(voterEmails.filter((email, i) => i !== index));
+
+    // Show notification that an email was removed
+    toast({
+      title: "Email Removed",
+      description: `${removedEmail} removed from whitelist`,
+    });
+  };
+
+  // Allows the user to upload a txt or csv file, adding its content to the text area
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Get the file from the event
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    // I don't think this stops people from renaming a file to a .csv/.txt
+    // and then uploading it. But nobody is gonna do that right? :)
+    const fileName = file.name.toLowerCase();
+    const isValidFileType = 
+      file.type.includes('text') || 
+      fileName.endsWith('.csv') || 
+      fileName.endsWith('.txt');
+
+    if (!isValidFileType) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload a CSV or Text file (.csv, .txt)",
+        variant: "destructive",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => { // the function called when the FileReader loads the file for reading
+      try {
+        const text = e.target?.result as string;
+        if (text) {
+          setEmailInput((emailInput + '\n' + text).trim()); // this is kinda wacky but its okay for now
+          toast({
+            title: "File Loaded",
+            description: "File content loaded.",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to read file content.",
+          variant: "destructive",
+        });
+      }
+    };
+    reader.onerror = () => { // the function called when the reader fails to load the file
+      toast({
+        title: "Error",
+        description: "Failed to read file.",
+        variant: "destructive",
+      });
+      event.target.value = "";
+    };
+
+    reader.readAsText(file); // load the file and try to read it
+  };
   const addPosition = () => {
     if (!newPositionTitle.trim()) {
       toast({
@@ -136,6 +246,10 @@ export default function CreateElectionPage() {
       toast({ title: "Error", description: "Start and end dates are required", variant: "destructive" });
       return false;
     }
+    if (voterEmails.length === 0) {
+      toast({ title: "Error", description: "At least one voter email is required", variant: "destructive" });
+      return false;
+    }
     if (positions.length === 0) {
       toast({ title: "Error", description: "At least one position is required", variant: "destructive" });
       return false;
@@ -153,7 +267,7 @@ export default function CreateElectionPage() {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-    
+
     const startDateTime = new Date(startDate!);
     const [startHour, startMinute] = startTime.split(':');
     startDateTime.setHours(parseInt(startHour), parseInt(startMinute));
@@ -173,6 +287,7 @@ export default function CreateElectionPage() {
         title: p.title,
         candidates: p.candidates.map(name => ({ name })),
       })),
+      voterEmails,
     };
 
     try {
@@ -201,7 +316,7 @@ export default function CreateElectionPage() {
       <div className="max-w-4xl mx-auto">
         <Card className="p-6 md:p-8">
           <h1 className="text-3xl font-bold mb-6">Election Details</h1>
-          
+
           <div className="space-y-6">
             {/* Election Title */}
             <div className="space-y-2">
@@ -322,7 +437,7 @@ export default function CreateElectionPage() {
             {/* Candidate Details Section */}
             <div className="border-t pt-6 space-y-4">
               <h2 className="text-2xl font-semibold">Candidate Details</h2>
-              
+
               {/* Add Position */}
               <div className="flex gap-2">
                 <Input
@@ -385,6 +500,67 @@ export default function CreateElectionPage() {
                   </div>
                 </Card>
               ))}
+            </div>
+
+            {/* Authorized Voters Section */}
+            <div className="border-t pt-6 space-y-4">
+              <div>
+                <h2 className="text-2xl font-semibold">Authorized Voters</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Only users with accounts linked to these email addresses will be authorized to participate in this election.
+                </p>
+              </div>
+              {/* Upload File Button */}
+              <div className="space-y-2">
+                <Label htmlFor="emailFile">Upload Email List (CSV/Text)</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="emailFile"
+                    type="file"
+                    accept=".csv,.txt"
+                    onChange={handleFileUpload}
+                    className="cursor-pointer"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Upload a .csv or .txt file containing email addresses (one per line or comma-separated)
+                </p>
+              </div>
+              {/* Email Entry */}
+              <div className="space-y-2">
+                <Label htmlFor="bulkEmails">Email Addresses</Label>
+                <Textarea
+                  id="bulkEmails"
+                  placeholder="Enter email addresses separated by commas or newlines (e.g., user1@example.com, user2@example.com)"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  rows={6}
+                />
+                <Button onClick={addEmails} className="w-full">
+                  Add All Emails
+                </Button>
+              </div>
+
+              {/* List of Whitelisted Emails */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Authorized Emails ({voterEmails.length})</Label>
+                </div>
+                <div className="space-y-2 max-h-60 overflow-y-auto border rounded-md p-3">
+                  {voterEmails.map((email, index) => (
+                    <div key={index} className="flex items-center justify-between bg-muted px-3 py-2 rounded-md">
+                      <span className="text-sm">{email}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeEmail(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Submit Button */}
