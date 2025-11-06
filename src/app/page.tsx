@@ -1,10 +1,14 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Vote } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 
-const Landing = () => {
-  const navigate = useNavigate();
+export const dynamic = 'force-dynamic';
+
+export default function HomePage() {
+  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 flex items-center justify-center p-4">
@@ -28,7 +32,7 @@ const Landing = () => {
           <Button 
             size="lg" 
             className="text-lg px-8 py-6"
-            onClick={() => navigate('/create-election')}
+            onClick={() => router.push('/create-election')}
           >
             Organize an Election
           </Button>
@@ -40,6 +44,5 @@ const Landing = () => {
       </Card>
     </div>
   );
-};
+}
 
-export default Landing;

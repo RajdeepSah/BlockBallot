@@ -1,5 +1,7 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -10,9 +12,12 @@ import { dummyBackend, Election } from "@/services/dummyBackend";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 
-const VoteElection = () => {
-  const { electionId } = useParams<{ electionId: string }>();
-  const navigate = useNavigate();
+export const dynamic = 'force-dynamic';
+
+export default function VoteElectionPage() {
+  const params = useParams();
+  const electionId = params?.electionId as string;
+  const router = useRouter();
   const [election, setElection] = useState<Election | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedCandidates, setSelectedCandidates] = useState<Record<string, string>>({});
@@ -27,7 +32,7 @@ const VoteElection = () => {
           description: "Invalid election ID",
           variant: "destructive",
         });
-        navigate("/");
+        router.push("/");
         return;
       }
 
@@ -38,7 +43,7 @@ const VoteElection = () => {
           description: "Election not found",
           variant: "destructive",
         });
-        navigate("/");
+        router.push("/");
         return;
       }
 
@@ -47,7 +52,7 @@ const VoteElection = () => {
     };
 
     fetchElection();
-  }, [electionId, navigate]);
+  }, [electionId, router]);
 
   const handleVoteChange = (positionId: string, candidateName: string) => {
     setSelectedCandidates({
@@ -89,7 +94,7 @@ const VoteElection = () => {
       });
 
       setTimeout(() => {
-        navigate(`/results/${electionId}`);
+        router.push(`/results/${electionId}`);
       }, 2000);
     } catch (error) {
       toast({
@@ -201,6 +206,5 @@ const VoteElection = () => {
       </AlertDialog>
     </div>
   );
-};
+}
 
-export default VoteElection;

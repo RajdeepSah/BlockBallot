@@ -1,5 +1,7 @@
+"use client";
+
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +16,8 @@ import { CalendarIcon, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { dummyBackend, Position } from "@/services/dummyBackend";
+
+export const dynamic = 'force-dynamic';
 
 interface PositionForm {
   id: string;
@@ -34,8 +38,8 @@ const TIMEZONES = [
   "Australia/Sydney",
 ];
 
-const CreateElection = () => {
-  const navigate = useNavigate();
+export default function CreateElectionPage() {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [timezone, setTimezone] = useState("UTC");
@@ -178,7 +182,7 @@ const CreateElection = () => {
         description: "Your election has been successfully created on the blockchain",
       });
       setTimeout(() => {
-        navigate(`/vote/${electionId}`);
+        router.push(`/vote/${electionId}`);
       }, 1500);
     } catch (error) {
       toast({
@@ -417,6 +421,5 @@ const CreateElection = () => {
       </AlertDialog>
     </div>
   );
-};
+}
 
-export default CreateElection;

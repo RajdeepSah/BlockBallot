@@ -1,5 +1,7 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
@@ -9,9 +11,12 @@ import { format } from "date-fns";
 import { Trophy, Home } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
-const ElectionResults = () => {
-  const { electionId } = useParams<{ electionId: string }>();
-  const navigate = useNavigate();
+export const dynamic = 'force-dynamic';
+
+export default function ElectionResultsPage() {
+  const params = useParams();
+  const electionId = params?.electionId as string;
+  const router = useRouter();
   const [election, setElection] = useState<Election | null>(null);
   const [results, setResults] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +29,7 @@ const ElectionResults = () => {
           description: "Invalid election ID",
           variant: "destructive",
         });
-        navigate("/");
+        router.push("/");
         return;
       }
 
@@ -35,7 +40,7 @@ const ElectionResults = () => {
           description: "Election not found",
           variant: "destructive",
         });
-        navigate("/");
+        router.push("/");
         return;
       }
 
@@ -47,7 +52,7 @@ const ElectionResults = () => {
     };
 
     fetchResults();
-  }, [electionId, navigate]);
+  }, [electionId, router]);
 
   if (loading) {
     return (
@@ -165,14 +170,14 @@ const ElectionResults = () => {
               <Button
                 variant="outline"
                 className="flex-1"
-                onClick={() => navigate("/")}
+                onClick={() => router.push("/")}
               >
                 <Home className="mr-2 h-4 w-4" />
                 Back to Home
               </Button>
               <Button
                 className="flex-1"
-                onClick={() => navigate("/create-election")}
+                onClick={() => router.push("/create-election")}
               >
                 Create New Election
               </Button>
@@ -182,6 +187,5 @@ const ElectionResults = () => {
       </div>
     </div>
   );
-};
+}
 
-export default ElectionResults;
