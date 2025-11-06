@@ -20,6 +20,7 @@ export interface Election {
   startDate: Date;
   endDate: Date;
   positions: Position[];
+  voterEmails: string[];
 }
 
 export interface VoteData {
