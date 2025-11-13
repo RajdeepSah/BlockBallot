@@ -94,6 +94,16 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
               </div>
             </div>
 
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => window.location.href = '/forgot-password'}
+                className="text-sm text-indigo-600 hover:underline"
+              >
+                Forgot password?
+              </button>
+            </div>
+
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
