@@ -144,6 +144,43 @@ app.post('/make-server-b7b6fbd4/auth/login', async (c) => {
   }
 });
 
+app.post('/make-server-b7b6fbd4/auth/forgot-password', async (c) => {
+  try {
+    const { email } = await c.req.json();
+
+    if (!email) {
+      return c.json({ error: 'Email is required' }, 400);
+    }
+
+    const userId = await kv.get(`user:email:${email}`);
+
+    if (!userId) {
+      return c.json({
+        success: true,
+        message: 'If an account exists for this email, a reset link has been sent.'
+      });
+    }
+
+    const redirectTo = Deno.env.get('PASSWORD_RESET_REDIRECT_URL');
+    const result = redirectTo
+      ? await supabase.auth.admin.resetPasswordForEmail(email, { redirectTo })
+      : await supabase.auth.admin.resetPasswordForEmail(email);
+
+    if (result.error) {
+      console.log('Forgot password error:', result.error);
+      return c.json({ error: 'Failed to send reset email' }, 400);
+    }
+
+    return c.json({
+      success: true,
+      message: 'Password reset email sent successfully'
+    });
+  } catch (error) {
+    console.log('Forgot password handler error:', error);
+    return c.json({ error: 'Failed to process password reset request' }, 500);
+  }
+});
+
 app.post('/make-server-b7b6fbd4/auth/verify-2fa', async (c) => {
   try {
     const { userId, otp } = await c.req.json();

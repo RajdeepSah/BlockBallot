@@ -16,6 +16,7 @@ interface AuthContextType {
   register: (data: any) => Promise<void>;
   logout: () => void;
   resendOTP: (userId: string) => Promise<string>;
+  resetPassword: (email: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -77,6 +78,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return response.devOTP;
   };
 
+  const resetPassword = async (email: string) => {
+    await api.resetPassword({ email });
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -86,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, verify2FA, register, logout, resendOTP, loading }}>
+    <AuthContext.Provider value={{ user, token, login, verify2FA, register, logout, resendOTP, resetPassword, loading }}>
       {children}
     </AuthContext.Provider>
   );

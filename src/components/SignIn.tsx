@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
-import { Vote, Lock, Mail } from 'lucide-react';
+import { Vote, Lock, Mail, HelpCircle } from 'lucide-react';
 
 interface SignInProps {
   onToggleMode: () => void;
@@ -14,16 +14,19 @@ interface SignInProps {
 }
 
 export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) {
-  const { login } = useAuth();
+  const { login, resetPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resetStatus, setResetStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+    setResetStatus(null);
 
     try {
       const result = await login(email, password);
@@ -37,6 +40,29 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
       setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setResetStatus({ type: 'error', message: 'Enter your email to receive reset instructions.' });
+      return;
+    }
+
+    setError('');
+    setResetStatus(null);
+    setResetLoading(true);
+
+    try {
+      await resetPassword(email);
+      setResetStatus({
+        type: 'success',
+        message: "If an account exists for this email, you'll receive a password reset link shortly."
+      });
+    } catch (err: any) {
+      setResetStatus({ type: 'error', message: err.message || 'Could not send reset email. Please try again.' });
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -59,6 +85,12 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {resetStatus && (
+              <Alert variant={resetStatus.type === 'error' ? 'destructive' : 'default'}>
+                <AlertDescription>{resetStatus.message}</AlertDescription>
               </Alert>
             )}
 
@@ -92,6 +124,18 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
                   className="pl-10"
                 />
               </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="flex items-center gap-2 text-sm text-indigo-600 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={resetLoading}
+              >
+                <HelpCircle className="h-4 w-4" aria-hidden="true" />
+                <span>{resetLoading ? 'Sending reset link...' : 'Forgot password?'}</span>
+              </button>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>

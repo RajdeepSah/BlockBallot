@@ -46,6 +46,7 @@ export const api = {
   login: (data: any) => apiCall('/auth/login', { method: 'POST', body: data }),
   verify2FA: (data: any) => apiCall('/auth/verify-2fa', { method: 'POST', body: data }),
   resendOTP: (data: any) => apiCall('/auth/resend-otp', { method: 'POST', body: data }),
+  resetPassword: (data: any) => apiCall('/auth/forgot-password', { method: 'POST', body: data }),
   getMe: (token: string) => apiCall('/auth/me', { token }),
 
   // Elections
