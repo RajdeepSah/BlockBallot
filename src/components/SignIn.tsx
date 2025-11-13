@@ -49,9 +49,9 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
               <Vote className="w-8 h-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl">Welcome to BlockBallot</CardTitle>
+          <CardTitle className="text-2xl">BlockBallot</CardTitle>
           <CardDescription>
-            Secure, transparent, and private voting
+            Your voice. Your vote.
           </CardDescription>
         </CardHeader>
         <CardContent>
