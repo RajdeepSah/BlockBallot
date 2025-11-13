@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Momo+Trust+Display&display=swap');
 /*! tailwindcss v4.1.3 | MIT License | https://tailwindcss.com */
 @layer properties {
   @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
@@ -114,12 +115,18 @@
     --animate-spin: spin 1s linear infinite;
     --default-transition-duration: .15s;
     --default-transition-timing-function: cubic-bezier(.4, 0, .2, 1);
-    --default-font-family: var(--font-sans);
+    --default-font-family: "Momo Trust Display", sans-serif;
     --default-font-feature-settings: var(--font-sans--font-feature-settings);
     --default-font-variation-settings: var(--font-sans--font-variation-settings);
     --default-mono-font-family: var(--font-mono);
     --default-mono-font-feature-settings: var(--font-mono--font-feature-settings);
     --default-mono-font-variation-settings: var(--font-mono--font-variation-settings);
+    /* Golden highlight colors */
+    --color-gold-50: #fff9ec;
+    --color-gold-200: #f6e5b8;
+    --color-gold-500: #d4af37;
+    --color-gold-700: #b8860b;
+    --gold-highlight-gradient: linear-gradient(180deg, #2826ad3a, rgba(38, 30, 203, 0.04));
   }
 }
 
@@ -1409,6 +1416,29 @@
     color: var(--color-yellow-500);
   }
 
+  /* Elegant golden highlight utility */
+  .highlight {
+    background: var(--gold-highlight-gradient);
+    padding: 0.06rem 0.36rem;
+    border-radius: 0.28rem;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.06), inset 0 -3px 8px rgba(212,175,55,0.04);
+    color: #1f1f1f;
+    font-weight: 600;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Subtle gold underline for inline emphasis */
+  .highlight-underline {
+    background-image: linear-gradient(180deg, rgba(212,175,55,0.18), rgba(212,175,55,0.02));
+    background-repeat: no-repeat;
+    background-size: 100% 38%;
+    background-position: 0 100%;
+    padding: 0 0.08rem;
+    border-radius: 0.12rem;
+    box-decoration-break: clone;
+  }
+
   .uppercase {
     text-transform: uppercase;
   }
@@ -2106,7 +2136,7 @@
   --card-foreground: oklch(.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(.145 0 0);
-  --primary: #030213;
+  --primary: #00008B;
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(.95 .0058 264.53);
   --secondary-foreground: #030213;
