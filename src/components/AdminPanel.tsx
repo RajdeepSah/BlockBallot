@@ -106,7 +106,7 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
   };
 
   const getInvitationLink = () => {
-    return `${window.location.origin}?election=${election.id}`;
+    return `${window.location.origin}/vote/${election.id}`;
   };
 
   if (loading) {
