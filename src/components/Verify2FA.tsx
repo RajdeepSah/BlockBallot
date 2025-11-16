@@ -6,6 +6,7 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Shield} from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Verify2FAProps {
   userId: string;
@@ -17,20 +18,20 @@ interface Verify2FAProps {
 export function Verify2FA({ userId, devOTP, onSuccess, onBack }: Verify2FAProps) {
   const { verify2FA, resendOTP } = useAuth();
   const [otp, setOtp] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [displayOTP, setDisplayOTP] = useState(devOTP);
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
       await verify2FA(userId, otp);
+      toast.success('2FA verification successful!');
       onSuccess();
     } catch (err: any) {
-      setError(err.message || '2FA verification failed');
+      toast.error(err.message || '2FA verification failed');
     } finally {
       setLoading(false);
     }
@@ -38,22 +39,13 @@ export function Verify2FA({ userId, devOTP, onSuccess, onBack }: Verify2FAProps)
 
   const handleResend = async () => {
     setResending(true);
-    setError('');
 
     try {
       const newOTP = await resendOTP(userId);
       setDisplayOTP(newOTP);
-      setError('');
-      // Show success message briefly
-      const tempError = error;
-      setError('New code sent!');
-      setTimeout(() => {
-        if (error === 'New code sent!') {
-          setError('');
-        }
-      }, 3000);
+      toast.success('New code sent!');
     } catch (err: any) {
-      setError(err.message || 'Failed to resend code');
+      toast.error(err.message || 'Failed to resend code');
     } finally {
       setResending(false);
     }
@@ -75,12 +67,6 @@ export function Verify2FA({ userId, devOTP, onSuccess, onBack }: Verify2FAProps)
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant={error === 'New code sent!' ? 'default' : 'destructive'}>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
             {displayOTP && (
               <div className="flex justify-center">
                 <Alert className="w-auto">
