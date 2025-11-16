@@ -4,8 +4,9 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Alert, AlertDescription } from './ui/alert';
-import { Shield } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Shield} from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Verify2FAProps {
   userId: string;
@@ -17,21 +18,20 @@ interface Verify2FAProps {
 export function Verify2FA({ userId, devOTP, onSuccess, onBack }: Verify2FAProps) {
   const { verify2FA, resendOTP } = useAuth();
   const [otp, setOtp] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [displayOTP, setDisplayOTP] = useState(devOTP);
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
       await verify2FA(userId, otp);
+      toast.success('2FA verification successful!');
       onSuccess();
     } catch (err: any) {
-      setError(err.message || '2FA verification failed');
+      toast.error(err.message || '2FA verification failed');
     } finally {
       setLoading(false);
     }
@@ -39,22 +39,13 @@ export function Verify2FA({ userId, devOTP, onSuccess, onBack }: Verify2FAProps)
 
   const handleResend = async () => {
     setResending(true);
-    setError('');
 
     try {
       const newOTP = await resendOTP(userId);
       setDisplayOTP(newOTP);
-      setError('');
-      // Show success message briefly
-      const tempError = error;
-      setError('New code sent!');
-      setTimeout(() => {
-        if (error === 'New code sent!') {
-          setError('');
-        }
-      }, 3000);
+      toast.success('New code sent!');
     } catch (err: any) {
-      setError(err.message || 'Failed to resend code');
+      toast.error(err.message || 'Failed to resend code');
     } finally {
       setResending(false);
     }
@@ -76,18 +67,27 @@ export function Verify2FA({ userId, devOTP, onSuccess, onBack }: Verify2FAProps)
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant={error === 'New code sent!' ? 'default' : 'destructive'}>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
             {displayOTP && (
-              <Alert>
-                <AlertDescription>
-                  <strong>Development Mode:</strong> Your OTP is <strong>{displayOTP}</strong>
-                </AlertDescription>
-              </Alert>
+              <div className="flex justify-center">
+                <Alert className="w-auto">
+                  <AlertDescription className="!justify-items-center">
+                    <div className="flex flex-col items-center text-center">
+                      <div className="flex items-center justify-center gap-5 text-sm">
+                        <AlertTitle className="font-normal text-muted-foreground whitespace-nowrap">
+                          Development Mode OTP 
+                        </AlertTitle>
+                        <Button
+                          type="button"
+                          onClick={() => setOtp(displayOTP)}
+                          className="font-mono font-bold text-muted-foreground bg-transparent hover:underline rounded-lg transition-all cursor-pointer border-2 border-muted-foreground hover:border-indigo-400 hover:text-indigo-400 border-dotted hover:border-solid"
+                        >
+                          {displayOTP}
+                        </Button>
+                      </div>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              </div>
             )}
 
             <div className="space-y-2">
