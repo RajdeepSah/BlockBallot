@@ -2,60 +2,97 @@ import { ethers, Contract, JsonRpcProvider, Wallet } from "ethers";
 import { NextRequest, NextResponse } from "next/server";
 import abi from "@abis/BlockBallotSingle.json";
 
-let contract: Contract;
-
-const initEthers = () => {
-  if (contract) {
-    return;
-  }
-
-  // TEMPORARY hardcoded values for development
-  const rpcUrl = process.env.SEPOLIA_RPC_URL;
-  const privateKey = process.env.ORGANIZER_PRIVATE_KEY;
-  const contractAddress = process.env.CONTRACT_ADDRESS;
-
-  if (!rpcUrl || !privateKey || !contractAddress) {
-    console.error("Missing environment variables for backend.");
-    return;
-  }
-
-  const provider = new JsonRpcProvider(rpcUrl);
-  const signer = new Wallet(privateKey, provider);
-  contract = new Contract(contractAddress, abi.abi, signer);
-};
-
 export async function POST(request: NextRequest) {
   try {
-    initEthers();
+    const body = await request.json();
+    const { contractAddress, position, candidate, votes } = body;
 
-    if (!contract) {
+    // Validate contract address
+    if (!contractAddress || typeof contractAddress !== "string") {
       return NextResponse.json(
-        { message: "Backend not initialized. Check server logs." },
-        { status: 500 }
-      );
-    }
-
-    // Get the candidate name from the request body
-    // This is the new way to get the body in App Router
-    const { candidate } = await request.json();
-
-    if (!candidate || typeof candidate !== "string") {
-      return NextResponse.json(
-        { message: "Candidate name (string) is required." },
+        { message: "Contract address is required." },
         { status: 400 }
       );
     }
 
-    // Send the actual transaction to the blockchain
-    console.log(`Submitting vote for: ${candidate}`);
-    const tx = await contract.vote(candidate);
+    // Support both single vote (position + candidate) and array of votes
+    let votesToProcess: Array<{ position: string; candidate: string }> = [];
+    
+    if (votes && Array.isArray(votes)) {
+      // Array of votes format
+      votesToProcess = votes;
+    } else if (position && candidate) {
+      // Single vote format (backward compatible)
+      votesToProcess = [{ position, candidate }];
+    } else {
+      return NextResponse.json(
+        { message: "Either 'position' and 'candidate' or 'votes' array is required." },
+        { status: 400 }
+      );
+    }
 
-    // Wait for the transaction to be mined (1 confirmation)
-    await tx.wait(1);
+    // Validate votes array
+    if (votesToProcess.length === 0) {
+      return NextResponse.json(
+        { message: "At least one vote is required." },
+        { status: 400 }
+      );
+    }
 
-    console.log(`Vote successful! Tx hash: ${tx.hash}`);
-    // Send a success response back to the frontend
-    return NextResponse.json({ success: true, txHash: tx.hash });
+    for (const vote of votesToProcess) {
+      if (!vote.position || typeof vote.position !== "string") {
+        return NextResponse.json(
+          { message: "Each vote must have a 'position' (string)." },
+          { status: 400 }
+        );
+      }
+      if (!vote.candidate || typeof vote.candidate !== "string") {
+        return NextResponse.json(
+          { message: "Each vote must have a 'candidate' (string)." },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Get environment variables
+    const rpcUrl = process.env.SEPOLIA_RPC_URL;
+    const privateKey = process.env.ORGANIZER_PRIVATE_KEY;
+
+    if (!rpcUrl || !privateKey) {
+      return NextResponse.json(
+        { message: "Missing environment variables: SEPOLIA_RPC_URL and ORGANIZER_PRIVATE_KEY must be set." },
+        { status: 500 }
+      );
+    }
+
+    // Create provider and wallet
+    const provider = new JsonRpcProvider(rpcUrl);
+    const wallet = new Wallet(privateKey, provider);
+    const contract = new Contract(contractAddress, abi.abi, wallet);
+
+    // Process each vote as a separate transaction
+    const transactionHashes: string[] = [];
+    
+    for (const vote of votesToProcess) {
+      console.log(`Submitting vote for position "${vote.position}", candidate "${vote.candidate}"`);
+      
+      // Send the actual transaction to the blockchain
+      const tx = await contract.vote(vote.position, vote.candidate);
+      
+      // Wait for the transaction to be mined (1 confirmation)
+      await tx.wait(1);
+      
+      console.log(`Vote successful! Tx hash: ${tx.hash}`);
+      transactionHashes.push(tx.hash);
+    }
+
+    // Return success response with transaction hash(es)
+    return NextResponse.json({ 
+      success: true, 
+      txHash: transactionHashes.length === 1 ? transactionHashes[0] : transactionHashes,
+      txHashes: transactionHashes,
+      votesProcessed: votesToProcess.length
+    });
 
   } catch (error: any) {
     console.error("Error during vote:", error);
