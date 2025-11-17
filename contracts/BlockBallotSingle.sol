@@ -71,7 +71,7 @@ contract BlockBallotSingle {
     /**
      * @dev A public "read" function to get the tally for one candidate.
      */
-    function getTally(string memory positionName, string memory candidateName) public view returns (uint256) {
+    function getVoteCount(string memory positionName, string memory candidateName) public view returns (uint256) {
         return votes[positionName][candidateName];
     }
 
