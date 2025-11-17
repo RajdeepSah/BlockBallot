@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
 
-// Get environment variables
+// Get environment variables (after dotenv.config)
 const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || "";
 const ORGANIZER_PRIVATE_KEY = process.env.ORGANIZER_PRIVATE_KEY || "";
 
