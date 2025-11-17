@@ -1,16 +1,8 @@
-import { ethers, Contract, JsonRpcProvider } from "ethers";
-import { NextRequest, NextResponse } from "next/server";
-import abi from "@abis/BlockBallotSingle.json";
-
-type CandidateTally = {
-  name: string;
-  votes: string;
-};
-
-type PositionResult = {
-  name: string;
-  candidates: CandidateTally[];
-};
+import { NextRequest } from "next/server";
+import { createReadOnlyContract } from "@/utils/blockchain/contract";
+import { validateContractAddress } from "@/utils/validation";
+import { handleApiError, createValidationError } from "@/utils/api/errors";
+import type { VotesResponse, PositionResult, CandidateTally } from "@/types/blockchain";
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,34 +11,29 @@ export async function GET(request: NextRequest) {
     const contractAddress = searchParams.get("contractAddress");
 
     if (!contractAddress) {
-      return NextResponse.json(
-        { message: "Contract address query parameter is required." },
-        { status: 400 }
-      );
+      return createValidationError("Contract address query parameter is required.");
     }
 
-    // Get environment variables
-    const rpcUrl = process.env.SEPOLIA_RPC_URL;
-
-    if (!rpcUrl) {
-      return NextResponse.json(
-        { message: "Missing environment variable: SEPOLIA_RPC_URL must be set." },
-        { status: 500 }
-      );
+    // Validate contract address format
+    try {
+      validateContractAddress(contractAddress);
+    } catch (validationError) {
+      const message = validationError instanceof Error ? validationError.message : String(validationError);
+      return createValidationError(message);
     }
 
-    // Create read-only provider and contract instance
-    const provider = new JsonRpcProvider(rpcUrl);
-    const contract = new Contract(contractAddress, abi.abi, provider);
+    // Create read-only contract instance
+    const contract = createReadOnlyContract(contractAddress);
 
     // Fetch the list of positions
     const positions: string[] = await contract.getPositionList();
 
     if (!positions || positions.length === 0) {
-      return NextResponse.json({
+      const response: VotesResponse = {
         positions: [],
-        message: "No positions found in contract."
-      });
+        contractAddress
+      };
+      return Response.json(response);
     }
 
     // Build results structure with positions and their candidates
@@ -74,22 +61,14 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ 
+    const response: VotesResponse = {
       positions: results,
-      contractAddress 
-    });
+      contractAddress
+    };
+
+    return Response.json(response);
     
-  } catch (error: any) {
-    console.error("Error fetching votes:", error);
-    
-    let errorMessage = "Failed to fetch votes.";
-    if (error.message) {
-      errorMessage = `Failed to fetch votes: ${error.message}`;
-    }
-    
-    return NextResponse.json(
-      { message: errorMessage },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleApiError(error, "get-votes");
   }
 }
