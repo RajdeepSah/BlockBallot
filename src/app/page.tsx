@@ -13,7 +13,7 @@ export default function HomePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [screen, setScreen] = useState<'signin' | 'signup' | '2fa' | 'dashboard' | null>(null);
-  const [twoFAState, setTwoFAState] = useState<{ userId: string; devOTP?: string } | null>(null);
+  const [twoFAState, setTwoFAState] = useState<{ userId: string; email: string } | null>(null);
 
   useEffect(() => {
     if (!loading) {
@@ -47,8 +47,8 @@ export default function HomePage() {
         <SignIn
           onToggleMode={() => setScreen('signup')}
           onSuccess={() => setScreen('dashboard')}
-          on2FARequired={(userId, devOTP) => {
-            setTwoFAState({ userId, devOTP });
+          on2FARequired={({ userId, email }) => {
+            setTwoFAState({ userId, email });
             setScreen('2fa');
           }}
         />
@@ -63,8 +63,7 @@ export default function HomePage() {
     } else if (screen === '2fa' && twoFAState) {
       return (
         <Verify2FA
-          userId={twoFAState.userId}
-          devOTP={twoFAState.devOTP}
+          email={twoFAState.email}
           onSuccess={() => setScreen('dashboard')}
           onBack={() => setScreen('signin')}
         />

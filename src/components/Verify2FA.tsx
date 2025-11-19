@@ -4,30 +4,27 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { Shield} from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Verify2FAProps {
-  userId: string;
-  devOTP?: string;
+  email: string;
   onSuccess: () => void;
   onBack: () => void;
 }
 
-export function Verify2FA({ userId, devOTP, onSuccess, onBack }: Verify2FAProps) {
+export function Verify2FA({ email, onSuccess, onBack }: Verify2FAProps) {
   const { verify2FA, resendOTP } = useAuth();
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [displayOTP, setDisplayOTP] = useState(devOTP);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      await verify2FA(userId, otp);
+      await verify2FA(email, otp);
       toast.success('2FA verification successful!');
       onSuccess();
     } catch (err: any) {
@@ -41,8 +38,7 @@ export function Verify2FA({ userId, devOTP, onSuccess, onBack }: Verify2FAProps)
     setResending(true);
 
     try {
-      const newOTP = await resendOTP(userId);
-      setDisplayOTP(newOTP);
+      await resendOTP(email);
       toast.success('New code sent!');
     } catch (err: any) {
       toast.error(err.message || 'Failed to resend code');
@@ -67,29 +63,6 @@ export function Verify2FA({ userId, devOTP, onSuccess, onBack }: Verify2FAProps)
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {displayOTP && (
-              <div className="flex justify-center">
-                <Alert className="w-auto">
-                  <AlertDescription className="!justify-items-center">
-                    <div className="flex flex-col items-center text-center">
-                      <div className="flex items-center justify-center gap-5 text-sm">
-                        <AlertTitle className="font-normal text-muted-foreground whitespace-nowrap">
-                          Development Mode OTP 
-                        </AlertTitle>
-                        <Button
-                          type="button"
-                          onClick={() => setOtp(displayOTP)}
-                          className="font-mono font-bold text-muted-foreground bg-transparent hover:underline rounded-lg transition-all cursor-pointer border-2 border-muted-foreground hover:border-indigo-400 hover:text-indigo-400 border-dotted hover:border-solid"
-                        >
-                          {displayOTP}
-                        </Button>
-                      </div>
-                    </div>
-                  </AlertDescription>
-                </Alert>
-              </div>
-            )}
-
             <div className="space-y-2">
               <Label htmlFor="otp">Verification Code</Label>
               <Input
@@ -103,7 +76,7 @@ export function Verify2FA({ userId, devOTP, onSuccess, onBack }: Verify2FAProps)
                 className="text-center text-2xl tracking-widest"
               />
               <p className="text-xs text-gray-500 text-center">
-                Code expires in 5 minutes
+                Code was sent to <span className="font-medium text-gray-700">{email}</span> and expires in 5 minutes.
               </p>
             </div>
 
