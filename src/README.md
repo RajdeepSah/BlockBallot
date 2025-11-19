@@ -47,7 +47,7 @@ A secure, privacy-preserving web voting application built with React, Supabase, 
 ### Quick Start
 
 1. **Sign Up**: Create an account with your name, email, and password
-2. **Verify**: Complete 2FA verification (OTP is emailed via Resend)
+2. **Verify**: Complete 2FA verification (OTP displayed in development mode)
 3. **Dashboard**: Access your dashboard to create or join elections
 
 ### Creating an Election
@@ -162,8 +162,6 @@ Perfect for:
 - `POST /auth/verify-2fa` - Verify OTP
 - `POST /auth/resend-otp` - Resend OTP code
 - `GET /auth/me` - Get current user
-- `POST /api/send-otp` - Generate & email OTP (Next.js route)
-- `POST /api/verify-otp` - Verify OTP code (Next.js route)
 
 **Elections**
 - `POST /elections` - Create election
@@ -181,54 +179,9 @@ Perfect for:
 
 ### Development Mode Features
 
-- OTP codes are delivered through the Resend test domain (no on-screen fallback)
+- OTP codes are displayed in the UI (for testing without email service)
 - All error messages include detailed context
 - Console logging for debugging
-
-## 📧 Email OTP via Resend
-
-BlockBallot now sends production-safe OTP codes using [Resend](https://resend.com/). Codes are generated as 6-digit strings, hashed with a per-code salt, stored inside Supabase with a 5-minute expiry, and never logged or displayed.
-
-### Environment Variables
-
-Create `.env.local` with the following keys (server-only):
-
-```
-RESEND_API_KEY=your_resend_api_key
-# Optional – defaults to BlockBallot <onboarding@resend.dev>
-RESEND_FROM_EMAIL="BlockBallot <onboarding@resend.dev>"
-SUPABASE_URL=https://ncxlkhvlskwkksukgcyo.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-```
-
-> ⚠️ `SUPABASE_SERVICE_ROLE_KEY` grants full database access. Never expose it to the browser or commit it to source control.
-
-### OTP API Routes (Next.js App Router)
-
-- `POST /api/send-otp` – Accepts `{ email }`, rate-limits requests per email, hashes and stores the OTP with a 5-minute TTL, and sends the code via Resend’s free test domain.
-- `POST /api/verify-otp` – Accepts `{ email, otp }`, validates the hash, enforces expiry/attempt limits, and deletes the OTP record so it can’t be reused.
-
-### Client Usage Example
-
-```ts
-await fetch('/api/send-otp', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email: 'voter@example.com' }),
-});
-```
-
-### Test with cURL
-
-```bash
-curl -X POST http://localhost:3000/api/send-otp \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"voter@example.com"}'
-
-curl -X POST http://localhost:3000/api/verify-otp \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"voter@example.com","otp":"123456"}'
-```
 
 ## 📝 License & Disclaimer
 
