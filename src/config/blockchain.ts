@@ -10,6 +10,7 @@ const requiredEnvVars = {
 
 // Validate required environment variables
 for (const [key, value] of Object.entries(requiredEnvVars)) {
+   console.log(`Checking environment variable: ${key}: ${value}`);
   if (!value) {
     throw new Error(
       `Missing required environment variable: ${key}. ` +
@@ -23,13 +24,7 @@ export const blockchainConfig = {
   privateKey: requiredEnvVars.ORGANIZER_PRIVATE_KEY!,
   network: 'sepolia' as const,
   chainId: 11155111,
-  etherscanBaseUrl: 'https://sepolia.etherscan.io',
 } as const;
 
-/**
- * Generate Etherscan URL for a contract address
- */
-export function getEtherscanUrl(address: string): string {
-  return `${blockchainConfig.etherscanBaseUrl}/address/${address}`;
-}
+
 
