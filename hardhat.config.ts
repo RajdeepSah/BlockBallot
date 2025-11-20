@@ -14,7 +14,7 @@ const config = {
       type: "http",
       url: SEPOLIA_RPC_URL,
       accounts: [ORGANIZER_PRIVATE_KEY],
-      chainId: 11155111,
+      chainId: 421614,
     },
     hardhat: {
       type: "edr-simulated",

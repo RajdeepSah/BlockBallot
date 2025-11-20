@@ -5,34 +5,23 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
+import { Election } from '@/types/election';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ArrowLeft, Plus, Trash2, Vote } from 'lucide-react';
-
+import { getEtherscanUrl } from '@/utils/blockchain/utils';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
+import { Position, Candidate } from '@/types/election';
 interface CreateElectionProps {
   onBack: () => void;
   onSuccess: (electionId: string) => void;
 }
 
-interface Candidate {
-  id: string;
-  name: string;
-  description: string;
-}
-
-interface Position {
-  id: string;
-  name: string;
-  description: string;
-  ballot_type: 'single' | 'multiple' | 'ranked';
-  candidates: Candidate[];
-}
-
 export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
   const { token } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(''); // api error messages
 
   // Election details
   const [title, setTitle] = useState('');
@@ -40,6 +29,9 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
   const [timeZone, setTimeZone] = useState('UTC');
+  const [deployInfo, setDeployInfo] = useState<{ txHash: string; contractAddress: string } | null>(null);
+  const [electionID, setElectionID] = useState('');
+
 
   // Positions
   const [positions, setPositions] = useState<Position[]>([
@@ -113,9 +105,11 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Clear any previous state
     setError('');
+    setDeployInfo(null); 
 
-    // Validation
+    // Validate required form info
     if (!title || !startsAt || !endsAt) {
       setError('Please fill in all required fields');
       return;
@@ -147,37 +141,123 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
         }
       }
     }
+    
+    // Ensure user is authenticated before deployment
+    if (!token) {
+      setError('You must be signed in to deploy an election');
+      return;
+    }
 
     setLoading(true);
 
     try {
-      const response = await api.createElection({
-        title,
-        description,
-        starts_at: new Date(startsAt).toISOString(),
-        ends_at: new Date(endsAt).toISOString(),
-        time_zone: timeZone,
-        positions: positions.map(p => ({
-          name: p.name,
-          description: p.description,
-          ballot_type: p.ballot_type,
-          candidates: p.candidates.map(c => ({
-            name: c.name,
-            description: c.description
-          }))
-        }))
-      }, token!);
+      // 1. Prepare the full payload for the Next.js API Route
+      // This payload contains all the data needed for BOTH contract deployment
+      // AND eventually saving to the Supabase database.
+      const electionPayload = {
+         title,
+         description,
+         starts_at: new Date(startsAt).toISOString(),
+         ends_at: new Date(endsAt).toISOString(),
+         time_zone: timeZone,
+         token: token, // Pass the user's auth token for server-side user verification
+         positions: positions.map(p => ({ // creates an array of Positions containing the list of candidate for that position
+            name: p.name,
+            description: p.description,
+            ballot_type: p.ballot_type,
+            candidates: p.candidates.map(c => ({name: c.name, description: c.description}))
+         })),
+         contractAddress: undefined // If deployed successfully, this will be replaces with the actual address  
+      };
+      console.log(electionPayload)
+      // 2. Client -> Backend: POST /api/create-election
+      // This initiates the DEPLOYMENT process on the server side.
+      // The API route will handle the communication with Ethereum.
+      const deployResponse = await fetch('/api/deploy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // Ensure auth token is passed
+        },
+        body: JSON.stringify(electionPayload)
+      });
+      
+      const data = await deployResponse.json();
 
-      onSuccess(response.election.id);
+      if (deployResponse.ok) { // YAY
+         const { txHash, contractAddress } = data;
+         console.log("Deploy response: ", data);
+
+         //put the deployed contract address into the election payload
+         electionPayload.contractAddress = contractAddress;
+
+         // Set the information for the success message display
+         setDeployInfo({
+            txHash: txHash,
+            contractAddress: contractAddress
+         });
+         // debug print
+         console.log("deployInfo: ", deployInfo)
+         // currently this will just redirect to the admin page for the election.
+         // should instead send back the deployInfo to display a message with the address
+         console.log(`contract deployment transaction: ${getEtherscanUrl(txHash, 'tx')}`)
+         console.log(`deployed contract address: ${getEtherscanUrl(contractAddress, 'address')}`)
+         try { // to store election info in db
+            const dbResponse = await api.createElection(electionPayload, token!);
+            console.log("DB store response: ", dbResponse);
+            setElectionID(dbResponse.election.id); // store in state so continue button can redirect
+         } catch (err: any) {
+            setError(`Error storing election in db: ${err}`);
+         }
+      } else {
+         // If the server returns an error (e.g., failed deployment, missing key)
+         throw new Error(data.message || `Deployment request failed: ${data.message}`);
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to create election');
+      setError('Failed to deploy election contract: '+err.message );
     } finally {
       setLoading(false);
     }
   };
+  const handleContinue = () => {
+   if (electionID) {
+      onSuccess(electionID);
+   }
+   setDeployInfo(null);
+   setElectionID('')
+   };
+   
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Success Modal */}
+      <Dialog open={deployInfo !== null && electionID !== ''} onOpenChange={() => {}}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Election Created Successfully!</DialogTitle>
+            <DialogDescription>Your election has been deployed to the blockchain</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {deployInfo && (
+              <>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700">Transaction Hash</p>
+                  <a href={getEtherscanUrl(deployInfo.txHash, 'tx')} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline break-all">
+                    {deployInfo.txHash}
+                  </a>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700">Contract Address</p>
+                  <a href={getEtherscanUrl(deployInfo.contractAddress, 'address')} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline break-all">
+                    {deployInfo.contractAddress}
+                  </a>
+                </div>
+              </>
+            )}
+          </div>
+          <Button onClick={handleContinue} className="w-full">Continue</Button>
+        </DialogContent>
+      </Dialog>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Button onClick={onBack} variant="ghost" className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />

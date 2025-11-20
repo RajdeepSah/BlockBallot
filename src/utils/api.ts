@@ -1,6 +1,6 @@
 import { projectId, publicAnonKey } from './supabase/info';
 
-const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-b7b6fbd4`;
+const DB_API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-b7b6fbd4`;
 
 interface ApiOptions {
   method?: string;
@@ -30,11 +30,11 @@ export async function apiCall(endpoint: string, options: ApiOptions = {}) {
     config.body = JSON.stringify(body);
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, config);
+  const response = await fetch(`${DB_API_BASE}${endpoint}`, config);
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'API request failed');
+    throw new Error(`API request failed: ${data.error}\nEndpoint: ${endpoint}\nOptions: ${JSON.stringify({method, body, token}, null, 2)}`);
   }
 
   return data;
@@ -79,15 +79,8 @@ export const api = {
       token
     }),
 
-  // Voting
-  castVote: (electionId: string, votes: any, token: string) =>
-    apiCall(`/elections/${electionId}/cast-vote`, { 
-      method: 'POST', 
-      body: { votes }, 
-      token 
-    }),
-  
   // Results
-  getResults: (electionId: string, token?: string) =>
-    apiCall(`/elections/${electionId}/results`, { token }),
+  getResults: (electionId: string, token?: string) => {
+    return apiCall(`/elections/${electionId}/results`, { token });
+  },
 };
