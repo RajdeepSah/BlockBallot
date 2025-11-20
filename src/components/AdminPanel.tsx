@@ -7,7 +7,10 @@ import { Badge } from './ui/badge';
 import { Textarea } from './ui/textarea';
 import { Alert, AlertDescription } from './ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { ArrowLeft, Users, UserCheck, UserX, Upload, TrendingUp, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Users, UserCheck, UserX, Upload, TrendingUp, Copy, Check, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { getElectionInvitePreview } from '@/emails/ElectionInviteEmail';
+import { fetchEligibleVoters, type EligibleVoter } from '@/utils/eligible-voters';
 
 interface AdminPanelProps {
   electionId: string;
@@ -25,11 +28,18 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
   const [voterList, setVoterList] = useState('');
   const [uploading, setUploading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [sendingInvites, setSendingInvites] = useState(false);
+  const [preapprovedVoters, setPreapprovedVoters] = useState<EligibleVoter[]>([]);
+  const [loadingPreapproved, setLoadingPreapproved] = useState(false);
 
   useEffect(() => {
     loadElection();
-    loadAccessRequests();
   }, [electionId]);
+
+  useEffect(() => {
+    loadAccessRequests();
+    loadPreapprovedVoters();
+  }, [electionId, token]);
 
   const loadElection = async () => {
     try {
@@ -43,11 +53,25 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
   };
 
   const loadAccessRequests = async () => {
+    if (!token) return;
     try {
-      const response = await api.getAccessRequests(electionId, token!);
+      const response = await api.getAccessRequests(electionId, token);
       setAccessRequests(response.requests || []);
     } catch (err: any) {
       console.error('Failed to load access requests:', err);
+    }
+  };
+
+  const loadPreapprovedVoters = async () => {
+    setLoadingPreapproved(true);
+    try {
+      // The helper hits our sanitized Next.js API, preventing the JSON parsing errors we saw earlier.
+      const voters = await fetchEligibleVoters(electionId);
+      setPreapprovedVoters(voters);
+    } catch (err) {
+      console.error('Failed to load pre-approved voters:', err);
+    } finally {
+      setLoadingPreapproved(false);
     }
   };
 
@@ -89,6 +113,7 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
       setError('');
       await api.updateAccessRequest(electionId, requestId, action, token!);
       await loadAccessRequests();
+      await loadPreapprovedVoters();
       setSuccess(`Access request ${action}d successfully`);
     } catch (err: any) {
       setError(err.message || `Failed to ${action} access request`);
@@ -106,7 +131,67 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
   };
 
   const getInvitationLink = () => {
+    if (typeof window === 'undefined' || !election) {
+      return '';
+    }
     return `${window.location.origin}/vote/${election.id}`;
+  };
+
+  const invitationLink = getInvitationLink();
+  const emailPreview = election
+    ? getElectionInvitePreview({
+        electionName: election.title,
+        electionCode: election.code,
+        directLink: invitationLink,
+        startTime: election.starts_at,
+        endTime: election.ends_at,
+      })
+    : '';
+
+  const handleSendInvites = async () => {
+    if (!election) {
+      toast.error('Election data is still loading.');
+      return;
+    }
+    if (!token) {
+      toast.error('You must be signed in to send invitations.');
+      return;
+    }
+
+    setSendingInvites(true);
+    try {
+      const response = await fetch('/api/send-election-invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          electionId: election.id,
+          electionName: election.title,
+          electionCode: election.code,
+          directLink: invitationLink,
+          startTime: election.starts_at,
+          endTime: election.ends_at,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send invitations.');
+      }
+
+      const sentCount = data.sentCount ?? 0;
+      toast.success(
+        sentCount === 0
+          ? (data.message as string) || 'No invitations were sent.'
+          : `Sent ${sentCount} invitation${sentCount === 1 ? '' : 's'} successfully.`
+      );
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to send invitations.');
+    } finally {
+      setSendingInvites(false);
+    }
   };
 
   if (loading) {
@@ -321,6 +406,41 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
                 )}
               </CardContent>
             </Card>
+
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Pre-Approved Voters</CardTitle>
+                <CardDescription>
+                  These voters were uploaded in the eligibility list and can access the ballot immediately
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingPreapproved ? (
+                  <div className="flex items-center justify-center py-8 text-gray-500">
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    Loading pre-approved voters...
+                  </div>
+                ) : preapprovedVoters.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                    <p>No pre-approved voters uploaded yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {preapprovedVoters.map((voter) => (
+                      <div
+                        key={voter.id}
+                        className="p-4 border rounded-lg flex flex-col"
+                      >
+                        <span className="font-medium text-gray-900">
+                          {voter.full_name || 'Pending Registration'} [{voter.email}]
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="share">
@@ -354,10 +474,10 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
                   <label className="text-sm text-gray-600 mb-2 block">Direct Link</label>
                   <div className="flex items-center space-x-2">
                     <div className="flex-1 p-3 bg-gray-50 border rounded-lg text-sm break-all">
-                      {getInvitationLink()}
+                      {invitationLink}
                     </div>
                     <Button
-                      onClick={() => copyToClipboard(getInvitationLink())}
+                      onClick={() => copyToClipboard(invitationLink)}
                       variant="outline"
                     >
                       {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -368,23 +488,33 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
                   </p>
                 </div>
 
+                <div className="space-y-2">
+                  <Button
+                    onClick={handleSendInvites}
+                    disabled={sendingInvites || !token}
+                  >
+                    {sendingInvites ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      'Send Email Invitation'
+                    )}
+                  </Button>
+                  <p className="text-xs text-gray-500">
+                    Emails are only sent to verified voters and include the latest election details.
+                  </p>
+                </div>
+
                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="text-sm mb-2">📧 Email Template</h4>
-                  <div className="text-xs text-gray-700 space-y-2">
-                    <p>Subject: You're invited to vote in {election.title}</p>
-                    <p>
-                      You've been invited to participate in the {election.title}. 
-                    </p>
-                    <p>
-                      Election Code: <strong>{election.code}</strong>
-                    </p>
-                    <p>
-                      Or use this direct link: {getInvitationLink()}
-                    </p>
-                    <p>
-                      Voting Period: {new Date(election.starts_at).toLocaleString()} - {new Date(election.ends_at).toLocaleString()}
-                    </p>
-                  </div>
+                  <h4 className="text-sm mb-1">📧 Email Template</h4>
+                  <p className="text-xs text-gray-600 mb-3">
+                    Preview of the invitation voters receive.
+                  </p>
+                  <pre className="text-xs text-gray-800 whitespace-pre-wrap font-mono leading-relaxed">
+                    {emailPreview}
+                  </pre>
                 </div>
               </CardContent>
             </Card>
