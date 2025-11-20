@@ -34,7 +34,7 @@ async function sendOtpEmail(email: string, code: string) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: process.env.RESEND_FROM_EMAIL ?? 'BlockBallot <onboarding@resend.dev>',
+      from: process.env.RESEND_FROM_EMAIL ?? 'BlockBallot <no-reply@blockballot.officialework.com>',
       to: email,
       subject: 'Your BlockBallot Verification Code',
       html,
