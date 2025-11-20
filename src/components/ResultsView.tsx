@@ -5,8 +5,28 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { ArrowLeft, TrendingUp, Users, Award, Download } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
+import { ArrowLeft, TrendingUp, Users, Award, Download, Loader2 } from 'lucide-react';
+import { fetchEligibleVoters, type EligibleVoter } from '@/utils/eligible-voters';
 
 interface ResultsViewProps {
   electionId: string;
@@ -22,11 +42,21 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
   const [election, setElection] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [eligibleDialogOpen, setEligibleDialogOpen] = useState(false);
+  const [eligibleLoading, setEligibleLoading] = useState(false);
+  const [eligibleError, setEligibleError] = useState('');
+  const [eligibleVoters, setEligibleVoters] = useState<EligibleVoter[]>([]);
 
   useEffect(() => {
     loadResults();
     loadElection();
   }, [electionId]);
+
+  useEffect(() => {
+    if (eligibleDialogOpen) {
+      void loadEligibleVoters();
+    }
+  }, [eligibleDialogOpen, electionId, token]);
 
   const loadElection = async () => {
     try {
@@ -48,6 +78,21 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
     }
   };
 
+  const loadEligibleVoters = async () => {
+    setEligibleLoading(true);
+    setEligibleError('');
+    try {
+      // Route now guarantees pure JSON (no stray logs), so a single res.json() call is safe here.
+      const voters = await fetchEligibleVoters(electionId);
+      setEligibleVoters(voters);
+    } catch (err: any) {
+      setEligibleError(err.message || 'Failed to load eligible voters.');
+      setEligibleVoters([]);
+    } finally {
+      setEligibleLoading(false);
+    }
+  };
+
   const exportResults = () => {
     if (!results) return;
 
@@ -57,9 +102,9 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
         title: results.election_title,
         total_votes: results.total_votes,
         eligible_voters: results.eligible_voters,
-        turnout_percentage: results.turnout_percentage
+        turnout_percentage: results.turnout_percentage,
       },
-      results: results.results
+      results: results.results,
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -92,7 +137,9 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
-            <Button onClick={onBack} className="mt-4">Back</Button>
+            <Button onClick={onBack} className="mt-4">
+              Back
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -150,7 +197,14 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
               <Users className="w-4 h-4 text-gray-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl">{results.eligible_voters}</div>
+              <button
+                type="button"
+                onClick={() => setEligibleDialogOpen(true)}
+                className="text-3xl font-semibold text-indigo-600 hover:underline focus:outline-none"
+              >
+                {results.eligible_voters}
+              </button>
+              <p className="text-xs text-gray-500 mt-1">Click to view eligible voters</p>
             </CardContent>
           </Card>
 
@@ -170,7 +224,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
           const chartData = positionData.candidates.map((candidate: any) => ({
             name: candidate.name,
             votes: candidate.votes,
-            percentage: parseFloat(candidate.percentage)
+            percentage: parseFloat(candidate.percentage),
           }));
 
           const winner = positionData.candidates[0];
@@ -202,12 +256,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="name" 
-                        angle={-45}
-                        textAnchor="end"
-                        height={100}
-                      />
+                      <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
                       <YAxis />
                       <Tooltip />
                       <Legend />
@@ -218,7 +267,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
 
                 {/* Pie Chart */}
                 <div className="mb-8">
-                  <h4 className="text-sm mb-4">Vote Percentage</h4>
+                  <h4 className="text-sm mb-4">Vote Share</h4>
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
@@ -226,84 +275,81 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={(entry) => `${entry.name}: ${entry.percentage}%`}
-                        outerRadius={100}
+                        outerRadius={120}
                         fill="#8884d8"
-                        dataKey="votes"
+                        dataKey="percentage"
+                        label={({ name, percentage }) => `${name} ${(percentage || 0).toFixed(1)}%`}
                       >
-                        {chartData.map((entry: any, index: number) => (
+                        {chartData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip formatter={(value) => `${value}%`} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
 
-                {/* Candidate Details Table */}
-                <div>
-                  <h4 className="text-sm mb-4">Detailed Results</h4>
-                  <div className="border rounded-lg overflow-hidden">
-                    <table className="w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">
-                            Rank
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">
-                            Candidate
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">
-                            Votes
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">
-                            Percentage
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {positionData.candidates.map((candidate: any, index: number) => (
-                          <tr key={candidate.id} className={index === 0 && candidate.votes > 0 ? 'bg-green-50' : ''}>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center">
-                                {index === 0 && candidate.votes > 0 && (
-                                  <Award className="w-4 h-4 text-green-600 mr-2" />
-                                )}
-                                <span>{index + 1}</span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3">
-                              <div>
-                                <p>{candidate.name}</p>
-                                {candidate.description && (
-                                  <p className="text-xs text-gray-500">{candidate.description}</p>
-                                )}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3">{candidate.votes}</td>
-                            <td className="px-4 py-3">{candidate.percentage}%</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                {/* Candidate List */}
+                <div className="space-y-4">
+                  <h4 className="text-sm">Candidate Breakdown</h4>
+                  {positionData.candidates.map((candidate: any, index: number) => (
+                    <div
+                      key={candidate.id}
+                      className="p-4 border rounded-lg flex items-center justify-between"
+                    >
+                      <div>
+                        <p className="font-medium">{candidate.name}</p>
+                        <p className="text-sm text-gray-500">{candidate.description}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold">{candidate.votes}</p>
+                        <p className="text-sm text-gray-500">{candidate.percentage}%</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
           );
         })}
 
-        {results.total_votes === 0 && (
-          <Card>
-            <CardContent className="pt-6 text-center py-12">
-              <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl mb-2">No Votes Yet</h3>
-              <p className="text-gray-600">
-                Results will appear here once voters start casting their ballots
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        <Dialog open={eligibleDialogOpen} onOpenChange={setEligibleDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Eligible Voters</DialogTitle>
+              <DialogDescription>
+                These are the pre-approved voters uploaded for this election.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4">
+              {eligibleLoading ? (
+                <div className="flex items-center justify-center py-6 text-gray-500">
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  Loading eligible voters...
+                </div>
+              ) : eligibleError ? (
+                <Alert variant="destructive">
+                  <AlertDescription>{eligibleError}</AlertDescription>
+                </Alert>
+              ) : eligibleVoters.length === 0 ? (
+                <div className="text-center py-6 text-gray-500">
+                  No pre-approved voters found for this election.
+                </div>
+              ) : (
+                <div className="max-h-80 overflow-y-auto divide-y">
+                  {eligibleVoters.map((voter) => (
+                    <div key={voter.id} className="py-3 text-sm text-gray-800">
+                      <span className="font-medium">
+                        {voter.full_name || 'Pending Registration'}
+                      </span>{' '}
+                      [{voter.email}]
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

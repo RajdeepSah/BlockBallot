@@ -25,6 +25,7 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [receipt, setReceipt] = useState('');
+  const [requestingAccess, setRequestingAccess] = useState(false);
 
   // Vote selections
   const [selections, setSelections] = useState<Record<string, any>>({});
@@ -57,11 +58,27 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
   const handleRequestAccess = async () => {
     try {
       setError('');
-      await api.requestAccess(electionId, token!);
+      setSuccess('');
+      setRequestingAccess(true);
+      const response = await api.requestAccess(electionId, token!);
+
+      if (response?.status === 'already-approved') {
+        setSuccess('You are already approved — you may cast your vote.');
+      } else if (response?.success) {
+        setSuccess('Access request submitted successfully');
+      } else if (response?.status === 'pending') {
+        setSuccess(response.message || 'Your access request is already pending review.');
+      } else if (response?.status) {
+        setError(response.message || 'Could not submit access request.');
+      } else {
+        setSuccess('Access request submitted successfully');
+      }
+
       await checkEligibility();
-      setSuccess('Access request submitted successfully');
     } catch (err: any) {
       setError(err.message || 'Failed to request access');
+    } finally {
+      setRequestingAccess(false);
     }
   };
 
@@ -259,8 +276,8 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
               <p className="text-gray-600 mb-4">
                 You are not on the approved voter list for this election.
               </p>
-              <Button onClick={handleRequestAccess}>
-                Request Access
+              <Button onClick={handleRequestAccess} disabled={requestingAccess}>
+                {requestingAccess ? 'Requesting...' : 'Request Access'}
               </Button>
             </CardContent>
           </Card>

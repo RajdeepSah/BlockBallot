@@ -548,11 +548,50 @@ app.post('/make-server-b7b6fbd4/elections/:id/access-request', async (c) => {
     }
 
     const userData = await kv.get(`user:${user.id}`);
-    
-    // Check for existing request
+    if (!userData) {
+      return c.json({ error: 'User profile not found' }, 404);
+    }
+
+    const eligibility = await kv.get(`eligibility:${electionId}:${userData.email}`);
     const existingRequest = await kv.get(`access_request:${electionId}:${user.id}`);
+
+    const removeExistingRequest = async (request: any) => {
+      if (!request) return;
+      await kv.del(`access_request:${electionId}:${request.user_id}`);
+      if (request.id) {
+        await kv.del(`access_request:${request.id}`);
+      }
+    };
+
+    const isAlreadyApproved =
+      eligibility &&
+      (eligibility.status === 'approved' || eligibility.status === 'preapproved');
+
+    if (isAlreadyApproved) {
+      if (existingRequest) {
+        await removeExistingRequest(existingRequest);
+      }
+      return c.json({
+        status: 'already-approved',
+        message: 'You are already approved to vote in this election.'
+      });
+    }
+
     if (existingRequest) {
-      return c.json({ error: 'Access request already exists', status: existingRequest.status }, 400);
+      if (existingRequest.status === 'denied') {
+        await removeExistingRequest(existingRequest);
+      } else if (existingRequest.status === 'approved') {
+        await removeExistingRequest(existingRequest);
+        return c.json({
+          status: 'already-approved',
+          message: 'You are already approved to vote in this election.'
+        });
+      } else {
+        return c.json({
+          status: existingRequest.status || 'pending',
+          message: 'Access request already exists'
+        });
+      }
     }
 
     const requestId = crypto.randomUUID();
@@ -571,6 +610,7 @@ app.post('/make-server-b7b6fbd4/elections/:id/access-request', async (c) => {
     return c.json({
       success: true,
       message: 'Access request submitted',
+      status: 'pending',
       requestId
     });
   } catch (error) {
@@ -623,6 +663,71 @@ app.get('/make-server-b7b6fbd4/elections/:id/access-requests', async (c) => {
   }
 });
 
+app.get('/make-server-b7b6fbd4/elections/:id/preapproved-voters', async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    if (!accessToken) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const electionId = c.req.param('id');
+    const election = await kv.get(`election:${electionId}`);
+
+    if (!election) {
+      return c.json({ error: 'Election not found' }, 404);
+    }
+
+    if (election.creator_id !== user.id) {
+      return c.json({ error: 'Only election creator can view pre-approved voters' }, 403);
+    }
+
+    const eligibilityRecords = await kv.getByPrefix(`eligibility:${electionId}:`);
+    const voters = [];
+
+    for (const record of eligibilityRecords) {
+      if (
+        !record ||
+        (record.status !== 'preapproved' && record.status !== 'approved')
+      ) {
+        continue;
+      }
+
+      let userId = record.user_id;
+      if (!userId) {
+        userId = await kv.get(`user:email:${record.contact}`);
+      }
+
+      let fullName = 'Pending Registration';
+      if (userId) {
+        const userData = await kv.get(`user:${userId}`);
+        if (userData?.name) {
+          fullName = userData.name;
+        } else if (userData?.email) {
+          fullName = userData.email;
+        }
+      }
+
+      voters.push({
+        id: record.id ?? record.contact,
+        email: record.contact,
+        full_name: fullName,
+      });
+    }
+
+    voters.sort((a, b) => a.email.localeCompare(b.email));
+
+    return c.json({ voters });
+  } catch (error) {
+    console.log('Get preapproved voters error:', error);
+    return c.json({ error: 'Failed to get pre-approved voters' }, 500);
+  }
+});
+
 app.patch('/make-server-b7b6fbd4/elections/:id/access-requests/:requestId', async (c) => {
   try {
     const accessToken = c.req.header('Authorization')?.split(' ')[1];
@@ -657,15 +762,9 @@ app.patch('/make-server-b7b6fbd4/elections/:id/access-requests/:requestId', asyn
       return c.json({ error: 'Access request not found' }, 404);
     }
 
-    // Update request status
-    request.status = action === 'approve' ? 'approved' : 'denied';
-    request.decided_by = user.id;
-    request.decided_at = new Date().toISOString();
+    const requestKeyByElection = `access_request:${electionId}:${request.user_id}`;
+    const requestKeyById = `access_request:${requestId}`;
 
-    await kv.set(`access_request:${requestId}`, request);
-    await kv.set(`access_request:${electionId}:${request.user_id}`, request);
-
-    // If approved, add to eligibility
     if (action === 'approve') {
       const userData = await kv.get(`user:${request.user_id}`);
       const eligibilityId = crypto.randomUUID();
@@ -679,6 +778,14 @@ app.patch('/make-server-b7b6fbd4/elections/:id/access-requests/:requestId', asyn
       };
 
       await kv.set(`eligibility:${electionId}:${userData.email}`, eligibility);
+      await kv.del(requestKeyByElection);
+      await kv.del(requestKeyById);
+    } else {
+      request.status = 'denied';
+      request.decided_by = user.id;
+      request.decided_at = new Date().toISOString();
+      await kv.set(requestKeyById, request);
+      await kv.set(requestKeyByElection, request);
     }
 
     return c.json({
@@ -717,10 +824,21 @@ app.get('/make-server-b7b6fbd4/elections/:id/eligibility-status', async (c) => {
     const ballotLink = await kv.get(`ballot:link:${electionId}:${user.id}`);
 
     // Check access request
-    const accessRequest = await kv.get(`access_request:${electionId}:${user.id}`);
+    let accessRequest = await kv.get(`access_request:${electionId}:${user.id}`);
+
+    const isEligible =
+      eligibility && (eligibility.status === 'approved' || eligibility.status === 'preapproved');
+
+    if (isEligible && accessRequest) {
+      await kv.del(`access_request:${electionId}:${user.id}`);
+      if (accessRequest.id) {
+        await kv.del(`access_request:${accessRequest.id}`);
+      }
+      accessRequest = null;
+    }
 
     return c.json({
-      eligible: eligibility && (eligibility.status === 'approved' || eligibility.status === 'preapproved'),
+      eligible: isEligible,
       hasVoted: !!ballotLink,
       accessRequest: accessRequest ? {
         status: accessRequest.status,
