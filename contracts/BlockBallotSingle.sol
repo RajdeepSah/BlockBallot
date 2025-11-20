@@ -17,7 +17,7 @@ contract BlockBallotSingle {
     mapping(string => string[]) public candidateList; // e.g. candidateList["President"] = ["Alice", "Bob"]
 
     // event for confirming that the vote has been recorded
-    event VoteCast(address indexed relayer, string position, string candidate);
+    event VoteCast(address indexed relayer, string[] positions, string[] candidates);
     
     /**
      * @dev Constructor runs once on deployment.
@@ -53,20 +53,21 @@ contract BlockBallotSingle {
 
     /**
      * @dev The main 'vote' function, called by our Relayer.
-     * Now takes TWO arguments.
      */
-    function vote(string memory positionName, string memory candidateName) public {
-        // Only our server (the owner) can call this
+    function castVotes(string[] memory _positions, string[] memory _candidates) public {
         require(msg.sender == i_owner, "Only the owner (relayer) can call this.");
-        
-        // Check if this is a valid candidate for the position
-        require(isCandidate[positionName][candidateName] == true, "Not a valid candidate for this position.");
-
-        // increment vote!
-        votes[positionName][candidateName] += 1;
-
-        emit VoteCast(msg.sender, positionName, candidateName);
+        require(_positions.length == _candidates.length, "Ballot array mismatch");
+        require(_positions.length > 0, "Ballot cannot be empty");
+        for (uint i = 0; i < _positions.length; i++) {
+            string memory positionName = _positions[i];
+            string memory candidateName = _candidates[i];
+            // Verify
+            require(isCandidate[positionName][candidateName] == true, "Invalid candidate in ballot");
+            votes[positionName][candidateName] += 1;
+        }
+        emit VoteCast(msg.sender, _positions, _candidates);
     }
+
 
     /**
      * @dev A public "read" function to get the tally for one candidate.
