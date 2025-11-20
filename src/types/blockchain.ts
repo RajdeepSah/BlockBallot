@@ -7,7 +7,7 @@ export type TransactionHash = string;
 
 export interface CandidateTally {
   name: string;
-  votes: string; // BigInt converted to string
+  votes: string;
 }
 
 export interface PositionResult {
@@ -18,7 +18,7 @@ export interface PositionResult {
 export interface DeploymentResponse {
   success: boolean;
   contractAddress: ContractAddress;
-  etherscanUrl: string;
+  txHash: string;
   message: string;
 }
 

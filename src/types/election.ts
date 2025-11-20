@@ -3,6 +3,20 @@
  * Extends base election structure with blockchain fields
  */
 
+export interface Candidate {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface Position {
+  id: string;
+  name: string;
+  description: string;
+  ballot_type: 'single' | 'multiple' | 'ranked';
+  candidates: Candidate[];
+}
+
 export interface Election {
   id: string;
   code: string;
@@ -14,7 +28,8 @@ export interface Election {
   creator_id: string;
   created_at: string;
   status: 'draft' | 'active' | 'ended';
-  positions: string[];
-  contractAddress?: string; // Blockchain contract address (optional for backward compatibility)
+  positions: Position[];
+  //? indicates optional so that It wont interfere with existing elections, but we should make it required after blockchain is fully integrated  
+  contractAddress?: string; 
 }
 
