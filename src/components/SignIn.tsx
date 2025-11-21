@@ -6,6 +6,7 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Vote, Lock, Mail } from 'lucide-react';
+import {BlockBallotLogo}from '@/components/designs/BlockBallot_Logo';
 
 interface SignInProps {
   onToggleMode: () => void;
@@ -19,6 +20,7 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +29,6 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
 
     try {
       const result = await login(email, password);
-      
       if (result.requires2FA) {
         on2FARequired(result.userId!, result.devOTP);
       } else {
@@ -41,86 +42,116 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-indigo-600 rounded-full">
-              <Vote className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl">BlockBallot</CardTitle>
-          <CardDescription>
-            Your voice. Your vote.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      
+      {/* Clickable Logo */}
+      <div className="flex flex-col items-center mb-6">
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="
+            w-80 h-80 
+            focus:outline-none 
+            rounded-lg 
+            shadow-lg 
+            transition-transform 
+            duration-300 
+            hover:scale-105 
+            hover:-translate-y-1
+          "
+        >
+          <BlockBallotLogo />
+        </button>
+        <span className="mt-2 text-sm text-gray-600">
+          Click the logo to {showForm ? 'hide' : 'show'} login form
+        </span>
+      </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="pl-10"
-                />
+      {/* Login Form with smooth slide animation */}
+      <div
+        className={`
+          w-full max-w-md 
+          transition-all duration-500 ease-in-out
+          ${showForm ? 'max-h-screen opacity-100 mt-4' : 'max-h-0 opacity-0 overflow-hidden'}
+        `}
+      >
+        <Card className="w-full">
+          <CardHeader className="space-y-1 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-indigo-600 rounded-full">
+                <Vote className="w-8 h-8 text-white" />
               </div>
             </div>
+            <CardTitle className="text-2xl">BlockBallot</CardTitle>
+            <CardDescription>Your voice. Your vote.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="pl-10"
-                />
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="pl-10"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="text-right">
-              <button
-                type="button"
-                onClick={() => window.location.href = '/forgot-password'}
-                className="text-sm text-indigo-600 hover:underline"
-              >
-                Forgot password?
-              </button>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="pl-10"
+                  />
+                </div>
+              </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
-            </Button>
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => (window.location.href = '/forgot-password')}
+                  className="text-sm text-indigo-600 hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
 
-            <div className="text-center text-sm">
-              <span className="text-gray-600">Don't have an account? </span>
-              <button
-                type="button"
-                onClick={onToggleMode}
-                className="text-indigo-600 hover:underline"
-              >
-                Sign Up
-              </button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Signing in...' : 'Sign In'}
+              </Button>
+
+              <div className="text-center text-sm">
+                <span className="text-gray-600">Don't have an account? </span>
+                <button
+                  type="button"
+                  onClick={onToggleMode}
+                  className="text-indigo-600 hover:underline"
+                >
+                  Sign Up
+                </button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
