@@ -17,6 +17,7 @@ export interface PositionResult {
 
 export interface DeploymentResponse {
   success: boolean;
+  electionId: string;
   contractAddress: ContractAddress;
   txHash: string;
   message: string;
@@ -24,8 +25,7 @@ export interface DeploymentResponse {
 
 export interface VoteResponse {
   success: boolean;
-  txHash: TransactionHash | TransactionHash[];
-  txHashes: TransactionHash[];
+  txHash: TransactionHash;
   votesProcessed: number;
 }
 

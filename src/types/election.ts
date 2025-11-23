@@ -18,18 +18,16 @@ export interface Position {
 }
 
 export interface Election {
-  id: string;
+  id?: string;
   code: string;
   title: string;
   description: string;
   starts_at: string;
   ends_at: string;
-  time_zone: string;
   creator_id: string;
-  created_at: string;
   status: 'draft' | 'active' | 'ended';
   positions: Position[];
-  //? indicates optional so that It wont interfere with existing elections, but we should make it required after blockchain is fully integrated  
-  contractAddress?: string; 
+  time_zone: string;
+  contract_address?: string; 
 }
 
