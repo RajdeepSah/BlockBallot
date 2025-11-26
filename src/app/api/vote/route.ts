@@ -66,6 +66,10 @@ export async function POST(request: NextRequest) {
       return createValidationError(message);
     }
 
+    // Extract parallel arrays from votesToProcess for blockchain contract call
+    const positionsArray = votesToProcess.map(vote => vote.position);
+    const candidatesArray = votesToProcess.map(vote => vote.candidate);
+
     // Get election from database to check dates and validate election exists
     const supabase = await createClient();
     const { data: election, error: electionError } = await supabase
@@ -140,7 +144,7 @@ export async function POST(request: NextRequest) {
     let txHash: string;
     try {
       const contract = createWritableContract(contractAddress);
-      const tx = await contract.castVotes(positions, candidates);
+      const tx = await contract.castVotes(positionsArray, candidatesArray);
       await tx.wait(1);
       txHash = tx.hash;
     } catch (error) {
