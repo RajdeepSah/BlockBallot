@@ -37,6 +37,23 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
   const loadElection = async () => {
     try {
       const response = await api.getElection(electionId);
+      // Ensure positions and candidates have IDs
+      if (response.positions && Array.isArray(response.positions)) {
+        response.positions = response.positions.map((position: any, posIndex: number) => {
+          // Generate ID if missing
+          const positionId = position.id || `pos-${posIndex}`;
+          // Ensure candidates have IDs
+          const candidates = (position.candidates || []).map((candidate: any, candIndex: number) => ({
+            ...candidate,
+            id: candidate.id || `pos-${posIndex}-cand-${candIndex}`
+          }));
+          return {
+            ...position,
+            id: positionId,
+            candidates
+          };
+        });
+      }
       setElection(response);
     } catch (err: any) {
       setError(err.message || 'Failed to load election');
@@ -79,7 +96,7 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
         }
       }
 
-      const response = await api.castVote(electionId, selections, token!);
+      const response = await api.castVote(electionId, selections, election, token!);
       setReceipt(response.receipt);
       setSuccess('Vote cast successfully!');
       await checkEligibility();
