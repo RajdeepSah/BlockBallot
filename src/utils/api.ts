@@ -206,4 +206,71 @@ export const api = {
     }
     return await response.json();
   },
+
+  // Voting
+  castVote: async (electionId: string, selections: Record<string, any>, election: any, token: string) => {
+    const validToken = await getValidAccessToken();
+    if (!validToken) {
+      handleUnauthorizedError();
+      throw new Error('Unauthorized');
+    }
+
+    // Use the election data passed in (already loaded in component)
+    if (!election || !election.contract_address) {
+      throw new Error('Election not found or contract address missing');
+    }
+
+    // Transform selections (positionId -> candidateId) to votes array (position name -> candidate name)
+    const votes: Array<{ position: string; candidate: string }> = [];
+    
+    for (const position of election.positions) {
+      const selection = selections[position.id];
+      if (!selection) continue;
+
+      // Handle different ballot types
+      if (Array.isArray(selection)) {
+        // Multiple choice or ranked choice - add each selection
+        for (const candidateId of selection) {
+          const candidate = position.candidates.find((c: any) => c.id === candidateId);
+          if (candidate) {
+            votes.push({ position: position.name, candidate: candidate.name });
+          }
+        }
+      } else {
+        // Single choice
+        const candidate = position.candidates.find((c: any) => c.id === selection);
+        if (candidate) {
+          votes.push({ position: position.name, candidate: candidate.name });
+        }
+      }
+    }
+
+    if (votes.length === 0) {
+      throw new Error('No valid votes to cast');
+    }
+
+    const response = await authenticatedFetch('/api/vote', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${validToken}`
+      },
+      body: JSON.stringify({
+        electionId,
+        contractAddress: election.contract_address,
+        votes
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to cast vote');
+    }
+
+    const result = await response.json();
+    return {
+      receipt: result.txHash,
+      ...result
+    };
+  },
 };
