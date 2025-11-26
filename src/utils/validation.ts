@@ -93,3 +93,91 @@ export function validatePositionsArray(positions: PositionInput[]): void {
   });
 }
 
+/**
+ * Sanitize string input by trimming whitespace and removing control characters
+ */
+export function sanitizeString(input: string): string {
+  if (typeof input !== 'string') {
+    return '';
+  }
+  // Trim whitespace and remove null bytes and other control characters (except newlines/tabs for descriptions)
+  return input.trim().replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+}
+
+/**
+ * Sanitize text input (for descriptions) - allows newlines and tabs
+ */
+export function sanitizeText(input: string): string {
+  if (typeof input !== 'string') {
+    return '';
+  }
+  // Trim whitespace but preserve newlines and tabs for descriptions
+  return input.trim().replace(/[\x00-\x08\x0E-\x1F\x7F]/g, '');
+}
+
+/**
+ * Validate that there are no duplicate candidate names within a position
+ */
+export function validateNoDuplicateCandidates(position: PositionInput): void {
+  if (!position.candidates || !Array.isArray(position.candidates)) {
+    return; // Will be caught by validatePositionInput
+  }
+
+  const candidateNames = position.candidates
+    .map(c => sanitizeString(c.name).toLowerCase())
+    .filter(name => name.length > 0); // Only check non-empty names
+
+  const duplicates = candidateNames.filter((name, index) => 
+    candidateNames.indexOf(name) !== index
+  );
+
+  if (duplicates.length > 0) {
+    const uniqueDuplicates = [...new Set(duplicates)];
+    throw new Error(
+      `Position "${position.name}" has duplicate candidates: ${uniqueDuplicates.join(', ')}`
+    );
+  }
+}
+
+/**
+ * Validate all positions for duplicate candidates
+ */
+export function validateNoDuplicateCandidatesInPositions(positions: PositionInput[]): void {
+  if (!Array.isArray(positions)) {
+    return; // Will be caught by validatePositionsArray
+  }
+
+  positions.forEach((position) => {
+    try {
+      validateNoDuplicateCandidates(position);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(message);
+    }
+  });
+}
+
+/**
+ * Validate that there are no duplicate position names
+ */
+export function validateNoDuplicatePositions(positions: PositionInput[]): void {
+  if (!Array.isArray(positions)) {
+    return; // Will be caught by validatePositionsArray
+  }
+
+  const positionNames = positions
+    .map(p => sanitizeString(p.name).toLowerCase())
+    .filter(name => name.length > 0); // Only check non-empty names
+
+  const duplicates = positionNames.filter((name, index) => 
+    positionNames.indexOf(name) !== index
+  );
+
+  if (duplicates.length > 0) {
+    const uniqueDuplicates = [...new Set(duplicates)];
+    throw new Error(
+      `Duplicate position names found: ${uniqueDuplicates.join(', ')}`
+    );
+  }
+}
+
