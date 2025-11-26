@@ -15,11 +15,11 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<{ requires2FA: boolean; userId?: string; devOTP?: string }>;
-  verify2FA: (userId: string, otp: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ requires2FA: boolean; userId?: string; email?: string }>;
+  verify2FA: (email: string, otp: string) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => void;
-  resendOTP: (userId: string) => Promise<string>;
+  resendOTP: (email: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -70,26 +70,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { 
         requires2FA: true, 
         userId: response.userId,
-        devOTP: response.devOTP 
+        email
       };
     }
 
     return { requires2FA: false };
   };
 
-  const verify2FA = async (userId: string, otp: string) => {
-    const response = await api.verify2FA({ userId, otp });
-    
+  const verify2FA = async (email: string, otp: string) => {
+    const res = await fetch('/api/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.error || '2FA verification failed');
+    }
+
     const tempToken = localStorage.getItem('tempToken');
     const tempRefreshToken = localStorage.getItem('tempRefreshToken');
     if (tempToken) {
+      const me = await api.getMe(tempToken);
       setToken(tempToken);
-      setUser(response.user);
+      setUser(me.user);
       localStorage.setItem('accessToken', tempToken);
-      localStorage.setItem('user', JSON.stringify(response.user));
       if (tempRefreshToken) {
         localStorage.setItem('refreshToken', tempRefreshToken);
       }
+      localStorage.setItem('user', JSON.stringify(me.user));
       localStorage.removeItem('tempToken');
       localStorage.removeItem('tempRefreshToken');
     }
@@ -99,9 +110,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await api.register(data);
   };
 
-  const resendOTP = async (userId: string) => {
-    const response = await api.resendOTP({ userId });
-    return response.devOTP;
+  const resendOTP = async (email: string) => {
+    const res = await fetch('/api/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to resend verification code');
+    }
   };
 
   const logout = () => {

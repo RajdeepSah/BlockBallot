@@ -10,7 +10,7 @@ import { Vote, Lock, Mail } from 'lucide-react';
 interface SignInProps {
   onToggleMode: () => void;
   onSuccess: () => void;
-  on2FARequired: (userId: string, devOTP?: string) => void;
+  on2FARequired: (payload: { userId: string; email: string }) => void;
 }
 
 export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) {
@@ -20,19 +20,40 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const requestEmailOtp = async (targetEmail: string) => {
+    const response = await fetch('/api/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: targetEmail }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to send verification code');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+    const normalizedEmail = email.trim().toLowerCase();
 
     try {
-      const result = await login(email, password);
+      const result = await login(normalizedEmail, password);
       
       if (result.requires2FA) {
-        on2FARequired(result.userId!, result.devOTP);
-      } else {
-        onSuccess();
+        if (!result.userId) {
+          throw new Error('Unable to start verification flow. Missing user ID.');
+        }
+
+        await requestEmailOtp(normalizedEmail);
+        on2FARequired({ userId: result.userId, email: normalizedEmail });
+        return;
       }
+
+      onSuccess();
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {
