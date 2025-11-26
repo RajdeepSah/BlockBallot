@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { ContractFactory } from 'ethers';
 import { createWallet } from '@/utils/blockchain/provider'; 
 import { getContractABI, getContractBytecode } from '@/utils/blockchain/contractLoader'; 
@@ -54,11 +54,8 @@ export async function POST(request: NextRequest) {
       wallet 
     );
 
-    console.log('Deploying contract with positions:', positionNames);
-    
     const contract = await contractFactory.deploy(positionNames, candidatesForPosition);
 
-        
     const deployTx = contract.deploymentTransaction();
     if (!deployTx) {
       throw new Error("Deployment transaction failed to generate.");
@@ -69,8 +66,6 @@ export async function POST(request: NextRequest) {
     await contract.waitForDeployment();
     
     const contractAddress = await contract.getAddress();
-    
-    console.log('Contract deployed to:', contractAddress);
 
     // Generate unique election code
     let code = generateCode();
@@ -108,7 +103,6 @@ export async function POST(request: NextRequest) {
       .insert(election)
       .select()
       .single();
-    console.log('Election inserted:', insertedElection);
     if (insertError) {
       throw new Error(`Failed to insert election: ${insertError.message}`);
     }
@@ -125,8 +119,7 @@ export async function POST(request: NextRequest) {
       message: 'Contract deployed successfully and transaction confirmed.'
     };
 
-    // Use NextResponse.json for Next.js App Router return (FIXED)
-    return NextResponse.json(response, { status: 200 });
+    return Response.json(response, { status: 200 });
 
   } catch (error) {
     // Return a 500 status code for server/deployment errors
