@@ -3,15 +3,37 @@ import { createReadOnlyContract } from "@/utils/blockchain/contract";
 import { validateContractAddress } from "@/utils/validation";
 import { handleApiError, createValidationError } from "@/utils/api/errors";
 import type { VotesResponse, PositionResult, CandidateTally } from "@/types/blockchain";
+import { createClient } from "@/utils/supabase/server";
 
 export async function GET(request: NextRequest) {
   try {
-    // Get contract address from query parameter
+    // Get parameters from query string
     const { searchParams } = new URL(request.url);
-    const contractAddress = searchParams.get("contractAddress");
+    let contractAddress = searchParams.get("contractAddress");
+    const electionId = searchParams.get("electionId");
+
+    // If no contract address provided, try to look it up by electionId
+    if (!contractAddress && electionId) {
+      const supabase = await createClient();
+      const { data: election, error: electionError } = await supabase
+        .from('elections')
+        .select('contract_address')
+        .eq('id', electionId)
+        .single();
+
+      if (electionError || !election?.contract_address) {
+        return createValidationError(
+          `Election not found or contract address not available for election ID: ${electionId}`
+        );
+      }
+
+      contractAddress = election.contract_address;
+    }
 
     if (!contractAddress) {
-      return createValidationError("Contract address query parameter is required.");
+      return createValidationError(
+        "Either 'contractAddress' or 'electionId' query parameter is required."
+      );
     }
 
     // Validate contract address format
@@ -48,7 +70,7 @@ export async function GET(request: NextRequest) {
 
       // Loop through each candidate to get their tally
       for (const candidateName of candidates) {
-        const tally: bigint = await contract.getTally(positionName, candidateName);
+        const tally: bigint = await contract.getVoteCount(positionName, candidateName);
         candidateTallies.push({
           name: candidateName,
           votes: tally.toString() // Convert BigInt to string
