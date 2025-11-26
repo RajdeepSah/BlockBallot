@@ -69,7 +69,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
 
   const loadResults = async () => {
     try {
-      const response = await api.getResults(electionId, token);
+      const response = await api.getResults(electionId);
       setResults(response);
     } catch (err: any) {
       setError(err.message || 'Failed to load results');

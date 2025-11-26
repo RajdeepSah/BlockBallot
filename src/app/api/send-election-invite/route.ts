@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { projectId } from '@/utils/supabase/info';
+import { createClient as createServerClient } from '@/utils/supabase/server';
 import {
   buildElectionInviteEmail,
   getElectionInvitePlainText,
@@ -144,7 +145,12 @@ async function updateRateLimit(electionId: string) {
 }
 
 async function getElection(electionId: string): Promise<ElectionRecord> {
-  const election = await getKvValue<ElectionRecord>(`election:${electionId}`);
+   const supabase = await createServerClient();
+  const { data: election, error: electionError } = await supabase
+      .from('elections')
+      .select('*')
+      .eq('id', electionId)
+      .single();
   if (!election) {
     throw httpError(404, 'Election not found.');
   }
@@ -315,8 +321,12 @@ export async function POST(request: Request) {
     if (!payload || !payload.electionId) {
       throw httpError(400, 'electionId is required.');
     }
-
-    const election = await getElection(payload.electionId);
+   const supabase = await createServerClient();
+   const { data: election, error: electionError } = await supabase
+      .from('elections')
+      .select('*')   
+      .eq('id', payload.electionId)
+      .single();
 
     if (election.creator_id !== userId) {
       throw httpError(403, 'Only the election creator can send invitations.');

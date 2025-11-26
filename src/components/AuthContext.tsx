@@ -70,15 +70,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(data.error || '2FA verification failed');
     }
 
-    const tempToken = localStorage.getItem('tempToken');
-    if (tempToken) {
-      const me = await api.getMe(tempToken);
-      setToken(tempToken);
-      setUser(me.user);
-      localStorage.setItem('accessToken', tempToken);
-      localStorage.setItem('user', JSON.stringify(me.user));
+   const tempToken = localStorage.getItem('tempToken');
+   if (tempToken) {
+   const me = await fetch('/api/auth/me', {
+      headers: {
+         'Authorization': `Bearer ${tempToken}`
+      }
+   });
+   
+   if (!me.ok) {
+      // Token invalid or expired, clean up
       localStorage.removeItem('tempToken');
-    }
+      return;
+   }
+   
+   const { user } = await me.json();
+   setToken(tempToken);
+   setUser(user);
+   localStorage.setItem('accessToken', tempToken);
+   localStorage.setItem('user', JSON.stringify(user));
+   localStorage.removeItem('tempToken');
+   }
   };
 
   const register = async (data: any) => {

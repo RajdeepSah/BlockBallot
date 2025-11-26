@@ -88,10 +88,9 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
     try {
       // Parse emails from textarea (comma or newline separated)
       const emails = voterList
-        .split(/[\n,]/)
+        .split(/[\n,\s]+/)
         .map(email => email.trim())
         .filter(email => email && email.includes('@'));
-
       if (emails.length === 0) {
         setError('No valid email addresses found');
         setUploading(false);
@@ -122,11 +121,27 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
 
   const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      // Check if Clipboard API is available (requires secure context)
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback for older browsers or non-secure contexts
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
+      // Optionally show a toast/error message to the user
     }
   };
 
@@ -164,7 +179,7 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           electionId: election.id,
