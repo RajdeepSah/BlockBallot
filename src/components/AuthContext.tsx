@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../utils/api';
+import { getValidAccessToken, isTokenExpired } from '../utils/auth/tokenRefresh';
+import { handleUnauthorizedError } from '../utils/auth/errorHandler';
 
 interface User {
   id: string;
@@ -29,24 +31,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load from localStorage
-    const storedToken = localStorage.getItem('accessToken');
-    const storedUser = localStorage.getItem('user');
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem('accessToken');
+      const storedUser = localStorage.getItem('user');
+      if (storedToken && storedUser) {
+        if (isTokenExpired(storedToken)) {
+          try {
+            const refreshedToken = await getValidAccessToken();
+            if (refreshedToken) {
+              setToken(refreshedToken);
+              setUser(JSON.parse(storedUser));
+            } else {
+              handleUnauthorizedError(false);
+            }
+          } catch {
+            handleUnauthorizedError(false);
+          }
+        } else {
+          setToken(storedToken);
+          setUser(JSON.parse(storedUser));
+        }
+      }
+      setLoading(false);
+    };
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
     const response = await api.login({ email, password });
     
     if (response.requires2FA) {
-      // Store temporary token
       setToken(response.accessToken);
       localStorage.setItem('tempToken', response.accessToken);
+      if (response.refreshToken) {
+        localStorage.setItem('tempRefreshToken', response.refreshToken);
+      }
       return { 
         requires2FA: true, 
         userId: response.userId,
@@ -61,12 +81,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const response = await api.verify2FA({ userId, otp });
     
     const tempToken = localStorage.getItem('tempToken');
+    const tempRefreshToken = localStorage.getItem('tempRefreshToken');
     if (tempToken) {
       setToken(tempToken);
       setUser(response.user);
       localStorage.setItem('accessToken', tempToken);
       localStorage.setItem('user', JSON.stringify(response.user));
+      if (tempRefreshToken) {
+        localStorage.setItem('refreshToken', tempRefreshToken);
+      }
       localStorage.removeItem('tempToken');
+      localStorage.removeItem('tempRefreshToken');
     }
   };
 
@@ -83,8 +108,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setToken(null);
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     localStorage.removeItem('tempToken');
+    localStorage.removeItem('tempRefreshToken');
   };
 
   return (
