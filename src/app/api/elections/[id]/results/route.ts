@@ -6,6 +6,48 @@ import { createReadOnlyContract } from '@/utils/blockchain/contract';
 import * as kv from '@/utils/supabase/kvStore';
 import { getServiceRoleClient } from '@/utils/supabase/clients';
 
+/**
+ * Retry a function with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      
+      // Check if it's a rate limit error
+      const isRateLimit = error?.message?.includes('Too Many Requests') || 
+                         error?.code === 'BAD_DATA' ||
+                         error?.shortMessage?.includes('missing response');
+      
+      if (!isRateLimit || attempt === maxRetries) {
+        throw error;
+      }
+      
+      // Exponential backoff: 1s, 2s, 4s
+      const delay = baseDelay * Math.pow(2, attempt);
+      console.log(`Rate limit hit, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError || new Error('Failed after retries');
+}
+
+/**
+ * Add a small delay to avoid rate limiting
+ */
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 interface PositionRecord {
   id?: string;
   name: string;
@@ -55,7 +97,12 @@ export async function GET(
     }
 
     const contract = createReadOnlyContract(election.contract_address);
-    const positionNames: string[] = await contract.getPositionList();
+    
+    // Retry position list call with backoff
+    const positionNames: string[] = await retryWithBackoff(
+      () => contract.getPositionList() as Promise<string[]>
+    );
+    
     const electionPositions: PositionRecord[] = Array.isArray(election.positions)
       ? election.positions
       : [];
@@ -101,7 +148,16 @@ export async function GET(
         electionPositions[positionIndex] ||
         null;
       const positionId = positionMeta?.id || `position-${positionIndex}`;
-      const candidatesFromContract: string[] = await contract.getCandidateList(positionName);
+      
+      // Retry candidate list call with backoff
+      const candidatesFromContract: string[] = await retryWithBackoff(
+        () => contract.getCandidateList(positionName) as Promise<string[]>
+      );
+      
+      // Add delay between positions to avoid rate limiting
+      if (positionIndex > 0) {
+        await delay(200); // 200ms delay between positions
+      }
 
       const candidatesPayload = [];
       for (let candidateIndex = 0; candidateIndex < candidatesFromContract.length; candidateIndex++) {
@@ -109,8 +165,17 @@ export async function GET(
         const candidateMeta =
           positionMeta?.candidates?.find((c) => c.name === candidateName) || null;
         const candidateId = candidateMeta?.id || `${positionId}-candidate-${candidateIndex}`;
-        const voteCount = await contract.getVoteCount(positionName, candidateName);
+        
+        // Retry vote count call with backoff
+        const voteCount = await retryWithBackoff(
+          () => contract.getVoteCount(positionName, candidateName)
+        );
         const voteNumber = Number(voteCount.toString());
+        
+        // Add small delay between candidates to avoid rate limiting
+        if (candidateIndex > 0) {
+          await delay(100); // 100ms delay between candidates
+        }
 
         candidatesPayload.push({
           id: candidateId,
