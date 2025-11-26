@@ -7,6 +7,7 @@ import * as kv from '@/utils/supabase/kvStore';
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('Authorization');
+    console.log(`hi ${authHeader}`)
     if (!authHeader) {
       return createUnauthorizedError();
     }

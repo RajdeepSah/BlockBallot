@@ -1,5 +1,46 @@
+import { projectId, publicAnonKey } from './supabase/info';
 import { getValidAccessToken } from './auth/tokenRefresh';
 import { authenticatedFetch, handleUnauthorizedError } from './auth/errorHandler';
+
+const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-b7b6fbd4`;
+
+interface ApiOptions {
+  method?: string;
+  body?: any;
+  token?: string;
+}
+
+export async function apiCall(endpoint: string, options: ApiOptions = {}) {
+  const { method = 'GET', body, token } = options;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  } else {
+    headers['Authorization'] = `Bearer ${publicAnonKey}`;
+  }
+
+  const config: RequestInit = {
+    method,
+    headers,
+  };
+
+  if (body && method !== 'GET') {
+    config.body = JSON.stringify(body);
+  }
+
+  const response = await fetch(`${API_BASE}${endpoint}`, config);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'API request failed');
+  }
+
+  return data;
+}
 
 export const api = {
   // Auth - Now using Next.js API routes
@@ -51,14 +92,7 @@ export const api = {
     }
     return await response.json();
   },
-  getMe: async () => {
-    const response = await authenticatedFetch('/api/auth/me');
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to load user');
-    }
-    return await response.json();
-  },
+  getMe: (token: string) => apiCall('/auth/me', { token }),
 
   // Elections
   getElection: async (id: string) => {

@@ -2,8 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../utils/api';
-import { getValidAccessToken, isTokenExpired } from '../utils/auth/tokenRefresh';
-import { handleUnauthorizedError } from '../utils/auth/errorHandler';
 
 interface User {
   id: string;
@@ -31,42 +29,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      const storedToken = localStorage.getItem('accessToken');
-      const storedUser = localStorage.getItem('user');
-      if (storedToken && storedUser) {
-        if (isTokenExpired(storedToken)) {
-          try {
-            const refreshedToken = await getValidAccessToken();
-            if (refreshedToken) {
-              setToken(refreshedToken);
-              setUser(JSON.parse(storedUser));
-            } else {
-              handleUnauthorizedError(false);
-            }
-          } catch {
-            handleUnauthorizedError(false);
-          }
-        } else {
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
-        }
-      }
-      setLoading(false);
-    };
+    // Load from localStorage
+    const storedToken = localStorage.getItem('accessToken');
+    const storedUser = localStorage.getItem('user');
 
-    initializeAuth();
+    if (storedToken && storedUser) {
+      setToken(storedToken);
+      setUser(JSON.parse(storedUser));
+    }
+    setLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
     const response = await api.login({ email, password });
     
     if (response.requires2FA) {
+      // Store temporary token
       setToken(response.accessToken);
       localStorage.setItem('tempToken', response.accessToken);
-      if (response.refreshToken) {
-        localStorage.setItem('tempRefreshToken', response.refreshToken);
-      }
       return { 
         requires2FA: true, 
         userId: response.userId,
@@ -90,20 +70,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(data.error || '2FA verification failed');
     }
 
-    const tempToken = localStorage.getItem('tempToken');
-    const tempRefreshToken = localStorage.getItem('tempRefreshToken');
-    if (tempToken) {
-      const me = await api.getMe(tempToken);
-      setToken(tempToken);
-      setUser(me.user);
-      localStorage.setItem('accessToken', tempToken);
-      if (tempRefreshToken) {
-        localStorage.setItem('refreshToken', tempRefreshToken);
+   const tempToken = localStorage.getItem('tempToken');
+   if (tempToken) {
+   const me = await fetch('/api/auth/me', {
+      headers: {
+         'Authorization': `Bearer ${tempToken}`
       }
-      localStorage.setItem('user', JSON.stringify(me.user));
+   });
+   
+   if (!me.ok) {
+      // Token invalid or expired, clean up
       localStorage.removeItem('tempToken');
-      localStorage.removeItem('tempRefreshToken');
-    }
+      return;
+   }
+   
+   const { user } = await me.json();
+   setToken(tempToken);
+   setUser(user);
+   localStorage.setItem('accessToken', tempToken);
+   localStorage.setItem('user', JSON.stringify(user));
+   localStorage.removeItem('tempToken');
+   }
   };
 
   const register = async (data: any) => {
@@ -128,10 +115,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setToken(null);
     localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     localStorage.removeItem('tempToken');
-    localStorage.removeItem('tempRefreshToken');
   };
 
   return (
