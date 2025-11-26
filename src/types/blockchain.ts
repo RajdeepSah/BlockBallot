@@ -27,6 +27,7 @@ export interface VoteResponse {
   success: boolean;
   txHash: TransactionHash;
   votesProcessed: number;
+  timestamp?: string;
 }
 
 export interface VotesResponse {
