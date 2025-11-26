@@ -1,86 +1,209 @@
-import { projectId, publicAnonKey } from './supabase/info';
-
-const DB_API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-b7b6fbd4`;
-
-interface ApiOptions {
-  method?: string;
-  body?: any;
-  token?: string;
-}
-
-export async function apiCall(endpoint: string, options: ApiOptions = {}) {
-  const { method = 'GET', body, token } = options;
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  } else {
-    headers['Authorization'] = `Bearer ${publicAnonKey}`;
-  }
-
-  const config: RequestInit = {
-    method,
-    headers,
-  };
-
-  if (body && method !== 'GET') {
-    config.body = JSON.stringify(body);
-  }
-
-  const response = await fetch(`${DB_API_BASE}${endpoint}`, config);
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(`API request failed: ${data.error}\nEndpoint: ${endpoint}\nOptions: ${JSON.stringify({method, body, token}, null, 2)}`);
-  }
-
-  return data;
-}
+import { getValidAccessToken } from './auth/tokenRefresh';
+import { authenticatedFetch, handleUnauthorizedError } from './auth/errorHandler';
 
 export const api = {
-  // Auth
-  register: (data: any) => apiCall('/auth/register', { method: 'POST', body: data }),
-  login: (data: any) => apiCall('/auth/login', { method: 'POST', body: data }),
-  verify2FA: (data: any) => apiCall('/auth/verify-2fa', { method: 'POST', body: data }),
-  resendOTP: (data: any) => apiCall('/auth/resend-otp', { method: 'POST', body: data }),
-  getMe: (token: string) => apiCall('/auth/me', { token }),
+  // Auth - Now using Next.js API routes
+  register: async (data: any) => {
+    const response = await authenticatedFetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Registration failed');
+    }
+    return await response.json();
+  },
+  login: async (data: any) => {
+    const response = await authenticatedFetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Login failed');
+    }
+    return await response.json();
+  },
+  verify2FA: async (data: any) => {
+    const response = await authenticatedFetch('/api/auth/verify-2fa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '2FA verification failed');
+    }
+    return await response.json();
+  },
+  resendOTP: async (data: any) => {
+    const response = await authenticatedFetch('/api/auth/resend-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to resend OTP');
+    }
+    return await response.json();
+  },
+  getMe: async () => {
+    const response = await authenticatedFetch('/api/auth/me');
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to load user');
+    }
+    return await response.json();
+  },
 
   // Elections
-  createElection: (data: any, token: string) => 
-    apiCall('/elections', { method: 'POST', body: data, token }),
-  getElection: (id: string) => apiCall(`/elections/${id}`),
-  searchElections: (code?: string, token?: string) => {
+  getElection: async (id: string) => {
+    const response = await authenticatedFetch(`/api/elections/${id}`);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get election');
+    }
+    return await response.json();
+  },
+  searchElections: async (code?: string, token?: string) => {
     const query = code ? `?code=${code}` : '';
-    return apiCall(`/elections${query}`, { token });
+    const headers: Record<string, string> = {};
+    
+    if (token) {
+      const validToken = await getValidAccessToken();
+      if (!validToken) {
+        handleUnauthorizedError();
+        throw new Error('Unauthorized');
+      }
+      headers['Authorization'] = `Bearer ${validToken}`;
+    }
+    
+    const response = await authenticatedFetch(`/api/elections${query}`, { headers });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to search elections');
+    }
+    
+    return await response.json();
   },
   
-  // Eligibility
-  uploadEligibility: (electionId: string, voters: string[], token: string) =>
-    apiCall(`/elections/${electionId}/eligibility`, { 
-      method: 'POST', 
-      body: { voters }, 
-      token 
-    }),
-  checkEligibility: (electionId: string, token: string) =>
-    apiCall(`/elections/${electionId}/eligibility-status`, { token }),
+  uploadEligibility: async (electionId: string, voters: string[], token: string) => {
+    const validToken = await getValidAccessToken();
+    if (!validToken) {
+      handleUnauthorizedError();
+      throw new Error('Unauthorized');
+    }
+    const response = await authenticatedFetch(`/api/elections/${electionId}/eligibility`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${validToken}`
+      },
+      body: JSON.stringify({ voters })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to upload eligibility list');
+    }
+    
+    return await response.json();
+  },
+  checkEligibility: async (electionId: string, token: string) => {
+    const validToken = await getValidAccessToken();
+    if (!validToken) {
+      handleUnauthorizedError();
+      throw new Error('Unauthorized');
+    }
+    const response = await authenticatedFetch(`/api/elections/${electionId}/eligibility-status`, {
+      headers: {
+        'Authorization': `Bearer ${validToken}`
+      }
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to check eligibility');
+    }
+    
+    return await response.json();
+  },
 
-  // Access Requests
-  requestAccess: (electionId: string, token: string) =>
-    apiCall(`/elections/${electionId}/access-request`, { method: 'POST', token }),
-  getAccessRequests: (electionId: string, token: string) =>
-    apiCall(`/elections/${electionId}/access-requests`, { token }),
-  updateAccessRequest: (electionId: string, requestId: string, action: 'approve' | 'deny', token: string) =>
-    apiCall(`/elections/${electionId}/access-requests/${requestId}`, {
+  // Access Requests - Now using Next.js API routes
+  requestAccess: async (electionId: string, token: string) => {
+    const validToken = await getValidAccessToken();
+    if (!validToken) {
+      handleUnauthorizedError();
+      throw new Error('Unauthorized');
+    }
+    const response = await authenticatedFetch(`/api/elections/${electionId}/access-request`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${validToken}`
+      }
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to request access');
+    }
+    
+    return await response.json();
+  },
+  getAccessRequests: async (electionId: string, token: string) => {
+    const validToken = await getValidAccessToken();
+    if (!validToken) {
+      handleUnauthorizedError();
+      throw new Error('Unauthorized');
+    }
+    const response = await authenticatedFetch(`/api/elections/${electionId}/access-requests`, {
+      headers: {
+        'Authorization': `Bearer ${validToken}`
+      }
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get access requests');
+    }
+    
+    return await response.json();
+  },
+  updateAccessRequest: async (electionId: string, requestId: string, action: 'approve' | 'deny', token: string) => {
+    const validToken = await getValidAccessToken();
+    if (!validToken) {
+      handleUnauthorizedError();
+      throw new Error('Unauthorized');
+    }
+    const response = await authenticatedFetch(`/api/elections/${electionId}/access-requests/${requestId}`, {
       method: 'PATCH',
-      body: { action },
-      token
-    }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${validToken}`
+      },
+      body: JSON.stringify({ action })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update access request');
+    }
+    
+    return await response.json();
+  },
 
   // Results
-  getResults: (electionId: string, token?: string) => {
-    return apiCall(`/elections/${electionId}/results`, { token });
+  getResults: async (electionId: string) => {
+    const response = await authenticatedFetch(`/api/elections/${electionId}/results`);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch results');
+    }
+    return await response.json();
   },
 };
