@@ -11,6 +11,9 @@ import { ArrowLeft, Users, UserCheck, UserX, Upload, TrendingUp, Copy, Check, Lo
 import { toast } from 'sonner';
 import { getElectionInvitePreview } from '@/emails/ElectionInviteEmail';
 import { fetchEligibleVoters, type EligibleVoter } from '@/utils/eligible-voters';
+import { Election, AccessRequest } from '@/types/election';
+import { LoadingSpinner } from './ui/loading-spinner';
+import { PageContainer } from './layouts/PageContainer';
 
 interface AdminPanelProps {
   electionId: string;
@@ -20,8 +23,8 @@ interface AdminPanelProps {
 
 export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProps) {
   const { token } = useAuth();
-  const [election, setElection] = useState<any>(null);
-  const [accessRequests, setAccessRequests] = useState<any[]>([]);
+  const [election, setElection] = useState<Election | null>(null);
+  const [accessRequests, setAccessRequests] = useState<AccessRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -45,8 +48,9 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
     try {
       const response = await api.getElection(electionId);
       setElection(response);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load election');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load election';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -57,7 +61,7 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
     try {
       const response = await api.getAccessRequests(electionId, token);
       setAccessRequests(response.requests || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to load access requests:', err);
     }
   };
@@ -100,8 +104,9 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
       await api.uploadEligibility(electionId, emails, token!);
       setSuccess(`Successfully added ${emails.length} voters to the eligibility list`);
       setVoterList('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to upload voter list');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to upload voter list';
+      setError(message);
     } finally {
       setUploading(false);
     }
@@ -114,8 +119,9 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
       await loadAccessRequests();
       await loadPreapprovedVoters();
       setSuccess(`Access request ${action}d successfully`);
-    } catch (err: any) {
-      setError(err.message || `Failed to ${action} access request`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : `Failed to ${action} access request`;
+      setError(message);
     }
   };
 
@@ -202,22 +208,16 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
           ? (data.message as string) || 'No invitations were sent.'
           : `Sent ${sentCount} invitation${sentCount === 1 ? '' : 's'} successfully.`
       );
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to send invitations.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to send invitations.';
+      toast.error(message);
     } finally {
       setSendingInvites(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading..." />;
   }
 
   if (!election) {
@@ -236,14 +236,13 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
   const pendingRequests = accessRequests.filter(r => r.status === 'pending');
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Button onClick={onBack} variant="ghost" className="mb-6">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
+    <PageContainer maxWidth="6xl">
+      <Button onClick={onBack} variant="ghost" className="mb-6">
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
 
-        <Card className="mb-6">
+      <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-2xl">{election.title}</CardTitle>
             <CardDescription>Admin Panel</CardDescription>
@@ -535,7 +534,6 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
+    </PageContainer>
   );
 }

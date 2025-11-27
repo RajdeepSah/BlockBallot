@@ -6,6 +6,7 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Vote, Lock, Mail } from 'lucide-react';
+import { AuthLayout } from './layouts/AuthLayout';
 
 interface SignInProps {
   onToggleMode: () => void;
@@ -54,15 +55,16 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
       }
 
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <AuthLayout>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
@@ -142,6 +144,6 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
           </form>
         </CardContent>
       </Card>
-    </div>
+    </AuthLayout>
   );
 }

@@ -6,13 +6,14 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Vote, User, Mail, Lock, Phone } from 'lucide-react';
+import { AuthLayout } from './layouts/AuthLayout';
 
 interface SignUpProps {
   onToggleMode: () => void;
   onSuccess: () => void;
 }
 
-export function SignUp({ onToggleMode, onSuccess }: SignUpProps) {
+export function SignUp({ onToggleMode, onSuccess: _onSuccess }: SignUpProps) {
   const { register } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -46,8 +47,9 @@ export function SignUp({ onToggleMode, onSuccess }: SignUpProps) {
       setTimeout(() => {
         onToggleMode();
       }, 2000);
-    } catch (err: any) {
-      setError(err.message || 'Registration failed');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Registration failed';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -55,7 +57,7 @@ export function SignUp({ onToggleMode, onSuccess }: SignUpProps) {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <AuthLayout>
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
@@ -71,12 +73,12 @@ export function SignUp({ onToggleMode, onSuccess }: SignUpProps) {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <AuthLayout>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
@@ -194,6 +196,6 @@ export function SignUp({ onToggleMode, onSuccess }: SignUpProps) {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </AuthLayout>
   );
 }

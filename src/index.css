@@ -2171,6 +2171,39 @@
   --sidebar-accent-foreground: oklch(.205 0 0);
   --sidebar-border: oklch(.922 0 0);
   --sidebar-ring: oklch(.708 0 0);
+  
+  /* ========================================
+   * DESIGN CUSTOMIZATION VARIABLES
+   * Change these to customize the look and feel
+   * ======================================== */
+  
+  /* Status colors - used for badges, alerts, notifications */
+  --status-success-bg: var(--color-green-50);
+  --status-success-border: var(--color-green-200);
+  --status-success-text: var(--color-green-800);
+  
+  --status-warning-bg: var(--color-yellow-50);
+  --status-warning-border: var(--color-yellow-200);
+  --status-warning-text: var(--color-yellow-800);
+  
+  --status-info-bg: var(--color-blue-50);
+  --status-info-border: var(--color-blue-200);
+  --status-info-text: var(--color-blue-800);
+  
+  --status-error-bg: var(--color-red-50, #fef2f2);
+  --status-error-border: var(--color-red-200, #fecaca);
+  --status-error-text: var(--color-red-800, #991b1b);
+  
+  /* Auth page gradient - single place to change auth page background */
+  --auth-gradient-from: var(--color-blue-50);
+  --auth-gradient-to: var(--color-indigo-100);
+  
+  /* Page backgrounds */
+  --page-bg: var(--color-gray-50);
+  
+  /* Loading spinner */
+  --spinner-color: var(--color-indigo-600);
+  --spinner-size: 3rem;
 }
 
 .dark {

@@ -27,6 +27,9 @@ import {
 } from 'recharts';
 import { ArrowLeft, TrendingUp, Users, Award, Download, Loader2 } from 'lucide-react';
 import { fetchEligibleVoters, type EligibleVoter } from '@/utils/eligible-voters';
+import { Election, ElectionResults, PositionResult, CandidateResult } from '@/types/election';
+import { LoadingSpinner } from './ui/loading-spinner';
+import { PageContainer } from './layouts/PageContainer';
 
 interface ResultsViewProps {
   electionId: string;
@@ -44,8 +47,8 @@ interface ChartDataEntry {
 
 export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) {
   const { token, user } = useAuth();
-  const [results, setResults] = useState<any>(null);
-  const [election, setElection] = useState<any>(null);
+  const [results, setResults] = useState<ElectionResults | null>(null);
+  const [election, setElection] = useState<Election | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [eligibleDialogOpen, setEligibleDialogOpen] = useState(false);
@@ -68,7 +71,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
     try {
       const response = await api.getElection(electionId);
       setElection(response);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to load election:', err);
     }
   };
@@ -77,8 +80,9 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
     try {
       const response = await api.getResults(electionId);
       setResults(response);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load results');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load results';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -91,8 +95,9 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
       // Route now guarantees pure JSON (no stray logs), so a single res.json() call is safe here.
       const voters = await fetchEligibleVoters(electionId);
       setEligibleVoters(voters);
-    } catch (err: any) {
-      setEligibleError(err.message || 'Failed to load eligible voters.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load eligible voters.';
+      setEligibleError(message);
       setEligibleVoters([]);
     } finally {
       setEligibleLoading(false);
@@ -125,23 +130,16 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-          <p className="mt-4 text-gray-600">Loading results...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading results..." />;
   }
 
-  if (error) {
+  if (error || !results) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{error || 'Failed to load results'}</AlertDescription>
             </Alert>
             <Button onClick={onBack} className="mt-4">
               Back
@@ -155,15 +153,14 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
   const isCreator = election?.creator_id === user?.id;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Button onClick={onBack} variant="ghost" className="mb-6">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
+    <PageContainer maxWidth="6xl">
+      <Button onClick={onBack} variant="ghost" className="mb-6">
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
 
-        {/* Header */}
-        <Card className="mb-6">
+      {/* Header */}
+      <Card className="mb-6">
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -226,8 +223,8 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
         </div>
 
         {/* Results by Position */}
-        {Object.entries(results.results).map(([positionId, positionData]: [string, any]) => {
-          const chartData: ChartDataEntry[] = positionData.candidates.map((candidate: any) => ({
+        {Object.entries(results.results).map(([positionId, positionData]: [string, PositionResult]) => {
+          const chartData: ChartDataEntry[] = positionData.candidates.map((candidate: CandidateResult) => ({
             name: candidate.name,
             votes: candidate.votes,
             percentage: parseFloat(candidate.percentage),
@@ -286,7 +283,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
                         dataKey="percentage"
                         label={({ name, percentage }) => `${name} ${(percentage || 0).toFixed(1)}%`}
                       >
-                        {chartData.map((entry, index) => (
+                        {chartData.map((_entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
@@ -298,7 +295,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
                 {/* Candidate List */}
                 <div className="space-y-4">
                   <h4 className="text-sm">Candidate Breakdown</h4>
-                  {positionData.candidates.map((candidate: any, index: number) => (
+                  {positionData.candidates.map((candidate: CandidateResult) => (
                     <div
                       key={candidate.id}
                       className="p-4 border rounded-lg flex items-center justify-between"
@@ -356,7 +353,6 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
             </div>
           </DialogContent>
         </Dialog>
-      </div>
-    </div>
+    </PageContainer>
   );
 }

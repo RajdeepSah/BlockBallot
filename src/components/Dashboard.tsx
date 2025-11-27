@@ -8,6 +8,8 @@ import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
 import { WelcomeGuide } from './WelcomeGuide';
 import { Vote, Plus, Search, LogOut, Calendar, Users, TrendingUp } from 'lucide-react';
+import { Election } from '@/types/election';
+import { LoadingSpinner } from './ui/loading-spinner';
 
 interface DashboardProps {
   onCreateElection: () => void;
@@ -18,7 +20,7 @@ interface DashboardProps {
 export function Dashboard({ onCreateElection, onViewElection, onManageElection }: DashboardProps) {
   const { user, token, logout } = useAuth();
   const [searchCode, setSearchCode] = useState('');
-  const [elections, setElections] = useState<any[]>([]);
+  const [elections, setElections] = useState<Election[]>([]);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
@@ -32,7 +34,7 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
       setLoading(true);
       const response = await api.searchElections(undefined, token!);
       setElections(response.elections || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to load elections:', err);
     } finally {
       setLoading(false);
@@ -51,18 +53,21 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
       
       if (response.elections && response.elections.length > 0) {
         const election = response.elections[0];
-        onViewElection(election.id);
+        if (election.id) {
+          onViewElection(election.id);
+        }
       } else {
         setError('Election not found');
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to search election');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to search election';
+      setError(message);
     } finally {
       setSearching(false);
     }
   };
 
-  const getElectionStatus = (election: any) => {
+  const getElectionStatus = (election: Election) => {
     const now = new Date();
     const starts = new Date(election.starts_at);
     const ends = new Date(election.ends_at);
@@ -187,7 +192,7 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
                       </div>
                       <div className="flex space-x-2">
                         <Button 
-                          onClick={() => onManageElection(election.id)}
+                          onClick={() => election.id && onManageElection(election.id)}
                           variant="outline"
                           size="sm"
                           className="flex-1"
@@ -196,7 +201,7 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
                           Manage
                         </Button>
                         <Button 
-                          onClick={() => onViewElection(election.id)}
+                          onClick={() => election.id && onViewElection(election.id)}
                           size="sm"
                           className="flex-1"
                         >
@@ -240,7 +245,7 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
                         </div>
                       </div>
                       <Button 
-                        onClick={() => onViewElection(election.id)}
+                        onClick={() => election.id && onViewElection(election.id)}
                         className="w-full"
                         size="sm"
                       >
@@ -272,9 +277,8 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
         )}
 
         {loading && (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-            <p className="mt-4 text-gray-600">Loading elections...</p>
+          <div className="py-12">
+            <LoadingSpinner message="Loading elections..." fullScreen={false} />
           </div>
         )}
       </div>

@@ -9,6 +9,10 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { ArrowLeft, Calendar, Clock, CheckCircle, AlertCircle, Vote, TrendingUp } from 'lucide-react';
+import { Election, EligibilityStatus, Position, Candidate } from '@/types/election';
+import { VoteSelections } from '@/types/api';
+import { LoadingSpinner } from './ui/loading-spinner';
+import { PageContainer } from './layouts/PageContainer';
 
 interface ElectionViewProps {
   electionId: string;
@@ -18,8 +22,8 @@ interface ElectionViewProps {
 
 export function ElectionView({ electionId, onBack, onViewResults }: ElectionViewProps) {
   const { token, user } = useAuth();
-  const [election, setElection] = useState<any>(null);
-  const [eligibility, setEligibility] = useState<any>(null);
+  const [election, setElection] = useState<Election | null>(null);
+  const [eligibility, setEligibility] = useState<EligibilityStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState(false);
   const [error, setError] = useState('');
@@ -28,7 +32,7 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
   const [requestingAccess, setRequestingAccess] = useState(false);
 
   // Vote selections
-  const [selections, setSelections] = useState<Record<string, any>>({});
+  const [selections, setSelections] = useState<VoteSelections>({});
 
   useEffect(() => {
     loadElection();
@@ -40,11 +44,11 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
       const response = await api.getElection(electionId);
       // Ensure positions and candidates have IDs
       if (response.positions && Array.isArray(response.positions)) {
-        response.positions = response.positions.map((position: any, posIndex: number) => {
+        response.positions = response.positions.map((position: Partial<Position>, posIndex: number) => {
           // Generate ID if missing
           const positionId = position.id || `pos-${posIndex}`;
           // Ensure candidates have IDs
-          const candidates = (position.candidates || []).map((candidate: any, candIndex: number) => ({
+          const candidates = (position.candidates || []).map((candidate: Partial<Candidate>, candIndex: number) => ({
             ...candidate,
             id: candidate.id || `pos-${posIndex}-cand-${candIndex}`
           }));
@@ -56,8 +60,9 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
         });
       }
       setElection(response);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load election');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load election';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -67,7 +72,7 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
     try {
       const response = await api.checkEligibility(electionId, token!);
       setEligibility(response);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to check eligibility:', err);
     }
   };
@@ -92,14 +97,16 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
       }
 
       await checkEligibility();
-    } catch (err: any) {
-      setError(err.message || 'Failed to request access');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to request access';
+      setError(message);
     } finally {
       setRequestingAccess(false);
     }
   };
 
   const handleVote = async () => {
+    if (!election) return;
     setError('');
     setVoting(true);
 
@@ -117,8 +124,9 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
       setReceipt(response.receipt);
       setSuccess('Vote cast successfully!');
       await checkEligibility();
-    } catch (err: any) {
-      setError(err.message || 'Failed to cast vote');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to cast vote';
+      setError(message);
     } finally {
       setVoting(false);
     }
@@ -129,7 +137,8 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
   };
 
   const handleMultipleChoice = (positionId: string, candidateId: string, checked: boolean) => {
-    const current = selections[positionId] || [];
+    const currentValue = selections[positionId];
+    const current = Array.isArray(currentValue) ? currentValue : [];
     if (checked) {
       setSelections({ ...selections, [positionId]: [...current, candidateId] });
     } else {
@@ -138,7 +147,8 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
   };
 
   const handleRankedChoice = (positionId: string, candidateId: string, rank: number) => {
-    const current = selections[positionId] || [];
+    const currentValue = selections[positionId];
+    const current = Array.isArray(currentValue) ? currentValue : [];
     const newRanking = [...current];
     
     // Remove if already ranked
@@ -154,14 +164,7 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-          <p className="mt-4 text-gray-600">Loading election...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading election..." />;
   }
 
   if (!election) {
@@ -191,9 +194,8 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
   const isCreator = election.creator_id === user?.id;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Button onClick={onBack} variant="ghost" className="mb-6">
+    <PageContainer maxWidth="4xl">
+      <Button onClick={onBack} variant="ghost" className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
@@ -361,7 +363,7 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
         )}
 
         {/* Ballot */}
-        {canVote && election.positions.map((position: any) => (
+        {canVote && election.positions.map((position: Position) => (
           <Card key={position.id} className="mb-6">
             <CardHeader>
               <CardTitle>{position.name}</CardTitle>
@@ -377,10 +379,10 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
             <CardContent>
               {position.ballot_type === 'single' && (
                 <RadioGroup
-                  value={selections[position.id]}
+                  value={selections[position.id] as string | undefined}
                   onValueChange={(value) => handleSingleChoice(position.id, value)}
                 >
-                  {position.candidates.map((candidate: any) => (
+                  {position.candidates.map((candidate: Candidate) => (
                     <div key={candidate.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200">
                       <RadioGroupItem value={candidate.id} id={candidate.id} className="mt-1" />
                       <Label htmlFor={candidate.id} className="flex-1 cursor-pointer">
@@ -396,11 +398,11 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
 
               {position.ballot_type === 'multiple' && (
                 <div className="space-y-3">
-                  {position.candidates.map((candidate: any) => (
+                  {position.candidates.map((candidate: Candidate) => (
                     <div key={candidate.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200">
                       <Checkbox
                         id={candidate.id}
-                        checked={(selections[position.id] || []).includes(candidate.id)}
+                        checked={((selections[position.id] as string[] | undefined) || []).includes(candidate.id)}
                         onCheckedChange={(checked) => handleMultipleChoice(position.id, candidate.id, checked as boolean)}
                         className="mt-1"
                       />
@@ -417,8 +419,8 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
 
               {position.ballot_type === 'ranked' && (
                 <div className="space-y-3">
-                  {position.candidates.map((candidate: any, index: number) => {
-                    const currentRank = (selections[position.id] || []).indexOf(candidate.id) + 1;
+                  {position.candidates.map((candidate: Candidate) => {
+                    const currentRank = ((selections[position.id] as string[] | undefined) || []).indexOf(candidate.id) + 1;
                     return (
                       <div key={candidate.id} className="flex items-start space-x-3 p-3 rounded-lg border">
                         <div className="flex flex-col space-y-1">
@@ -474,7 +476,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
             </CardContent>
           </Card>
         )}
-      </div>
-    </div>
+    </PageContainer>
   );
 }

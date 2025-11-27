@@ -6,6 +6,7 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Shield } from 'lucide-react';
 import { toast } from 'sonner';
+import { AuthLayout } from './layouts/AuthLayout';
 
 interface Verify2FAProps {
   email: string;
@@ -27,8 +28,9 @@ export function Verify2FA({ email, onSuccess, onBack }: Verify2FAProps) {
       await verify2FA(email, otp);
       toast.success('2FA verification successful!');
       onSuccess();
-    } catch (err: any) {
-      toast.error(err.message || '2FA verification failed');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '2FA verification failed';
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -40,15 +42,16 @@ export function Verify2FA({ email, onSuccess, onBack }: Verify2FAProps) {
     try {
       await resendOTP(email);
       toast.success('New code sent!');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to resend code');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to resend code';
+      toast.error(message);
     } finally {
       setResending(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <AuthLayout>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
@@ -104,6 +107,6 @@ export function Verify2FA({ email, onSuccess, onBack }: Verify2FAProps) {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </AuthLayout>
   );
 }
