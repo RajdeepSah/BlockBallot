@@ -9,14 +9,29 @@ export function WelcomeGuide() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    const hasSeenGuide = localStorage.getItem('blockballot_seen_guide');
-    if (!hasSeenGuide) {
-      setShow(true);
+    // Ensure we're in the browser
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const hasSeenGuide = localStorage.getItem('blockballot_seen_guide');
+      if (!hasSeenGuide) {
+        setShow(true);
+      }
+    } catch (error) {
+      console.error('Error checking welcome guide status:', error);
     }
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem('blockballot_seen_guide', 'true');
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('blockballot_seen_guide', 'true');
+      }
+    } catch (error) {
+      console.error('Error saving welcome guide status:', error);
+    }
     setShow(false);
   };
 
