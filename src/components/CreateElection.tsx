@@ -18,6 +18,12 @@ const generateTempId = (() => {
   return () => `temp-${Date.now()}-${counter++}`;
 })();
 
+/**
+ * Formats a date to local datetime-local input format.
+ * 
+ * @param date - The date to format
+ * @returns Formatted date string in YYYY-MM-DDTHH:mm format
+ */
 function currentLocalTime(date: Date): string {
   return `${date.toLocaleDateString('en-CA')}T${date.toTimeString().slice(0, 5)}`;
 }
@@ -27,6 +33,15 @@ interface CreateElectionProps {
   onSuccess: (electionId: string) => void;
 }
 
+/**
+ * Create election component for setting up new elections with positions and candidates.
+ * Handles form validation, sanitization, and blockchain contract deployment.
+ * 
+ * @param props - Component props
+ * @param props.onBack - Callback to navigate back
+ * @param props.onSuccess - Callback when election is successfully created
+ * @returns The create election form UI
+ */
 export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
   const { token } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -39,8 +54,6 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
   const [deployInfo, setDeployInfo] = useState<{ txHash: string; contractAddress: string } | null>(null);
   const [electionID, setElectionID] = useState('');
 
-
-  // Positions
   const [positions, setPositions] = useState<Position[]>([
     {
       id: generateTempId(),
@@ -86,12 +99,10 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
     ));
   };
 
-  // Sanitize position field on blur
   const handlePositionBlur = (id: string, field: string) => {
     setPositions(positions.map(p => {
       if (p.id !== id) return p;
       
-      // Sanitize string fields on blur
       if (field === 'name' && typeof p[field as keyof Position] === 'string') {
         return { ...p, [field]: sanitizeString(p[field as keyof Position] as string) };
       }
@@ -139,7 +150,6 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
     ));
   };
 
-  // Sanitize candidate field on blur
   const handleCandidateBlur = (positionId: string, candidateId: string, field: string) => {
     setPositions(positions.map(p => {
       if (p.id !== positionId) return p;
@@ -149,7 +159,6 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
         candidates: p.candidates.map(c => {
           if (c.id !== candidateId) return c;
           
-          // Sanitize string fields on blur
           if (field === 'name' && typeof c.name === 'string') {
             return { ...c, name: sanitizeString(c.name) };
           }
@@ -163,7 +172,6 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
     }));
   };
 
-  // Helper function to check for duplicate candidates in a position
   const getDuplicateCandidates = (position: Position): string[] => {
     const candidateNames = position.candidates
       .map(c => sanitizeString(c.name).toLowerCase())
@@ -182,7 +190,6 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
     return duplicates;
   };
 
-  // Check if a specific candidate name is a duplicate
   const isCandidateDuplicate = (position: Position, candidateId: string): boolean => {
     const candidate = position.candidates.find(c => c.id === candidateId);
     if (!candidate) return false;
@@ -194,7 +201,6 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
     return duplicates.includes(candidateName);
   };
 
-  // Helper function to check for duplicate position names
   const getDuplicatePositions = (): string[] => {
     const positionNames = positions
       .map(p => sanitizeString(p.name).toLowerCase())
@@ -213,7 +219,6 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
     return duplicates;
   };
 
-  // Check if a specific position name is a duplicate
   const isPositionDuplicate = (positionId: string): boolean => {
     const position = positions.find(p => p.id === positionId);
     if (!position) return false;
@@ -227,11 +232,9 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Clear any previous state
     setError('');
     setDeployInfo(null); 
 
-    // Validate required form info
     if (!title || !startsAt || !endsAt) {
       setError('Please fill in all required fields');
       return;
@@ -265,7 +268,6 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
       }
     }
 
-    // Validate no duplicate position names
     try {
       const positionsForValidation = positions.map(p => ({
         name: sanitizeString(p.name),
@@ -283,7 +285,6 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
       return;
     }
 
-    // Validate no duplicate candidates within any position
     try {
       const positionsForValidation = positions.map(p => ({
         name: sanitizeString(p.name),
@@ -301,7 +302,6 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
       return;
     }
     
-    // Ensure user is authenticated before deployment
     if (!token) {
       setError('You must be signed in to deploy an election');
       return;
@@ -310,26 +310,22 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
     setLoading(true);
 
     try {
-      // Prepare the full payload for the API Route
-      // This payload contains all the data needed for BOTH contract deployment
-      // AND eventually saving to the Supabase database.
-      // Sanitize all inputs before sending to backend
       const electionPayload = {
          title: sanitizeString(title),
          description: sanitizeText(description),
          starts_at: new Date(startsAt).toISOString(),
          ends_at: new Date(endsAt).toISOString(),
          time_zone: timeZone,
-         positions: positions.map(p => ({ // creates an array of Positions containing the list of candidate for that position
+         positions: positions.map(p => ({
             name: sanitizeString(p.name),
             description: sanitizeText(p.description || ''),
             ballot_type: p.ballot_type,
             candidates: p.candidates.map(c => ({
               name: sanitizeString(c.name),
-              description: sanitizeText(c.description || '')
+               description: sanitizeText(c.description || '')
             }))
          })),
-         contractAddress: undefined // If deployed successfully, this will be replaced with the actual address  
+         contractAddress: undefined
       };
 
       const deployResponse = await authenticatedFetch('/api/deploy', {
@@ -342,20 +338,17 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
       
       const data = await deployResponse.json();
 
-      if (deployResponse.ok) { // YAY
+      if (deployResponse.ok) {
          const { txHash, contractAddress, electionId } = data;
 
-         // Set the election ID so we can navigate to it
          setElectionID(electionId);
 
-         // Set the information for the success message display
          setDeployInfo({
             txHash: txHash,
             contractAddress: contractAddress
          });
 
       } else {
-         // If the server returns an error (e.g., failed deployment, missing key)
          throw new Error(data.message || `Deployment request failed: ${data.message}`);
       }
     } catch (err) {
@@ -376,7 +369,6 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Success Modal */}
       <Dialog open={deployInfo !== null && electionID !== ''} onOpenChange={() => {}}>
         <DialogContent>
           <DialogHeader>
@@ -430,7 +422,6 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                 </Alert>
               )}
 
-              {/* Election Details */}
               <div className="space-y-4">
                 <h3 className="text-lg">Election Details</h3>
                 
@@ -483,7 +474,6 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                 </div>
               </div>
 
-              {/* Positions & Candidates */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg">Positions & Candidates</h3>
@@ -560,7 +550,6 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                         />
                       </div>
 
-                      {/* Candidates */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <Label>Candidates</Label>

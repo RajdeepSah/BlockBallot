@@ -3,10 +3,9 @@
  * Types for data stored in the Supabase KV store
  */
 
-// ============================================
-// User Records
-// ============================================
-
+/**
+ * User record stored in KV store.
+ */
 export interface UserRecord {
   id?: string;
   email: string;
@@ -14,19 +13,17 @@ export interface UserRecord {
   phone?: string;
 }
 
-// ============================================
-// OTP Records
-// ============================================
-
+/**
+ * OTP record stored in KV store (legacy format).
+ */
 export interface OtpRecord {
   otp: string;
   expires_at: number;
 }
 
-// ============================================
-// Eligibility Records
-// ============================================
-
+/**
+ * Eligibility record for a voter in an election.
+ */
 export interface EligibilityRecord {
   id?: string;
   election_id: string;
@@ -36,10 +33,9 @@ export interface EligibilityRecord {
   created_at: string;
 }
 
-// ============================================
-// Access Request Records
-// ============================================
-
+/**
+ * Access request record for voters requesting eligibility.
+ */
 export interface AccessRequestRecord {
   id: string;
   election_id: string;
@@ -51,10 +47,9 @@ export interface AccessRequestRecord {
   decided_at?: string;
 }
 
-// ============================================
-// Ballot / Vote Records
-// ============================================
-
+/**
+ * Ballot link record connecting a user to their vote without exposing vote content.
+ */
 export interface BallotLinkRecord {
   ballot_id?: string;
   status: 'pending' | 'completed';

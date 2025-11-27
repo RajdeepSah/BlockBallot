@@ -18,6 +18,10 @@ for (const [key, value] of Object.entries(requiredEnvVars)) {
   }
 }
 
+/**
+ * Blockchain configuration object containing RPC URL, private key, and network details.
+ * Validates required environment variables on module load.
+ */
 export const blockchainConfig = {
   rpcUrl: requiredEnvVars.SEPOLIA_RPC_URL!,
   privateKey: requiredEnvVars.ORGANIZER_PRIVATE_KEY!,

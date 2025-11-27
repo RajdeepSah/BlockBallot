@@ -17,6 +17,15 @@ interface DashboardProps {
   onManageElection: (electionId: string) => void;
 }
 
+/**
+ * Dashboard component displaying user's elections and election search functionality.
+ * 
+ * @param props - Component props
+ * @param props.onCreateElection - Callback to navigate to election creation
+ * @param props.onViewElection - Callback to view an election by ID
+ * @param props.onManageElection - Callback to manage an election by ID
+ * @returns The dashboard UI with election listings and search
+ */
 export function Dashboard({ onCreateElection, onViewElection, onManageElection }: DashboardProps) {
   const { user, token, logout } = useAuth();
   const [searchCode, setSearchCode] = useState('');
@@ -67,6 +76,12 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
     }
   };
 
+  /**
+   * Determines the status badge for an election based on current time.
+   * 
+   * @param election - The election to check status for
+   * @returns Object with label and variant for the status badge
+   */
   const getElectionStatus = (election: Election) => {
     const now = new Date();
     const starts = new Date(election.starts_at);
@@ -83,7 +98,6 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
   return (
     <div className="min-h-screen bg-gray-50">
       <WelcomeGuide />
-      {/* Header */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -105,7 +119,6 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search & Create Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card>
             <CardHeader>
@@ -157,7 +170,6 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
           </Card>
         </div>
 
-        {/* My Elections */}
         {myElections.length > 0 && (
           <div className="mb-8">
             <h2 className="text-xl mb-4 flex items-center">
@@ -216,7 +228,6 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
           </div>
         )}
 
-        {/* Participating Elections */}
         {participatingElections.length > 0 && (
           <div>
             <h2 className="text-xl mb-4 flex items-center">
@@ -259,7 +270,6 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
           </div>
         )}
 
-        {/* Empty State */}
         {!loading && elections.length === 0 && (
           <Card className="text-center py-12">
             <CardContent>

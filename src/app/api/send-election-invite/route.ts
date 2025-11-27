@@ -24,6 +24,12 @@ const supabaseServerClient = serviceRoleKey
   ? createClient(supabaseUrl, serviceRoleKey)
   : null;
 
+/**
+ * Ensures Supabase service role client is available.
+ * 
+ * @returns Supabase client with service role
+ * @throws HttpError if service role credentials are missing
+ */
 function requireSupabase() {
   if (!supabaseServerClient) {
     throw httpError(
@@ -71,6 +77,13 @@ function httpError(status: number, message: string): HttpError {
   return error;
 }
 
+/**
+ * Retrieves a value from the KV store by key.
+ * 
+ * @param key - The key to look up
+ * @returns The value if found, null otherwise
+ * @throws HttpError if KV read fails
+ */
 async function getKvValue<T>(key: string): Promise<T | null> {
   const client = requireSupabase();
   const { data, error } = await client
@@ -86,6 +99,13 @@ async function getKvValue<T>(key: string): Promise<T | null> {
   return (data?.value as T) ?? null;
 }
 
+/**
+ * Sets a value in the KV store.
+ * 
+ * @param key - The key to store the value under
+ * @param value - The value to store
+ * @throws HttpError if KV write fails
+ */
 async function setKvValue<T>(key: string, value: T): Promise<void> {
   const client = requireSupabase();
   const { error } = await client.from(KV_TABLE).upsert({ key, value });
@@ -94,6 +114,13 @@ async function setKvValue<T>(key: string, value: T): Promise<void> {
   }
 }
 
+/**
+ * Extracts and validates the authenticated user ID from the request.
+ * 
+ * @param request - The incoming request object
+ * @returns The authenticated user ID
+ * @throws HttpError if authorization header is missing or invalid
+ */
 async function getAuthedUserId(request: Request): Promise<string> {
   const authorization =
     request.headers.get('authorization') ?? request.headers.get('Authorization');
@@ -118,6 +145,13 @@ async function getAuthedUserId(request: Request): Promise<string> {
   return data.user.id;
 }
 
+/**
+ * Enforces rate limiting for invitation sending.
+ * Prevents sending invitations more than once per rate limit window.
+ * 
+ * @param electionId - The election ID to check rate limit for
+ * @throws HttpError with 429 status if rate limit is exceeded
+ */
 async function enforceRateLimit(electionId: string) {
   const key = `${RATE_LIMIT_KEY_PREFIX}${electionId}`;
   const record = await getKvValue<RateLimitRecord>(key);
@@ -134,15 +168,24 @@ async function enforceRateLimit(electionId: string) {
   }
 }
 
+/**
+ * Updates the rate limit timestamp for an election.
+ * 
+ * @param electionId - The election ID to update rate limit for
+ */
 async function updateRateLimit(electionId: string) {
   const key = `${RATE_LIMIT_KEY_PREFIX}${electionId}`;
   await setKvValue<RateLimitRecord>(key, { lastSentAt: Date.now() });
 }
 
+/**
+ * Retrieves all pre-approved voters for an election from the KV store.
+ * 
+ * @param electionId - The election ID to get voters for
+ * @returns Array of verified voters
+ * @throws HttpError if voter loading fails
+ */
 async function getPreapprovedVoters(electionId: string): Promise<VerifiedVoter[]> {
-  // The previous implementation queried a non-existent `election_voters` table, which
-  // triggered "table ... not found" errors. Pre-approved voters are actually stored
-  // inside the KV table under `eligibility:${electionId}:*`, so we load them directly.
   const client = requireSupabase();
   const { data, error } = await client
     .from(KV_TABLE)
@@ -169,6 +212,12 @@ async function getPreapprovedVoters(electionId: string): Promise<VerifiedVoter[]
     }));
 }
 
+/**
+ * Retrieves the invitation history for an election, pruning expired entries.
+ * 
+ * @param electionId - The election ID to get history for
+ * @returns Invitation history record with pruned entries
+ */
 async function getInviteHistory(electionId: string): Promise<InviteHistoryRecord> {
   const key = `${HISTORY_KEY_PREFIX}${electionId}`;
   const history = (await getKvValue<InviteHistoryRecord>(key)) ?? { emails: {} };
@@ -184,6 +233,14 @@ async function getInviteHistory(electionId: string): Promise<InviteHistoryRecord
   return { emails: prunedEntries };
 }
 
+/**
+ * Filters voters to determine which should receive invitations.
+ * Removes duplicates and voters who have already received invitations.
+ * 
+ * @param voters - Array of verified voters
+ * @param history - Invitation history record
+ * @returns Object with voters to send and count of skipped voters
+ */
 function filterVoters(
   voters: VerifiedVoter[],
   history: InviteHistoryRecord
@@ -212,6 +269,13 @@ function filterVoters(
   return { toSend: normalized, skipped };
 }
 
+/**
+ * Saves invitation history for voters who received invitations.
+ * 
+ * @param electionId - The election ID
+ * @param history - Current invitation history
+ * @param sentVoters - Voters who received invitations
+ */
 async function saveInviteHistory(
   electionId: string,
   history: InviteHistoryRecord,
@@ -226,6 +290,15 @@ async function saveInviteHistory(
   await setKvValue(key, history);
 }
 
+/**
+ * Resolves the direct link URL for an election.
+ * Tries multiple sources: provided link, environment variables, request headers, or defaults.
+ * 
+ * @param request - The incoming request object
+ * @param electionId - The election ID
+ * @param provided - Optional provided direct link
+ * @returns Resolved direct link URL
+ */
 function resolveDirectLink(request: Request, electionId: string, provided?: string) {
   const sanitized = typeof provided === 'string' && provided.trim() ? provided.trim() : null;
   const vercelBase = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null;
@@ -256,6 +329,13 @@ function resolveDirectLink(request: Request, electionId: string, provided?: stri
   return `${process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://blockballot.vercel.app'}/vote/${electionId}`;
 }
 
+/**
+ * Sends an election invitation email via Resend API.
+ * 
+ * @param to - Recipient email address
+ * @param payload - Election invite email options
+ * @throws HttpError if email sending fails or API key is missing
+ */
 async function sendInvitationEmail(
   to: string,
   payload: ElectionInviteEmailOptions
@@ -295,6 +375,23 @@ async function sendInvitationEmail(
   }
 }
 
+/**
+ * POST /api/send-election-invite
+ * 
+ * Sends election invitation emails to all pre-approved voters for an election.
+ * Implements rate limiting and tracks invitation history to prevent duplicate sends.
+ * 
+ * Request body:
+ * - electionId: The election ID (required)
+ * - directLink: Optional direct link to override default resolution
+ * 
+ * Headers:
+ * - Authorization: Bearer token (required)
+ * 
+ * @param request - The incoming request object
+ * @returns JSON response with success status and sent count
+ * @throws Returns error response if sending fails or validation fails
+ */
 export async function POST(request: Request) {
   try {
     const userId = await getAuthedUserId(request);

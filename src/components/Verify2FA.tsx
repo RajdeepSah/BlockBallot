@@ -14,6 +14,16 @@ interface Verify2FAProps {
   onBack: () => void;
 }
 
+/**
+ * Verify2FA component for entering and verifying OTP codes.
+ * Handles 2FA verification flow after initial login.
+ * 
+ * @param props - Component props
+ * @param props.email - Email address receiving the OTP
+ * @param props.onSuccess - Callback when verification succeeds
+ * @param props.onBack - Callback to return to login
+ * @returns 2FA verification form UI
+ */
 export function Verify2FA({ email, onSuccess, onBack }: Verify2FAProps) {
   const { verify2FA, resendOTP } = useAuth();
   const [otp, setOtp] = useState('');

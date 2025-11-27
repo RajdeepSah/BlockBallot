@@ -6,7 +6,10 @@ import { isAddress } from 'ethers';
 import type { VoteInput, PositionInput } from '@/types/blockchain';
 
 /**
- * Validate Ethereum address format
+ * Validates that a string is a valid Ethereum address format.
+ * 
+ * @param address - The address string to validate
+ * @throws Error if address is missing, not a string, or invalid format
  */
 export function validateContractAddress(address: string): void {
   if (!address || typeof address !== 'string') {
@@ -19,7 +22,10 @@ export function validateContractAddress(address: string): void {
 }
 
 /**
- * Validate vote input structure
+ * Validates that a vote input has the required position and candidate fields.
+ * 
+ * @param vote - The vote input to validate
+ * @throws Error if vote is missing position or candidate
  */
 export function validateVoteInput(vote: VoteInput): void {
   if (!vote.position || typeof vote.position !== 'string') {
@@ -32,7 +38,10 @@ export function validateVoteInput(vote: VoteInput): void {
 }
 
 /**
- * Validate array of vote inputs
+ * Validates an array of vote inputs, ensuring all votes are valid.
+ * 
+ * @param votes - Array of vote inputs to validate
+ * @throws Error if array is empty or any vote is invalid
  */
 export function validateVotesArray(votes: VoteInput[]): void {
   if (!Array.isArray(votes) || votes.length === 0) {
@@ -50,7 +59,10 @@ export function validateVotesArray(votes: VoteInput[]): void {
 }
 
 /**
- * Validate position input structure
+ * Validates that a position input has required name and candidates.
+ * 
+ * @param position - The position input to validate
+ * @throws Error if position is missing name or has no candidates
  */
 export function validatePositionInput(position: PositionInput): void {
   if (!position.name || typeof position.name !== 'string') {
@@ -76,7 +88,10 @@ export function validatePositionInput(position: PositionInput): void {
 }
 
 /**
- * Validate array of position inputs
+ * Validates an array of position inputs, ensuring all positions are valid.
+ * 
+ * @param positions - Array of position inputs to validate
+ * @throws Error if array is empty or any position is invalid
  */
 export function validatePositionsArray(positions: PositionInput[]): void {
   if (!Array.isArray(positions) || positions.length === 0) {
@@ -94,7 +109,11 @@ export function validatePositionsArray(positions: PositionInput[]): void {
 }
 
 /**
- * Sanitize string input by trimming whitespace and removing control characters
+ * Sanitizes a string by trimming whitespace and removing control characters.
+ * Preserves newlines and tabs for use in descriptions.
+ * 
+ * @param input - The string to sanitize
+ * @returns Sanitized string, or empty string if input is not a string
  */
 export function sanitizeString(input: string): string {
   if (typeof input !== 'string') {
@@ -105,7 +124,11 @@ export function sanitizeString(input: string): string {
 }
 
 /**
- * Sanitize text input (for descriptions) - allows newlines and tabs
+ * Sanitizes text input for descriptions, preserving newlines and tabs.
+ * Removes control characters but keeps formatting characters.
+ * 
+ * @param input - The text to sanitize
+ * @returns Sanitized text, or empty string if input is not a string
  */
 export function sanitizeText(input: string): string {
   if (typeof input !== 'string') {
@@ -116,7 +139,11 @@ export function sanitizeText(input: string): string {
 }
 
 /**
- * Validate that there are no duplicate candidate names within a position
+ * Validates that a position has no duplicate candidate names.
+ * Comparison is case-insensitive and uses sanitized names.
+ * 
+ * @param position - The position to validate
+ * @throws Error if duplicate candidate names are found
  */
 export function validateNoDuplicateCandidates(position: PositionInput): void {
   if (!position.candidates || !Array.isArray(position.candidates)) {
@@ -140,7 +167,10 @@ export function validateNoDuplicateCandidates(position: PositionInput): void {
 }
 
 /**
- * Validate all positions for duplicate candidates
+ * Validates that all positions have no duplicate candidate names.
+ * 
+ * @param positions - Array of positions to validate
+ * @throws Error if any position has duplicate candidates
  */
 export function validateNoDuplicateCandidatesInPositions(positions: PositionInput[]): void {
   if (!Array.isArray(positions)) {
@@ -158,7 +188,11 @@ export function validateNoDuplicateCandidatesInPositions(positions: PositionInpu
 }
 
 /**
- * Validate that there are no duplicate position names
+ * Validates that there are no duplicate position names across all positions.
+ * Comparison is case-insensitive and uses sanitized names.
+ * 
+ * @param positions - Array of positions to validate
+ * @throws Error if duplicate position names are found
  */
 export function validateNoDuplicatePositions(positions: PositionInput[]): void {
   if (!Array.isArray(positions)) {

@@ -31,8 +31,12 @@ export function createErrorResponse(
 }
 
 /**
- * Handle errors and return standardized response
- * Extracts meaningful error messages from various error types
+ * Handles errors and returns a standardized error response.
+ * Extracts meaningful error messages from various error types including ethers.js errors.
+ * 
+ * @param error - The error to handle (can be Error, string, or object)
+ * @param context - Optional context string for logging (e.g., endpoint name)
+ * @returns NextResponse with standardized error JSON
  */
 export function handleApiError(error: unknown, context?: string): NextResponse<ApiErrorResponse> {
   console.error(`API Error${context ? ` in ${context}` : ''}:`, error);
@@ -65,35 +69,49 @@ export function handleApiError(error: unknown, context?: string): NextResponse<A
 }
 
 /**
- * Create validation error response
+ * Creates a validation error response (400 status).
+ * 
+ * @param message - Validation error message
+ * @returns NextResponse with 400 status and error message
  */
 export function createValidationError(message: string): NextResponse<ApiErrorResponse> {
   return createErrorResponse(message, 400);
 }
 
 /**
- * Create not found error response
+ * Creates a not found error response (404 status).
+ * 
+ * @param resource - Name of the resource that was not found
+ * @returns NextResponse with 404 status and error message
  */
 export function createNotFoundError(resource: string): NextResponse<ApiErrorResponse> {
   return createErrorResponse(`${resource} not found`, 404);
 }
 
 /**
- * Create unauthorized error response
+ * Creates an unauthorized error response (401 status).
+ * 
+ * @returns NextResponse with 401 status and "Unauthorized" message
  */
 export function createUnauthorizedError(): NextResponse<ApiErrorResponse> {
   return createErrorResponse('Unauthorized', 401);
 }
 
 /**
- * Create forbidden error response (403)
+ * Creates a forbidden error response (403 status).
+ * 
+ * @param message - Forbidden error message (default: "Forbidden")
+ * @returns NextResponse with 403 status and error message
  */
 export function createForbiddenError(message: string = 'Forbidden'): NextResponse<ApiErrorResponse> {
   return createErrorResponse(message, 403);
 }
 
 /**
- * Create bad request error response (400)
+ * Creates a bad request error response (400 status).
+ * 
+ * @param message - Bad request error message
+ * @returns NextResponse with 400 status and error message
  */
 export function createBadRequestError(message: string): NextResponse<ApiErrorResponse> {
   return createErrorResponse(message, 400);

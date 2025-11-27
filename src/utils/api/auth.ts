@@ -3,7 +3,12 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { projectId, publicAnonKey } from '@/utils/supabase/info';
 
 /**
- * Authenticates a Supabase JWT from the Authorization header.
+ * Authenticates a user from the Authorization header.
+ * Validates the JWT token and returns user information.
+ * 
+ * @param authHeader - Authorization header value (e.g., "Bearer <token>")
+ * @returns Promise resolving to user object with id and optional email
+ * @throws Error if authorization header is missing or token is invalid
  */
 export async function authenticateUser(authHeader: string | null): Promise<{ id: string; email?: string }> {
   if (!authHeader) {

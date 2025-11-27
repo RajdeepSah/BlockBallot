@@ -7,8 +7,12 @@ import { UserRecord, AccessRequestRecord } from "@/types/kv-records";
 
 /**
  * POST /api/elections/[id]/access-request
- * Submit an access request to vote in an election
- * Ported from Supabase Edge Function
+ * Submits an access request to vote in an election.
+ * Creates a pending access request that can be approved/denied by the election creator.
+ * 
+ * @param request - Next.js request object with Authorization header
+ * @param params - Route parameters containing election id
+ * @returns JSON response with success status and requestId, or error response
  */
 export async function POST(
   request: NextRequest,
@@ -18,10 +22,8 @@ export async function POST(
     const { id: electionId } = await params;
     const authHeader = request.headers.get('Authorization');
     
-    // Authenticate user
     const user = await authenticateUser(authHeader);
     
-    // Get election from Supabase database
     const supabase = await createClient();
     const { data: election, error: electionError } = await supabase
       .from('elections')
@@ -33,13 +35,11 @@ export async function POST(
       return createNotFoundError('Election');
     }
 
-    // Get user data
     const userData = await kv.get<UserRecord>(`user:${user.id}`);
     if (!userData) {
       return createNotFoundError('User data');
     }
     
-    // Check for existing request
     const existingRequest = await kv.get<AccessRequestRecord>(`access_request:${electionId}:${user.id}`);
     if (existingRequest) {
       return createBadRequestError('Access request already exists');

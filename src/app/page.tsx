@@ -8,6 +8,11 @@ import { SignUp } from '@/components/SignUp';
 import { Verify2FA } from '@/components/Verify2FA';
 import { Dashboard } from '@/components/Dashboard';
 
+/**
+ * Loading spinner component displayed while authentication state is being determined.
+ * 
+ * @returns Loading spinner UI
+ */
 function LoadingSpinner() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -19,6 +24,12 @@ function LoadingSpinner() {
   );
 }
 
+/**
+ * Main content component for the home page.
+ * Handles routing between sign in, sign up, 2FA, and dashboard screens.
+ * 
+ * @returns Appropriate screen component based on authentication state
+ */
 function HomePageContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -88,6 +99,12 @@ function HomePageContent() {
   return null;
 }
 
+/**
+ * Home page component wrapped in Suspense for Next.js navigation.
+ * Entry point for the application, handles authentication flow.
+ * 
+ * @returns Suspense-wrapped home page content
+ */
 export default function HomePage() {
   return (
     <Suspense fallback={<LoadingSpinner />}>

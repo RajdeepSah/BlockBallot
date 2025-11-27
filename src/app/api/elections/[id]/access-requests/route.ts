@@ -7,8 +7,12 @@ import { UserRecord, AccessRequestRecord } from "@/types/kv-records";
 
 /**
  * GET /api/elections/[id]/access-requests
- * Get all access requests for an election (admin only)
- * Ported from Supabase Edge Function
+ * Retrieves all access requests for an election (admin only).
+ * Only the election creator can view access requests.
+ * 
+ * @param request - Next.js request object with Authorization header
+ * @param params - Route parameters containing election id
+ * @returns JSON response with array of access requests enriched with user data, or error response
  */
 export async function GET(
   request: NextRequest,
@@ -33,16 +37,13 @@ export async function GET(
       return createNotFoundError('Election');
     }
 
-    // Verify user is the election creator
     if (election.creator_id !== user.id) {
       return createForbiddenError('Only election creator can view access requests');
     }
 
-    // Get all access requests for this election
     const allRequests = await kv.getByPrefix<AccessRequestRecord>(`access_request:${electionId}:`);
     const requests = allRequests.filter(req => req.election_id === electionId);
 
-    // Enrich with user data
     const enrichedRequests = [];
     for (const req of requests) {
       const userData = await kv.get<UserRecord>(`user:${req.user_id}`);

@@ -9,7 +9,11 @@ import { getContractABI } from './contractLoader';
 import type { ContractAddress } from '@/types/blockchain';
 
 /**
- * Create a read-only contract instance
+ * Creates a read-only contract instance for querying blockchain state.
+ * Cannot be used to send transactions.
+ * 
+ * @param address - The contract address
+ * @returns Contract instance for read-only operations
  */
 export function createReadOnlyContract(address: ContractAddress): Contract {
   const provider = createProvider();
@@ -17,7 +21,11 @@ export function createReadOnlyContract(address: ContractAddress): Contract {
 }
 
 /**
- * Create a writable contract instance (signed with wallet)
+ * Creates a writable contract instance that can send transactions.
+ * Contract is connected to a wallet for signing transactions.
+ * 
+ * @param address - The contract address
+ * @returns Contract instance for write operations (voting, etc.)
  */
 export function createWritableContract(address: ContractAddress): Contract {
   const wallet = createWallet();

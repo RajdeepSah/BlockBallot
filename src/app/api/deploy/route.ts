@@ -8,11 +8,37 @@ import type { PositionInput, DeploymentResponse } from '@/types/blockchain';
 import { createClient } from '@/utils/supabase/server';
 import { authenticateUser } from '@/utils/api/auth';
 import { Election } from '@/types/election';
-// Generate random election code
+
+/**
+ * Generates a random alphanumeric election code.
+ * 
+ * @param length - Length of the code to generate (default: 7)
+ * @returns Uppercase alphanumeric code
+ */
 function generateCode(length = 7): string {
   return Math.random().toString(36).substring(2, 2 + length).toUpperCase();
 }
 
+/**
+ * POST /api/deploy
+ * 
+ * Deploys a new election contract to the blockchain and creates the election record.
+ * 
+ * Request body:
+ * - title: Election title
+ * - description: Election description
+ * - starts_at: ISO date string for election start
+ * - ends_at: ISO date string for election end
+ * - time_zone: Timezone string (default: UTC)
+ * - positions: Array of position objects with candidates
+ * 
+ * Headers:
+ * - Authorization: Bearer token (required)
+ * 
+ * @param request - Next.js request object containing election payload
+ * @returns JSON response with deployment details (txHash, contractAddress, electionId)
+ * @throws Returns error response if deployment fails or validation fails
+ */
 export async function POST(request: NextRequest) {
   try {
     const electionPayload = await request.json();
@@ -26,14 +52,12 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     try {
-      // Validate input 
       validatePositionsArray(electionPayload.positions);
     } catch (validationError) {
       const message = validationError instanceof Error ? validationError.message : String(validationError);
       return createValidationError(message);
     }
 
-    // prepare data for contract contstructor
     const positionNames: string[] = [];
     const candidatesForPosition: string[][] = [];
     for (const position of electionPayload.positions as PositionInput[]) {
@@ -43,11 +67,9 @@ export async function POST(request: NextRequest) {
     }
 
     const wallet = createWallet();  
-    // Get the ABI and Bytecode (Contract's code and manual)
     const abi = getContractABI();
     const bytecode = getContractBytecode();
 
-    // Create contract factory (The tool that knows how to build the contract)
     const contractFactory = new ContractFactory(
       abi, 
       bytecode, 
@@ -62,12 +84,10 @@ export async function POST(request: NextRequest) {
     }
     const txHash = deployTx.hash; 
 
-    // deploy the contract on the blockchain
     await contract.waitForDeployment();
     
     const contractAddress = await contract.getAddress();
 
-    // Generate unique election code
     let code = generateCode();
     let codeExists = true;
     while (codeExists) {
@@ -76,7 +96,6 @@ export async function POST(request: NextRequest) {
         .select('code')
         .eq('code', code)
         .maybeSingle();
-      // If error or data exists, code is taken; otherwise it's available
       codeExists = !error && !!data;
       if (codeExists) {
         code = generateCode();
@@ -95,7 +114,6 @@ export async function POST(request: NextRequest) {
       status = 'ended';
     }
 
-    // Build complete election object
     const election: Election = {
       code,
       title: electionPayload.title,
@@ -109,7 +127,6 @@ export async function POST(request: NextRequest) {
       contract_address: contractAddress,
     };
 
-    // Insert election into database
     const { data: insertedElection, error: insertError } = await supabase
       .from('elections')
       .insert(election)
@@ -134,7 +151,6 @@ export async function POST(request: NextRequest) {
     return Response.json(response, { status: 200 });
 
   } catch (error) {
-    // Return a 500 status code for server/deployment errors
     return handleApiError(error, 'deploy');
   }
 }

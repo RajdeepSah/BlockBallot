@@ -13,6 +13,15 @@ interface SignUpProps {
   onSuccess: () => void;
 }
 
+/**
+ * SignUp component for new user registration.
+ * Handles account creation and redirects to sign in on success.
+ * 
+ * @param props - Component props
+ * @param props.onToggleMode - Callback to switch to sign in
+ * @param props.onSuccess - Callback when registration succeeds (currently unused)
+ * @returns Sign up form UI
+ */
 export function SignUp({ onToggleMode, onSuccess: _onSuccess }: SignUpProps) {
   const { register } = useAuth();
   const [name, setName] = useState('');

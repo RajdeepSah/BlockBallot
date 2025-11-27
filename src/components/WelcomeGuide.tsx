@@ -5,11 +5,16 @@ import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
 import { Vote, UserPlus, Search, TrendingUp, CheckCircle, X } from 'lucide-react';
 
+/**
+ * Welcome guide component displayed on first visit to the dashboard.
+ * Shows users how to use the platform and can be dismissed.
+ * 
+ * @returns Welcome guide modal or null if already seen
+ */
 export function WelcomeGuide() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    // Ensure we're in the browser
     if (typeof window === 'undefined') {
       return;
     }

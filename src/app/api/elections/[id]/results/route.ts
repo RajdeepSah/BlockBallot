@@ -7,7 +7,13 @@ import * as kv from '@/utils/supabase/kvStore';
 import { getServiceRoleClient } from '@/utils/supabase/clients';
 
 /**
- * Retry a function with exponential backoff
+ * Retries a function with exponential backoff to handle rate limiting.
+ * 
+ * @param fn - The function to retry
+ * @param maxRetries - Maximum number of retry attempts (default: 3)
+ * @param baseDelay - Base delay in milliseconds (default: 1000)
+ * @returns The result of the function
+ * @throws The last error if all retries fail
  */
 async function retryWithBackoff<T>(
   fn: () => Promise<T>,
@@ -43,7 +49,10 @@ async function retryWithBackoff<T>(
 }
 
 /**
- * Add a small delay to avoid rate limiting
+ * Adds a delay to avoid rate limiting.
+ * 
+ * @param ms - Delay duration in milliseconds
+ * @returns Promise that resolves after the delay
  */
 function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -59,6 +68,21 @@ interface PositionRecord {
   candidates?: Array<{ id?: string; name: string; description?: string; photo_url?: string | null }>;
 }
 
+/**
+ * GET /api/elections/[id]/results
+ * 
+ * Retrieves election results from the blockchain contract.
+ * Results are only available to the election creator before the election ends,
+ * and publicly available after the election ends.
+ * 
+ * Headers:
+ * - Authorization: Bearer token (optional, required for creator access before end)
+ * 
+ * @param request - Next.js request object
+ * @param params - Route parameters containing election ID
+ * @returns JSON response with election results including vote counts and percentages
+ * @throws Returns error response if election not found, contract missing, or access denied
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -101,7 +125,6 @@ export async function GET(
 
     const contract = createReadOnlyContract(election.contract_address);
     
-    // Retry position list call with backoff
     const positionNames: string[] = await retryWithBackoff(
       () => contract.getPositionList() as Promise<string[]>
     );
@@ -110,9 +133,6 @@ export async function GET(
       ? election.positions
       : [];
 
-    // Query ballot links directly to get keys and filter out temporary lock keys
-    // Final vote keys: ballot:link:${electionId}:${user.id}
-    // Lock keys: ballot:link:${electionId}:${user.id}:${timestamp}-${uniqueSuffix}
     const { data: voteKeys, error: voteKeysError } = await supabase
       .from('kv_store_b7b6fbd4')
       .select('key')
@@ -122,16 +142,12 @@ export async function GET(
       throw new Error(`Failed to query vote keys: ${voteKeysError.message}`);
     }
     
-    // Filter out lock keys (which have additional colons after the user ID)
-    // Count only final vote keys that match pattern: ballot:link:${electionId}:${user.id}
     const totalVotes = voteKeys?.filter((entry) => {
       if (!entry?.key) return false;
       const key = entry.key;
       const prefix = `ballot:link:${electionId}:`;
       if (!key.startsWith(prefix)) return false;
-      // Remove prefix to get the suffix (should be just user.id for final votes)
       const suffix = key.substring(prefix.length);
-      // Final votes have no additional colons, locks have colons followed by timestamp
       return !suffix.includes(':');
     }).length || 0;
 
@@ -167,14 +183,12 @@ export async function GET(
         null;
       const positionId = positionMeta?.id || `position-${positionIndex}`;
       
-      // Retry candidate list call with backoff
       const candidatesFromContract: string[] = await retryWithBackoff(
         () => contract.getCandidateList(positionName) as Promise<string[]>
       );
       
-      // Add delay between positions to avoid rate limiting
       if (positionIndex > 0) {
-        await delay(200); // 200ms delay between positions
+        await delay(200);
       }
 
       const candidatesPayload = [];
@@ -184,15 +198,13 @@ export async function GET(
           positionMeta?.candidates?.find((c) => c.name === candidateName) || null;
         const candidateId = candidateMeta?.id || `${positionId}-candidate-${candidateIndex}`;
         
-        // Retry vote count call with backoff
         const voteCount = await retryWithBackoff(
           () => contract.getVoteCount(positionName, candidateName)
         );
         const voteNumber = Number(voteCount.toString());
         
-        // Add small delay between candidates to avoid rate limiting
         if (candidateIndex > 0) {
-          await delay(100); // 100ms delay between candidates
+          await delay(100);
         }
 
         candidatesPayload.push({

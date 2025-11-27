@@ -6,10 +6,22 @@ import { UserRecord } from '@/types/kv-records';
 
 const OTP_EXPIRY_MS = 5 * 60 * 1000;
 
+/**
+ * Generates a random 6-digit OTP code.
+ * 
+ * @returns 6-digit OTP string
+ */
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+/**
+ * POST /api/auth/resend-otp
+ * Resends an OTP code to a user for 2FA verification.
+ * 
+ * @param request - Next.js request object containing userId in body
+ * @returns JSON response with success status and dev OTP (for development)
+ */
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await request.json();

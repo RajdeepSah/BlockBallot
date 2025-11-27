@@ -3,16 +3,18 @@
  * Extends base election structure with blockchain fields
  */
 
-// ============================================
-// Base Election Types
-// ============================================
-
+/**
+ * Represents a candidate in an election position.
+ */
 export interface Candidate {
   id: string;
   name: string;
   description: string;
 }
 
+/**
+ * Represents a position in an election with its candidates and ballot type.
+ */
 export interface Position {
   id: string;
   name: string;
@@ -21,6 +23,9 @@ export interface Position {
   candidates: Candidate[];
 }
 
+/**
+ * Represents a complete election with all its metadata and positions.
+ */
 export interface Election {
   id?: string;
   code: string;
@@ -35,10 +40,9 @@ export interface Election {
   contract_address?: string; 
 }
 
-// ============================================
-// Election Results Types
-// ============================================
-
+/**
+ * Represents a candidate's result in an election with vote counts.
+ */
 export interface CandidateResult {
   id: string;
   name: string;
@@ -48,12 +52,18 @@ export interface CandidateResult {
   percentage: string;
 }
 
+/**
+ * Represents the results for a single position in an election.
+ */
 export interface PositionResult {
   position_name: string;
   ballot_type: 'single' | 'multiple' | 'ranked';
   candidates: CandidateResult[];
 }
 
+/**
+ * Represents complete election results with statistics and position breakdowns.
+ */
 export interface ElectionResults {
   election_id: string;
   election_title: string;
@@ -64,10 +74,9 @@ export interface ElectionResults {
   has_ended: boolean;
 }
 
-// ============================================
-// Eligibility & Access Types
-// ============================================
-
+/**
+ * Represents a user's request for access to vote in an election.
+ */
 export interface AccessRequest {
   id: string;
   status: 'pending' | 'approved' | 'denied';
@@ -76,12 +85,18 @@ export interface AccessRequest {
   created_at: string;
 }
 
+/**
+ * Represents a user's eligibility status for an election.
+ */
 export interface EligibilityStatus {
   eligible: boolean;
   hasVoted: boolean;
   accessRequest?: AccessRequest;
 }
 
+/**
+ * Response containing all access requests for an election.
+ */
 export interface AccessRequestsResponse {
   requests: AccessRequest[];
 }

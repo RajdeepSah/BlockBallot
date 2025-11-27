@@ -1,8 +1,17 @@
+/**
+ * Options for building an OTP email.
+ */
 interface OtpEmailOptions {
   code: string;
   expiresInMinutes: number;
 }
 
+/**
+ * Builds an HTML email template for OTP verification codes.
+ * 
+ * @param options - OTP email options
+ * @returns HTML string for the email
+ */
 export function buildOtpEmail({ code, expiresInMinutes }: OtpEmailOptions) {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -35,6 +44,13 @@ export function buildOtpEmail({ code, expiresInMinutes }: OtpEmailOptions) {
 </html>`;
 }
 
+/**
+ * Builds a plain text version of the OTP email.
+ * 
+ * @param code - The OTP code
+ * @param expiresInMinutes - Expiration time in minutes
+ * @returns Plain text string for the email
+ */
 export function getOtpPlainText(code: string, expiresInMinutes: number) {
   return `Your BlockBallot verification code is ${code}. It expires in ${expiresInMinutes} minutes. If you did not request it, please reset your password.`;
 }

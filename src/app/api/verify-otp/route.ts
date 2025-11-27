@@ -12,6 +12,14 @@ import {
 
 export const runtime = 'nodejs';
 
+/**
+ * POST /api/verify-otp
+ * Verifies an OTP code for email verification.
+ * Enforces maximum attempt limits and expiration checks.
+ * 
+ * @param request - Request object containing email and otp in JSON body
+ * @returns JSON response with success status, or error response
+ */
 export async function POST(request: Request) {
   try {
     const payload = await request.json().catch(() => null);

@@ -6,8 +6,12 @@ import { UserRecord, EligibilityRecord, AccessRequestRecord } from "@/types/kv-r
 
 /**
  * GET /api/elections/[id]/eligibility-status
- * Check if current user is eligible to vote in an election
- * Ported from Supabase Edge Function
+ * Checks if the current user is eligible to vote in an election.
+ * Returns eligibility status, vote status, and any pending access requests.
+ * 
+ * @param request - Next.js request object with Authorization header
+ * @param params - Route parameters containing election id
+ * @returns JSON response with eligible, hasVoted, and accessRequest status, or error response
  */
 export async function GET(
   request: NextRequest,
@@ -26,13 +30,9 @@ export async function GET(
       return createNotFoundError('User');
     }
 
-    // Check eligibility
     const eligibility = await kv.get<EligibilityRecord>(`eligibility:${electionId}:${userData.email}`);
-    
-    // Check if already voted
     const ballotLink = await kv.get(`ballot:link:${electionId}:${user.id}`);
 
-    // Check access request
     const accessRequest = await kv.get<AccessRequestRecord>(`access_request:${electionId}:${user.id}`);
 
     return Response.json({

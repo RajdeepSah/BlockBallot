@@ -5,6 +5,13 @@ import { handleApiError, createUnauthorizedError, createNotFoundError } from '@/
 import * as kv from '@/utils/supabase/kvStore';
 import { UserRecord } from '@/types/kv-records';
 
+/**
+ * GET /api/auth/me
+ * Retrieves the current authenticated user's data.
+ * 
+ * @param request - Next.js request object with Authorization header
+ * @returns JSON response with user data, or error response
+ */
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('Authorization');

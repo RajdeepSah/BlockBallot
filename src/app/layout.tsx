@@ -7,6 +7,14 @@ export const metadata: Metadata = {
   description: "Secure web voting platform",
 };
 
+/**
+ * Root layout component for the Next.js application.
+ * Provides the HTML structure and wraps all pages with providers.
+ * 
+ * @param props - Layout props
+ * @param props.children - Child pages/components to render
+ * @returns Root HTML layout with providers
+ */
 export default function RootLayout({
   children,
 }: Readonly<{

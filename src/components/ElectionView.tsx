@@ -20,6 +20,16 @@ interface ElectionViewProps {
   onViewResults: (electionId: string) => void;
 }
 
+/**
+ * Election view component for displaying election details and casting votes.
+ * Handles eligibility checking, access requests, and different ballot types.
+ * 
+ * @param props - Component props
+ * @param props.electionId - The ID of the election to display
+ * @param props.onBack - Callback to navigate back
+ * @param props.onViewResults - Callback to view election results
+ * @returns The election view UI with ballot interface
+ */
 export function ElectionView({ electionId, onBack, onViewResults }: ElectionViewProps) {
   const { token, user } = useAuth();
   const [election, setElection] = useState<Election | null>(null);
@@ -31,18 +41,14 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
   const [receipt, setReceipt] = useState('');
   const [requestingAccess, setRequestingAccess] = useState(false);
 
-  // Vote selections
   const [selections, setSelections] = useState<VoteSelections>({});
 
   const loadElection = useCallback(async () => {
     try {
       const response = await api.getElection(electionId);
-      // Ensure positions and candidates have IDs
       if (response.positions && Array.isArray(response.positions)) {
         response.positions = response.positions.map((position: Partial<Position>, posIndex: number) => {
-          // Generate ID if missing
           const positionId = position.id || `pos-${posIndex}`;
-          // Ensure candidates have IDs
           const candidates = (position.candidates || []).map((candidate: Partial<Candidate>, candIndex: number) => ({
             ...candidate,
             id: candidate.id || `pos-${posIndex}-cand-${candIndex}`
@@ -111,7 +117,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
     setVoting(true);
 
     try {
-      // Validate all positions have selections
       for (const position of election.positions) {
         if (!selections[position.id]) {
           setError(`Please make a selection for ${position.name}`);
@@ -151,13 +156,11 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
     const current = Array.isArray(currentValue) ? currentValue : [];
     const newRanking = [...current];
     
-    // Remove if already ranked
     const existingIndex = newRanking.indexOf(candidateId);
     if (existingIndex !== -1) {
       newRanking.splice(existingIndex, 1);
     }
     
-    // Add at rank position
     newRanking.splice(rank - 1, 0, candidateId);
     
     setSelections({ ...selections, [positionId]: newRanking });
@@ -200,7 +203,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
           Back
         </Button>
 
-        {/* Election Header */}
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-start justify-between">
@@ -253,7 +255,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
           </CardContent>
         </Card>
 
-        {/* Status Messages */}
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertDescription>{error}</AlertDescription>
@@ -286,7 +287,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
           </Card>
         )}
 
-        {/* Not Eligible */}
         {!eligibility?.eligible && !eligibility?.accessRequest && !hasVoted && (
           <Card className="mb-6">
             <CardContent className="pt-6 text-center">
@@ -302,7 +302,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
           </Card>
         )}
 
-        {/* Pending Access Request */}
         {eligibility?.accessRequest?.status === 'pending' && (
           <Card className="mb-6">
             <CardContent className="pt-6 text-center">
@@ -315,7 +314,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
           </Card>
         )}
 
-        {/* Already Voted */}
         {hasVoted && (
           <Card className="mb-6">
             <CardContent className="pt-6 text-center">
@@ -333,7 +331,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
           </Card>
         )}
 
-        {/* Not Started Yet */}
         {hasNotStarted && eligibility?.eligible && (
           <Card className="mb-6">
             <CardContent className="pt-6 text-center">
@@ -346,7 +343,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
           </Card>
         )}
 
-        {/* Election Ended */}
         {hasEnded && eligibility?.eligible && !hasVoted && (
           <Card className="mb-6">
             <CardContent className="pt-6 text-center">
@@ -362,7 +358,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
           </Card>
         )}
 
-        {/* Ballot */}
         {canVote && election.positions.map((position: Position) => (
           <Card key={position.id} className="mb-6">
             <CardHeader>

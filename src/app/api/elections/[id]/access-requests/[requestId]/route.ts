@@ -7,8 +7,12 @@ import { UserRecord, AccessRequestRecord } from "@/types/kv-records";
 
 /**
  * PATCH /api/elections/[id]/access-requests/[requestId]
- * Approve or deny an access request (admin only)
- * Ported from Supabase Edge Function
+ * Approves or denies an access request (admin only).
+ * If approved, automatically creates an eligibility record for the user.
+ * 
+ * @param request - Next.js request object with Authorization header and action in body
+ * @param params - Route parameters containing election id and requestId
+ * @returns JSON response with success status, or error response
  */
 export async function PATCH(
   request: NextRequest,
@@ -18,16 +22,13 @@ export async function PATCH(
     const { id: electionId, requestId } = await params;
     const authHeader = request.headers.get('Authorization');
     
-    // Authenticate user
     const user = await authenticateUser(authHeader);
     
-    // Parse request body
     const { action } = await request.json();
     if (!action || !['approve', 'deny'].includes(action)) {
       return createBadRequestError('Invalid action');
     }
 
-    // Get election from Supabase database
     const supabase = await createClient();
     const { data: election, error: electionError } = await supabase
       .from('elections')
@@ -44,13 +45,11 @@ export async function PATCH(
       return createForbiddenError('Only election creator can manage access requests');
     }
 
-    // Get access request
     const accessRequest = await kv.get<AccessRequestRecord>(`access_request:${requestId}`);
     if (!accessRequest || accessRequest.election_id !== electionId) {
       return createNotFoundError('Access request');
     }
 
-    // Update request status
     const updatedRequest: AccessRequestRecord = {
       ...accessRequest,
       status: action === 'approve' ? 'approved' : 'denied',
@@ -61,7 +60,6 @@ export async function PATCH(
     await kv.set(`access_request:${requestId}`, updatedRequest);
     await kv.set(`access_request:${electionId}:${updatedRequest.user_id}`, updatedRequest);
 
-    // If approved, add to eligibility
     if (action === 'approve') {
       const userData = await kv.get<UserRecord>(`user:${updatedRequest.user_id}`);
       if (!userData) {

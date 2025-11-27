@@ -14,6 +14,16 @@ interface SignInProps {
   on2FARequired: (payload: { userId: string; email: string }) => void;
 }
 
+/**
+ * SignIn component for user authentication.
+ * Handles login flow and triggers 2FA when required.
+ * 
+ * @param props - Component props
+ * @param props.onToggleMode - Callback to switch to sign up
+ * @param props.onSuccess - Callback when login succeeds without 2FA
+ * @param props.on2FARequired - Callback when 2FA is required
+ * @returns Sign in form UI
+ */
 export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');

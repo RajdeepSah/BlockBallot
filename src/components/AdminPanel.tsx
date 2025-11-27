@@ -21,6 +21,15 @@ interface AdminPanelProps {
   onViewResults: (electionId: string) => void;
 }
 
+/**
+ * Admin panel component for managing election settings, voter eligibility, and access requests.
+ * 
+ * @param props - Component props
+ * @param props.electionId - The ID of the election to manage
+ * @param props.onBack - Callback to navigate back
+ * @param props.onViewResults - Callback to view election results
+ * @returns The admin panel UI with tabs for voters, requests, and sharing
+ */
 export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProps) {
   const { token } = useAuth();
   const [election, setElection] = useState<Election | null>(null);
@@ -60,7 +69,6 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
   const loadPreapprovedVoters = useCallback(async () => {
     setLoadingPreapproved(true);
     try {
-      // The helper hits our sanitized Next.js API, preventing the JSON parsing errors we saw earlier.
       const voters = await fetchEligibleVoters(electionId);
       setPreapprovedVoters(voters);
     } catch (err) {
@@ -90,7 +98,6 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
     setSuccess('');
 
     try {
-      // Parse emails from textarea (comma or newline separated)
       const emails = voterList
         .split(/[\n,\s]+/)
         .map(email => email.trim())
@@ -127,11 +134,9 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
 
   const copyToClipboard = async (text: string) => {
     try {
-      // Check if Clipboard API is available (requires secure context)
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(text);
       } else {
-        // Fallback for older browsers or non-secure contexts
         const textArea = document.createElement('textarea');
         textArea.value = text;
         textArea.style.position = 'fixed';
@@ -147,7 +152,6 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
-      // Optionally show a toast/error message to the user
     }
   };
 

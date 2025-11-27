@@ -10,6 +10,10 @@ const AUTH_STORAGE_KEYS = [
 
 const REQUEST_TIMEOUT_MS = 30000;
 
+/**
+ * Clears all authentication-related data from localStorage.
+ * Removes access tokens, refresh tokens, user data, and temporary tokens.
+ */
 export function clearStoredAuth() {
   if (typeof window === 'undefined') {
     return;
@@ -17,6 +21,11 @@ export function clearStoredAuth() {
   AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
 }
 
+/**
+ * Handles unauthorized errors by clearing auth data and optionally redirecting.
+ * 
+ * @param redirect - Whether to redirect to home page (default: true)
+ */
 export function handleUnauthorizedError(redirect = true) {
   if (typeof window === 'undefined') {
     return;
@@ -27,6 +36,14 @@ export function handleUnauthorizedError(redirect = true) {
   }
 }
 
+/**
+ * Wrapper around fetch that automatically adds authentication headers.
+ * Handles token refresh, request timeouts, and unauthorized errors.
+ * 
+ * @param input - Request URL or Request object
+ * @param init - Optional fetch init options
+ * @returns Promise resolving to Response
+ */
 export async function authenticatedFetch(
   input: RequestInfo | URL,
   init: RequestInit = {}

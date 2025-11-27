@@ -45,6 +45,15 @@ interface ChartDataEntry {
   percentage: number;
 }
 
+/**
+ * Results view component displaying election results with charts and statistics.
+ * 
+ * @param props - Component props
+ * @param props.electionId - The ID of the election to display results for
+ * @param props.onBack - Callback to navigate back
+ * @param props.onManage - Optional callback to manage the election
+ * @returns The results view UI with charts and vote breakdowns
+ */
 export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) {
   const { user } = useAuth();
   const [results, setResults] = useState<ElectionResults | null>(null);
@@ -81,7 +90,6 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
     setEligibleLoading(true);
     setEligibleError('');
     try {
-      // Route now guarantees pure JSON (no stray logs), so a single res.json() call is safe here.
       const voters = await fetchEligibleVoters(electionId);
       setEligibleVoters(voters);
     } catch (err) {
@@ -159,7 +167,6 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
         Back
       </Button>
 
-      {/* Header */}
       <Card className="mb-6">
           <CardHeader>
             <div className="flex items-start justify-between">
@@ -182,7 +189,6 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
           </CardHeader>
         </Card>
 
-        {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -222,7 +228,6 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
           </Card>
         </div>
 
-        {/* Results by Position */}
         {Object.entries(results.results).map(([positionId, positionData]: [string, PositionResult]) => {
           const chartData: ChartDataEntry[] = positionData.candidates.map((candidate: CandidateResult) => ({
             name: candidate.name,
@@ -253,7 +258,6 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Bar Chart */}
                 <div className="mb-8">
                   <h4 className="text-sm mb-4">Vote Distribution</h4>
                   <ResponsiveContainer width="100%" height={300}>
@@ -268,7 +272,6 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
                   </ResponsiveContainer>
                 </div>
 
-                {/* Pie Chart */}
                 <div className="mb-8">
                   <h4 className="text-sm mb-4">Vote Share</h4>
                   <ResponsiveContainer width="100%" height={300}>
@@ -292,7 +295,6 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
                   </ResponsiveContainer>
                 </div>
 
-                {/* Candidate List */}
                 <div className="space-y-4">
                   <h4 className="text-sm">Candidate Breakdown</h4>
                   {positionData.candidates.map((candidate: CandidateResult) => (

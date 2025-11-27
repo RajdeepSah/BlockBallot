@@ -24,20 +24,26 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * Auth provider component that manages authentication state and provides auth methods.
+ * Handles user login, registration, 2FA verification, and session management.
+ * 
+ * @param props - Component props
+ * @param props.children - Child components to wrap with auth context
+ * @returns Auth context provider
+ */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Ensure we're in the browser
     if (typeof window === 'undefined') {
       setLoading(false);
       return;
     }
 
     try {
-      // Load from localStorage
       const storedToken = localStorage.getItem('accessToken');
       const storedUser = localStorage.getItem('user');
 
@@ -47,7 +53,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('Error loading auth state from localStorage:', error);
-      // Clear potentially corrupted data
       localStorage.removeItem('accessToken');
       localStorage.removeItem('user');
     } finally {
@@ -59,7 +64,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const response = await api.login({ email, password });
     
     if (response.requires2FA) {
-      // Store temporary token
       setToken(response.accessToken);
       try {
         if (typeof window !== 'undefined') {
@@ -108,7 +112,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
      });
      
      if (!me.ok) {
-        // Token invalid or expired, clean up
         try {
           if (typeof window !== 'undefined') {
             localStorage.removeItem('tempToken');
@@ -173,6 +176,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Hook to access authentication context.
+ * 
+ * @returns Authentication context with user, token, and auth methods
+ * @throws Error if used outside of AuthProvider
+ */
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
