@@ -12,8 +12,7 @@ const requiredEnvVars = {
 for (const [key, value] of Object.entries(requiredEnvVars)) {
   if (!value) {
     throw new Error(
-      `Missing required environment variable: ${key}. ` +
-      `Please set it in your .env.local file.`
+      `Missing required environment variable: ${key}. ` + `Please set it in your .env.local file.`
     );
   }
 }
@@ -28,6 +27,3 @@ export const blockchainConfig = {
   network: 'sepolia' as const,
   chainId: 11155111,
 } as const;
-
-
-

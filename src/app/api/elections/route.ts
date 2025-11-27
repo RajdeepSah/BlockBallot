@@ -1,20 +1,20 @@
-import { NextRequest } from "next/server";
-import { createClient } from "@/utils/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { projectId, publicAnonKey } from "@/utils/supabase/info";
-import { handleApiError } from "@/utils/api/errors";
+import { NextRequest } from 'next/server';
+import { createClient } from '@/utils/supabase/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { projectId, publicAnonKey } from '@/utils/supabase/info';
+import { handleApiError } from '@/utils/api/errors';
 
 /**
  * GET /api/elections
- * 
+ *
  * Searches for elections by code or returns elections created by the authenticated user.
- * 
+ *
  * Query parameters:
  * - code (optional): 7-digit election code to search for
- * 
+ *
  * Headers:
  * - Authorization (optional): Bearer token for authenticated requests
- * 
+ *
  * @param request - Next.js request object
  * @returns JSON response with elections array
  * @throws Returns error response if request fails
@@ -40,15 +40,15 @@ export async function GET(request: NextRequest) {
         return Response.json({ elections: [] });
       }
 
-      return Response.json({ 
-        elections: election ? [election] : [] 
+      return Response.json({
+        elections: election ? [election] : [],
       });
     }
 
     // If token is provided, get user's elections
     if (token) {
       let userId: string | null = null;
-      
+
       try {
         const supabaseAuth = createSupabaseClient(
           `https://${projectId}.supabase.co`,
@@ -62,7 +62,10 @@ export async function GET(request: NextRequest) {
           }
         );
 
-        const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
+        const {
+          data: { user },
+          error: authError,
+        } = await supabaseAuth.auth.getUser(token);
         if (!authError && user) {
           userId = user.id;
         }
@@ -81,15 +84,14 @@ export async function GET(request: NextRequest) {
           return Response.json({ elections: [] });
         }
 
-        return Response.json({ 
-          elections: createdElections || [] 
+        return Response.json({
+          elections: createdElections || [],
         });
       }
     }
 
     return Response.json({ elections: [] });
   } catch (error) {
-    return handleApiError(error, "search-elections");
+    return handleApiError(error, 'search-elections');
   }
 }
-

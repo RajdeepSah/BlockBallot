@@ -33,7 +33,7 @@ let cachedArtifact: ContractArtifact | null = null;
 /**
  * Loads the contract artifact from the file system.
  * Caches the result for subsequent calls to improve performance.
- * 
+ *
  * @returns Contract artifact containing ABI and bytecode
  * @throws Error if artifact file is missing or invalid
  */
@@ -45,14 +45,14 @@ export function loadContractArtifact(): ContractArtifact {
   if (!fs.existsSync(ARTIFACTS_PATH)) {
     throw new Error(
       `Contract artifact not found at ${ARTIFACTS_PATH}. ` +
-      `Please run 'npm run compile-contract' first.`
+        `Please run 'npm run compile-contract' first.`
     );
   }
 
   try {
     const fileContent = fs.readFileSync(ARTIFACTS_PATH, 'utf-8');
     const artifact = JSON.parse(fileContent);
-    
+
     if (!artifact.abi || !artifact.bytecode) {
       throw new Error('Invalid contract artifact: missing ABI or bytecode');
     }
@@ -72,7 +72,7 @@ export function loadContractArtifact(): ContractArtifact {
 /**
  * Gets the contract ABI (Application Binary Interface).
  * Loads and caches the artifact if not already loaded.
- * 
+ *
  * @returns Array of ABI fragments
  * @throws Error if contract artifact cannot be loaded
  */
@@ -83,11 +83,10 @@ export function getContractABI(): ABIFragment[] {
 /**
  * Gets the contract bytecode for deployment.
  * Loads and caches the artifact if not already loaded.
- * 
+ *
  * @returns Contract bytecode as hex string
  * @throws Error if contract artifact cannot be loaded
  */
 export function getContractBytecode(): string {
   return loadContractArtifact().bytecode;
 }
-

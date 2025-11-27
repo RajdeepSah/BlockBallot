@@ -1,12 +1,6 @@
 import { getValidAccessToken } from './tokenRefresh';
 
-const AUTH_STORAGE_KEYS = [
-  'accessToken',
-  'refreshToken',
-  'user',
-  'tempToken',
-  'tempRefreshToken',
-];
+const AUTH_STORAGE_KEYS = ['accessToken', 'refreshToken', 'user', 'tempToken', 'tempRefreshToken'];
 
 const REQUEST_TIMEOUT_MS = 30000;
 
@@ -23,7 +17,7 @@ export function clearStoredAuth() {
 
 /**
  * Handles unauthorized errors by clearing auth data and optionally redirecting.
- * 
+ *
  * @param redirect - Whether to redirect to home page (default: true)
  */
 export function handleUnauthorizedError(redirect = true) {
@@ -39,7 +33,7 @@ export function handleUnauthorizedError(redirect = true) {
 /**
  * Wrapper around fetch that automatically adds authentication headers.
  * Handles token refresh, request timeouts, and unauthorized errors.
- * 
+ *
  * @param input - Request URL or Request object
  * @param init - Optional fetch init options
  * @returns Promise resolving to Response

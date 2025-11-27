@@ -5,13 +5,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from './ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import {
   BarChart,
   Bar,
@@ -47,7 +41,7 @@ interface ChartDataEntry {
 
 /**
  * Results view component displaying election results with charts and statistics.
- * 
+ *
  * @param props - Component props
  * @param props.electionId - The ID of the election to display results for
  * @param props.onBack - Callback to navigate back
@@ -143,7 +137,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
 
   if (error || !results) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <Alert variant="destructive">
@@ -163,77 +157,80 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
   return (
     <PageContainer maxWidth="6xl">
       <Button onClick={onBack} variant="ghost" className="mb-6">
-        <ArrowLeft className="w-4 h-4 mr-2" />
+        <ArrowLeft className="mr-2 h-4 w-4" />
         Back
       </Button>
 
       <Card className="mb-6">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <CardTitle className="text-2xl">{results.election_title}</CardTitle>
-                <CardDescription>Election Results</CardDescription>
-              </div>
-              <div className="flex space-x-2">
-                {isCreator && onManage && (
-                  <Button onClick={() => onManage(electionId)} variant="outline">
-                    Manage
-                  </Button>
-                )}
-                <Button onClick={exportResults} variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
-                </Button>
-              </div>
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <CardTitle className="text-2xl">{results.election_title}</CardTitle>
+              <CardDescription>Election Results</CardDescription>
             </div>
+            <div className="flex space-x-2">
+              {isCreator && onManage && (
+                <Button onClick={() => onManage(electionId)} variant="outline">
+                  Manage
+                </Button>
+              )}
+              <Button onClick={exportResults} variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm">Total Votes Cast</CardTitle>
+            <TrendingUp className="h-4 w-4 text-gray-500" />
           </CardHeader>
+          <CardContent>
+            <div className="text-3xl">{results.total_votes}</div>
+          </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm">Total Votes Cast</CardTitle>
-              <TrendingUp className="w-4 h-4 text-gray-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl">{results.total_votes}</div>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm">Eligible Voters</CardTitle>
+            <Users className="h-4 w-4 text-gray-500" />
+          </CardHeader>
+          <CardContent>
+            <button
+              type="button"
+              onClick={() => setEligibleDialogOpen(true)}
+              className="text-3xl font-semibold text-indigo-600 hover:underline focus:outline-none"
+            >
+              {results.eligible_voters}
+            </button>
+            <p className="mt-1 text-xs text-gray-500">Click to view eligible voters</p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm">Eligible Voters</CardTitle>
-              <Users className="w-4 h-4 text-gray-500" />
-            </CardHeader>
-            <CardContent>
-              <button
-                type="button"
-                onClick={() => setEligibleDialogOpen(true)}
-                className="text-3xl font-semibold text-indigo-600 hover:underline focus:outline-none"
-              >
-                {results.eligible_voters}
-              </button>
-              <p className="text-xs text-gray-500 mt-1">Click to view eligible voters</p>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm">Voter Turnout</CardTitle>
+            <Award className="h-4 w-4 text-gray-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl">{results.turnout_percentage}%</div>
+          </CardContent>
+        </Card>
+      </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm">Voter Turnout</CardTitle>
-              <Award className="w-4 h-4 text-gray-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl">{results.turnout_percentage}%</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {Object.entries(results.results).map(([positionId, positionData]: [string, PositionResult]) => {
-          const chartData: ChartDataEntry[] = positionData.candidates.map((candidate: CandidateResult) => ({
-            name: candidate.name,
-            votes: candidate.votes,
-            percentage: parseFloat(candidate.percentage),
-          }));
+      {Object.entries(results.results).map(
+        ([positionId, positionData]: [string, PositionResult]) => {
+          const chartData: ChartDataEntry[] = positionData.candidates.map(
+            (candidate: CandidateResult) => ({
+              name: candidate.name,
+              votes: candidate.votes,
+              percentage: parseFloat(candidate.percentage),
+            })
+          );
 
           const winner = positionData.candidates[0];
 
@@ -251,7 +248,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
                   </div>
                   {winner && winner.votes > 0 && (
                     <Badge className="bg-green-600">
-                      <Award className="w-3 h-3 mr-1" />
+                      <Award className="mr-1 h-3 w-3" />
                       Winner: {winner.name}
                     </Badge>
                   )}
@@ -259,7 +256,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
               </CardHeader>
               <CardContent>
                 <div className="mb-8">
-                  <h4 className="text-sm mb-4">Vote Distribution</h4>
+                  <h4 className="mb-4 text-sm">Vote Distribution</h4>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -273,7 +270,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
                 </div>
 
                 <div className="mb-8">
-                  <h4 className="text-sm mb-4">Vote Share</h4>
+                  <h4 className="mb-4 text-sm">Vote Share</h4>
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
@@ -300,7 +297,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
                   {positionData.candidates.map((candidate: CandidateResult) => (
                     <div
                       key={candidate.id}
-                      className="p-4 border rounded-lg flex items-center justify-between"
+                      className="flex items-center justify-between rounded-lg border p-4"
                     >
                       <div>
                         <p className="font-medium">{candidate.name}</p>
@@ -316,45 +313,44 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
               </CardContent>
             </Card>
           );
-        })}
+        }
+      )}
 
-        <Dialog open={eligibleDialogOpen} onOpenChange={setEligibleDialogOpen}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Eligible Voters</DialogTitle>
-              <DialogDescription>
-                These are the pre-approved voters uploaded for this election.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="mt-4">
-              {eligibleLoading ? (
-                <div className="flex items-center justify-center py-6 text-gray-500">
-                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                  Loading eligible voters...
-                </div>
-              ) : eligibleError ? (
-                <Alert variant="destructive">
-                  <AlertDescription>{eligibleError}</AlertDescription>
-                </Alert>
-              ) : eligibleVoters.length === 0 ? (
-                <div className="text-center py-6 text-gray-500">
-                  No pre-approved voters found for this election.
-                </div>
-              ) : (
-                <div className="max-h-80 overflow-y-auto divide-y">
-                  {eligibleVoters.map((voter) => (
-                    <div key={voter.id} className="py-3 text-sm text-gray-800">
-                      <span className="font-medium">
-                        {voter.full_name || 'Pending Registration'}
-                      </span>{' '}
-                      [{voter.email}]
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+      <Dialog open={eligibleDialogOpen} onOpenChange={setEligibleDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Eligible Voters</DialogTitle>
+            <DialogDescription>
+              These are the pre-approved voters uploaded for this election.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            {eligibleLoading ? (
+              <div className="flex items-center justify-center py-6 text-gray-500">
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Loading eligible voters...
+              </div>
+            ) : eligibleError ? (
+              <Alert variant="destructive">
+                <AlertDescription>{eligibleError}</AlertDescription>
+              </Alert>
+            ) : eligibleVoters.length === 0 ? (
+              <div className="py-6 text-center text-gray-500">
+                No pre-approved voters found for this election.
+              </div>
+            ) : (
+              <div className="max-h-80 divide-y overflow-y-auto">
+                {eligibleVoters.map((voter) => (
+                  <div key={voter.id} className="py-3 text-sm text-gray-800">
+                    <span className="font-medium">{voter.full_name || 'Pending Registration'}</span>{' '}
+                    [{voter.email}]
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }

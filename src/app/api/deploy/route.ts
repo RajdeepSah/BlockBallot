@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { ContractFactory } from 'ethers';
-import { createWallet } from '@/utils/blockchain/provider'; 
-import { getContractABI, getContractBytecode } from '@/utils/blockchain/contractLoader'; 
+import { createWallet } from '@/utils/blockchain/provider';
+import { getContractABI, getContractBytecode } from '@/utils/blockchain/contractLoader';
 import { validatePositionsArray } from '@/utils/validation';
 import { handleApiError, createValidationError, createUnauthorizedError } from '@/utils/api/errors';
 import type { PositionInput, DeploymentResponse } from '@/types/blockchain';
@@ -11,19 +11,22 @@ import { Election } from '@/types/election';
 
 /**
  * Generates a random alphanumeric election code.
- * 
+ *
  * @param length - Length of the code to generate (default: 7)
  * @returns Uppercase alphanumeric code
  */
 function generateCode(length = 7): string {
-  return Math.random().toString(36).substring(2, 2 + length).toUpperCase();
+  return Math.random()
+    .toString(36)
+    .substring(2, 2 + length)
+    .toUpperCase();
 }
 
 /**
  * POST /api/deploy
- * 
+ *
  * Deploys a new election contract to the blockchain and creates the election record.
- * 
+ *
  * Request body:
  * - title: Election title
  * - description: Election description
@@ -31,10 +34,10 @@ function generateCode(length = 7): string {
  * - ends_at: ISO date string for election end
  * - time_zone: Timezone string (default: UTC)
  * - positions: Array of position objects with candidates
- * 
+ *
  * Headers:
  * - Authorization: Bearer token (required)
- * 
+ *
  * @param request - Next.js request object containing election payload
  * @returns JSON response with deployment details (txHash, contractAddress, electionId)
  * @throws Returns error response if deployment fails or validation fails
@@ -54,7 +57,8 @@ export async function POST(request: NextRequest) {
     try {
       validatePositionsArray(electionPayload.positions);
     } catch (validationError) {
-      const message = validationError instanceof Error ? validationError.message : String(validationError);
+      const message =
+        validationError instanceof Error ? validationError.message : String(validationError);
       return createValidationError(message);
     }
 
@@ -66,26 +70,22 @@ export async function POST(request: NextRequest) {
       candidatesForPosition.push(candidateNames);
     }
 
-    const wallet = createWallet();  
+    const wallet = createWallet();
     const abi = getContractABI();
     const bytecode = getContractBytecode();
 
-    const contractFactory = new ContractFactory(
-      abi, 
-      bytecode, 
-      wallet 
-    );
+    const contractFactory = new ContractFactory(abi, bytecode, wallet);
 
     const contract = await contractFactory.deploy(positionNames, candidatesForPosition);
 
     const deployTx = contract.deploymentTransaction();
     if (!deployTx) {
-      throw new Error("Deployment transaction failed to generate.");
+      throw new Error('Deployment transaction failed to generate.');
     }
-    const txHash = deployTx.hash; 
+    const txHash = deployTx.hash;
 
     await contract.waitForDeployment();
-    
+
     const contractAddress = await contract.getAddress();
 
     let code = generateCode();
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     const startsAt = new Date(electionPayload.starts_at);
     const endsAt = new Date(electionPayload.ends_at);
-    
+
     let status: 'draft' | 'active' | 'ended' = 'draft';
     if (now >= startsAt && now <= endsAt) {
       status = 'active';
@@ -144,12 +144,11 @@ export async function POST(request: NextRequest) {
       success: true,
       electionId: insertedElection.id,
       contractAddress,
-      txHash, 
-      message: 'Contract deployed successfully and transaction confirmed.'
+      txHash,
+      message: 'Contract deployed successfully and transaction confirmed.',
     };
 
     return Response.json(response, { status: 200 });
-
   } catch (error) {
     return handleApiError(error, 'deploy');
   }

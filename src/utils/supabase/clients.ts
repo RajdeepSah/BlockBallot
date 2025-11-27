@@ -6,7 +6,7 @@ const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 /**
  * Asserts that an environment variable is set.
- * 
+ *
  * @param value - Environment variable value
  * @param name - Environment variable name
  * @returns The value if set
@@ -22,7 +22,7 @@ function assertEnv(value: string | undefined, name: string) {
 /**
  * Gets a Supabase client with service role permissions.
  * Can bypass Row Level Security (RLS) policies.
- * 
+ *
  * @returns Supabase client with service role key
  * @throws Error if required environment variables are missing
  */
@@ -41,7 +41,7 @@ export function getServiceRoleClient() {
 /**
  * Gets a Supabase client with anonymous key for server-side operations.
  * Respects Row Level Security (RLS) policies.
- * 
+ *
  * @returns Supabase client with anonymous key
  * @throws Error if required environment variables are missing
  */
@@ -56,5 +56,3 @@ export function getAnonServerClient() {
     },
   });
 }
-
-

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -10,15 +10,15 @@ import { Dashboard } from '@/components/Dashboard';
 
 /**
  * Loading spinner component displayed while authentication state is being determined.
- * 
+ *
  * @returns Loading spinner UI
  */
 function LoadingSpinner() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="bg-background flex min-h-screen items-center justify-center">
       <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        <p className="mt-4 text-muted-foreground">Loading...</p>
+        <div className="inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-indigo-600"></div>
+        <p className="text-muted-foreground mt-4">Loading...</p>
       </div>
     </div>
   );
@@ -27,7 +27,7 @@ function LoadingSpinner() {
 /**
  * Main content component for the home page.
  * Handles routing between sign in, sign up, 2FA, and dashboard screens.
- * 
+ *
  * @returns Appropriate screen component based on authentication state
  */
 function HomePageContent() {
@@ -70,10 +70,7 @@ function HomePageContent() {
       );
     } else if (screen === 'signup') {
       return (
-        <SignUp
-          onToggleMode={() => setScreen('signin')}
-          onSuccess={() => setScreen('signin')}
-        />
+        <SignUp onToggleMode={() => setScreen('signin')} onSuccess={() => setScreen('signin')} />
       );
     } else if (screen === '2fa' && twoFAState) {
       return (
@@ -102,7 +99,7 @@ function HomePageContent() {
 /**
  * Home page component wrapped in Suspense for Next.js navigation.
  * Entry point for the application, handles authentication flow.
- * 
+ *
  * @returns Suspense-wrapped home page content
  */
 export default function HomePage() {
@@ -112,4 +109,3 @@ export default function HomePage() {
     </Suspense>
   );
 }
-

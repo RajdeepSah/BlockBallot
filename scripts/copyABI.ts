@@ -31,9 +31,10 @@ function main(): void {
   }
 
   // Find all contract artifact directories
-  const contractDirs = fs.readdirSync(artifactsDir, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory() && dirent.name.endsWith('.sol'))
-    .map(dirent => dirent.name);
+  const contractDirs = fs
+    .readdirSync(artifactsDir, { withFileTypes: true })
+    .filter((dirent) => dirent.isDirectory() && dirent.name.endsWith('.sol'))
+    .map((dirent) => dirent.name);
 
   if (contractDirs.length === 0) {
     console.warn('⚠️  No contract artifacts found. Make sure contracts are compiled.');
@@ -45,10 +46,11 @@ function main(): void {
   // Process each contract directory
   for (const contractDir of contractDirs) {
     const contractArtifactsPath = path.join(artifactsDir, contractDir);
-    
+
     // Find all JSON files in the contract directory (excluding TypeScript definition files)
-    const jsonFiles = fs.readdirSync(contractArtifactsPath)
-      .filter(file => file.endsWith('.json') && !file.endsWith('.d.ts.json'));
+    const jsonFiles = fs
+      .readdirSync(contractArtifactsPath)
+      .filter((file) => file.endsWith('.json') && !file.endsWith('.d.ts.json'));
 
     // Copy each JSON file (ABI artifact)
     for (const jsonFile of jsonFiles) {
@@ -82,4 +84,3 @@ try {
   console.error('Error copying ABI:', errorMessage);
   process.exit(1);
 }
-

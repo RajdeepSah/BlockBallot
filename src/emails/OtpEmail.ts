@@ -8,7 +8,7 @@ interface OtpEmailOptions {
 
 /**
  * Builds an HTML email template for OTP verification codes.
- * 
+ *
  * @param options - OTP email options
  * @returns HTML string for the email
  */
@@ -46,7 +46,7 @@ export function buildOtpEmail({ code, expiresInMinutes }: OtpEmailOptions) {
 
 /**
  * Builds a plain text version of the OTP email.
- * 
+ *
  * @param code - The OTP code
  * @param expiresInMinutes - Expiration time in minutes
  * @returns Plain text string for the email

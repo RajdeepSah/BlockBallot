@@ -1,28 +1,34 @@
-import { NextRequest } from "next/server";
-import { createWritableContract } from "@/utils/blockchain/contract";
-import { validateContractAddress, validateVotesArray } from "@/utils/validation";
-import { handleApiError, createValidationError, createNotFoundError, createBadRequestError, createForbiddenError } from "@/utils/api/errors";
-import { authenticateUser } from "@/utils/api/auth";
-import { createClient } from "@/utils/supabase/server";
-import * as kv from "@/utils/supabase/kvStore";
-import type { VoteInput, VoteResponse } from "@/types/blockchain";
-import { UserRecord, EligibilityRecord, BallotLinkRecord } from "@/types/kv-records";
+import { NextRequest } from 'next/server';
+import { createWritableContract } from '@/utils/blockchain/contract';
+import { validateContractAddress, validateVotesArray } from '@/utils/validation';
+import {
+  handleApiError,
+  createValidationError,
+  createNotFoundError,
+  createBadRequestError,
+  createForbiddenError,
+} from '@/utils/api/errors';
+import { authenticateUser } from '@/utils/api/auth';
+import { createClient } from '@/utils/supabase/server';
+import * as kv from '@/utils/supabase/kvStore';
+import type { VoteInput, VoteResponse } from '@/types/blockchain';
+import { UserRecord, EligibilityRecord, BallotLinkRecord } from '@/types/kv-records';
 
 /**
  * POST /api/vote
- * 
+ *
  * Casts a vote in an election by submitting votes to the blockchain contract.
  * Implements race condition prevention using timestamped locks.
- * 
+ *
  * Request body:
  * - electionId: The election ID (required)
  * - contractAddress: The blockchain contract address (required)
  * - votes: Array of vote objects with position and candidate (preferred format)
  * - positions/candidates: Alternative format for backward compatibility
- * 
+ *
  * Headers:
  * - Authorization: Bearer token (required)
- * 
+ *
  * @param request - Next.js request object containing vote data
  * @returns JSON response with transaction hash and vote details
  * @throws Returns error response if voting fails, validation fails, or user is ineligible
@@ -31,23 +37,23 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { electionId, contractAddress, positions, candidates, votes } = body;
-    
+
     const authHeader = request.headers.get('Authorization');
     const user = await authenticateUser(authHeader);
 
     try {
       validateContractAddress(contractAddress);
     } catch (validationError) {
-      const message = validationError instanceof Error ? validationError.message : String(validationError);
+      const message =
+        validationError instanceof Error ? validationError.message : String(validationError);
       return createValidationError(message);
     }
 
     let votesToProcess: VoteInput[] = [];
-    
+
     if (votes && Array.isArray(votes)) {
       votesToProcess = votes;
     } else if (Array.isArray(positions) && Array.isArray(candidates)) {
-
       votesToProcess = positions.flatMap((positionName: string, idx: number) => {
         const candidateSelection = candidates[idx];
 
@@ -75,12 +81,13 @@ export async function POST(request: NextRequest) {
     try {
       validateVotesArray(votesToProcess);
     } catch (validationError) {
-      const message = validationError instanceof Error ? validationError.message : String(validationError);
+      const message =
+        validationError instanceof Error ? validationError.message : String(validationError);
       return createValidationError(message);
     }
 
-    const positionsArray = votesToProcess.map(vote => vote.position);
-    const candidatesArray = votesToProcess.map(vote => vote.candidate);
+    const positionsArray = votesToProcess.map((vote) => vote.position);
+    const candidatesArray = votesToProcess.map((vote) => vote.candidate);
 
     const supabase = await createClient();
     const { data: election, error: electionError } = await supabase
@@ -110,8 +117,13 @@ export async function POST(request: NextRequest) {
       return createNotFoundError('User data');
     }
 
-    const eligibility = await kv.get<EligibilityRecord>(`eligibility:${electionId}:${userData.email}`);
-    if (!eligibility || (eligibility.status !== 'approved' && eligibility.status !== 'preapproved')) {
+    const eligibility = await kv.get<EligibilityRecord>(
+      `eligibility:${electionId}:${userData.email}`
+    );
+    if (
+      !eligibility ||
+      (eligibility.status !== 'approved' && eligibility.status !== 'preapproved')
+    ) {
       return createForbiddenError('You are not eligible to vote in this election');
     }
 
@@ -119,7 +131,7 @@ export async function POST(request: NextRequest) {
     const finalVoteKey = voteKeyPrefix;
     const existingLocks = await kv.getByPrefix<BallotLinkRecord>(`${voteKeyPrefix}:`);
     const finalVote = await kv.get<BallotLinkRecord>(finalVoteKey);
-    
+
     if (existingLocks.length > 0 || finalVote) {
       return createBadRequestError('You have already voted in this election');
     }
@@ -127,10 +139,10 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now();
     const uniqueSuffix = crypto.randomUUID().substring(0, 8);
     const lockKey = `${voteKeyPrefix}:${timestamp}-${uniqueSuffix}`;
-    
+
     const pendingLock = {
       status: 'pending',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
 
     await kv.set(lockKey, pendingLock);
@@ -154,7 +166,7 @@ export async function POST(request: NextRequest) {
 
     const ballotLink = {
       tx_hash: txHash,
-      created_at: pendingLock.created_at
+      created_at: pendingLock.created_at,
     };
 
     await kv.set(finalVoteKey, ballotLink);
@@ -164,12 +176,11 @@ export async function POST(request: NextRequest) {
       success: true,
       txHash: txHash,
       votesProcessed: votesToProcess.length,
-      timestamp: ballotLink.created_at
+      timestamp: ballotLink.created_at,
     };
 
     return Response.json(response);
-
   } catch (error) {
-    return handleApiError(error, "vote");
+    return handleApiError(error, 'vote');
   }
 }

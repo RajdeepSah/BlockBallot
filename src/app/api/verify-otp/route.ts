@@ -16,7 +16,7 @@ export const runtime = 'nodejs';
  * POST /api/verify-otp
  * Verifies an OTP code for email verification.
  * Enforces maximum attempt limits and expiration checks.
- * 
+ *
  * @param request - Request object containing email and otp in JSON body
  * @returns JSON response with success status, or error response
  */
@@ -32,7 +32,10 @@ export async function POST(request: Request) {
     }
 
     if (sanitizedOtp.length !== 6) {
-      return NextResponse.json({ error: 'A 6-digit verification code is required.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'A 6-digit verification code is required.' },
+        { status: 400 }
+      );
     }
 
     const record = await getOtpRecord(normalizedEmail).catch((error) => {
@@ -48,11 +51,17 @@ export async function POST(request: Request) {
 
     if (Date.now() > record.expiresAt) {
       await deleteOtpRecord(normalizedEmail).catch(() => undefined);
-      return NextResponse.json({ error: 'Verification code expired. Request a new one.' }, { status: 410 });
+      return NextResponse.json(
+        { error: 'Verification code expired. Request a new one.' },
+        { status: 410 }
+      );
     }
 
     if (record.attemptCount >= OTP_MAX_VERIFY_ATTEMPTS) {
-      return NextResponse.json({ error: 'Too many invalid attempts. Request a new code.' }, { status: 429 });
+      return NextResponse.json(
+        { error: 'Too many invalid attempts. Request a new code.' },
+        { status: 429 }
+      );
     }
 
     const { hash } = createOtpHash(sanitizedOtp, record.salt);

@@ -5,18 +5,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 /**
  * 404 Not Found page component.
  * Displays when a user navigates to a non-existent route.
- * 
+ *
  * @returns 404 error page with link to home
  */
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl h-full text-center">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <Card className="h-full w-full max-w-2xl text-center">
         <CardHeader>
           <CardTitle className="text-2xl">404 - Page Not Found</CardTitle>
-          <CardDescription>
-            The page you&apos;re looking for doesn&apos;t exist.
-          </CardDescription>
+          <CardDescription>The page you&apos;re looking for doesn&apos;t exist.</CardDescription>
         </CardHeader>
         <CardContent>
           <Link href="/">
@@ -27,4 +25,3 @@ export default function NotFound() {
     </div>
   );
 }
-

@@ -17,7 +17,10 @@ const supabase = createClient(
 
 // Utility: Generate random code
 function generateCode(length = 7) {
-  return Math.random().toString(36).substring(2, 2 + length).toUpperCase();
+  return Math.random()
+    .toString(36)
+    .substring(2, 2 + length)
+    .toUpperCase();
 }
 
 // Utility: Generate OTP
@@ -55,7 +58,7 @@ app.post('/make-server-b7b6fbd4/auth/register', async (c) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { name, phone }
+      user_metadata: { name, phone },
     });
 
     if (authError) {
@@ -72,16 +75,16 @@ app.post('/make-server-b7b6fbd4/auth/register', async (c) => {
       email,
       phone: phone || null,
       twofa_method: 'email',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
 
     await kv.set(`user:${userId}`, userData);
     await kv.set(`user:email:${email}`, userId);
 
-    return c.json({ 
-      success: true, 
+    return c.json({
+      success: true,
       message: 'User registered successfully',
-      userId 
+      userId,
     });
   } catch (error) {
     console.log('Registration error:', error);
@@ -100,7 +103,7 @@ app.post('/make-server-b7b6fbd4/auth/login', async (c) => {
     // Sign in with Supabase
     const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
       email,
-      password
+      password,
     });
 
     if (signInError) {
@@ -122,7 +125,7 @@ app.post('/make-server-b7b6fbd4/auth/login', async (c) => {
       userId,
       created_at: Date.now(),
       expires_at: Date.now() + 5 * 60 * 1000, // 5 minutes
-      verified: false
+      verified: false,
     };
 
     await kv.set(`otp:${userId}`, otpData);
@@ -136,7 +139,7 @@ app.post('/make-server-b7b6fbd4/auth/login', async (c) => {
       accessToken: sessionData.session.access_token,
       requires2FA: true,
       // In production, don't return OTP - send via email
-      devOTP: otp
+      devOTP: otp,
     });
   } catch (error) {
     console.log('Login error:', error);
@@ -179,8 +182,8 @@ app.post('/make-server-b7b6fbd4/auth/verify-2fa', async (c) => {
         id: userData.id,
         name: userData.name,
         email: userData.email,
-        phone: userData.phone
-      }
+        phone: userData.phone,
+      },
     });
   } catch (error) {
     console.log('2FA verification error:', error);
@@ -208,7 +211,7 @@ app.post('/make-server-b7b6fbd4/auth/resend-otp', async (c) => {
       userId,
       created_at: Date.now(),
       expires_at: Date.now() + 5 * 60 * 1000,
-      verified: false
+      verified: false,
     };
 
     await kv.set(`otp:${userId}`, otpData);
@@ -218,7 +221,7 @@ app.post('/make-server-b7b6fbd4/auth/resend-otp', async (c) => {
     return c.json({
       success: true,
       message: 'OTP resent',
-      devOTP: otp
+      devOTP: otp,
     });
   } catch (error) {
     console.log('Resend OTP error:', error);
@@ -233,7 +236,10 @@ app.get('/make-server-b7b6fbd4/auth/me', async (c) => {
       return c.json({ error: 'No access token' }, 401);
     }
 
-    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(accessToken);
     if (error || !user) {
       return c.json({ error: 'Unauthorized' }, 401);
     }
@@ -248,8 +254,8 @@ app.get('/make-server-b7b6fbd4/auth/me', async (c) => {
         id: userData.id,
         name: userData.name,
         email: userData.email,
-        phone: userData.phone
-      }
+        phone: userData.phone,
+      },
     });
   } catch (error) {
     console.log('Get user error:', error);
@@ -266,7 +272,10 @@ app.post('/make-server-b7b6fbd4/elections', async (c) => {
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(accessToken);
     if (authError || !user) {
       return c.json({ error: 'Unauthorized' }, 401);
     }
@@ -281,7 +290,7 @@ app.post('/make-server-b7b6fbd4/elections', async (c) => {
     // Generate unique election code
     let code = generateCode();
     let codeExists = await kv.get(`election:code:${code}`);
-    
+
     while (codeExists) {
       code = generateCode();
       codeExists = await kv.get(`election:code:${code}`);
@@ -299,7 +308,7 @@ app.post('/make-server-b7b6fbd4/elections', async (c) => {
       creator_id: user.id,
       created_at: new Date().toISOString(),
       status: 'draft',
-      positions: []
+      positions: [],
     };
 
     // Process positions and candidates
@@ -312,7 +321,7 @@ app.post('/make-server-b7b6fbd4/elections', async (c) => {
         name: position.name,
         description: position.description || '',
         ballot_type: position.ballot_type || 'single',
-        candidates: []
+        candidates: [],
       };
 
       // Process candidates
@@ -325,9 +334,9 @@ app.post('/make-server-b7b6fbd4/elections', async (c) => {
             position_id: positionId,
             name: candidate.name,
             description: candidate.description || '',
-            photo_url: candidate.photo_url || null
+            photo_url: candidate.photo_url || null,
           };
-          
+
           await kv.set(`candidate:${candidateId}`, candidateData);
           positionData.candidates.push(candidateId);
         }
@@ -341,9 +350,9 @@ app.post('/make-server-b7b6fbd4/elections', async (c) => {
 
     await kv.set(`election:${electionId}`, election);
     await kv.set(`election:code:${code}`, electionId);
-    
+
     // Track creator's elections
-    const creatorElections = await kv.get(`user:${user.id}:elections`) || [];
+    const creatorElections = (await kv.get(`user:${user.id}:elections`)) || [];
     creatorElections.push(electionId);
     await kv.set(`user:${user.id}:elections`, creatorElections);
 
@@ -354,8 +363,8 @@ app.post('/make-server-b7b6fbd4/elections', async (c) => {
         code,
         title,
         description,
-        positions: positionsData.length
-      }
+        positions: positionsData.length,
+      },
     });
   } catch (error) {
     console.log('Create election error:', error);
@@ -390,7 +399,7 @@ app.get('/make-server-b7b6fbd4/elections/:id', async (c) => {
 
     return c.json({
       ...election,
-      positions
+      positions,
     });
   } catch (error) {
     console.log('Get election error:', error);
@@ -405,7 +414,9 @@ app.get('/make-server-b7b6fbd4/elections', async (c) => {
 
     let userId = null;
     if (accessToken) {
-      const { data: { user } } = await supabase.auth.getUser(accessToken);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser(accessToken);
       userId = user?.id;
     }
 
@@ -426,9 +437,9 @@ app.get('/make-server-b7b6fbd4/elections', async (c) => {
 
     if (userId) {
       // Get user's created elections
-      const createdElections = await kv.get(`user:${userId}:elections`) || [];
+      const createdElections = (await kv.get(`user:${userId}:elections`)) || [];
       const elections = [];
-      
+
       for (const electionId of createdElections) {
         const election = await kv.get(`election:${electionId}`);
         if (election) {
@@ -439,10 +450,12 @@ app.get('/make-server-b7b6fbd4/elections', async (c) => {
       // Get elections user is eligible for
       const eligibilityKeys = await kv.getByPrefix(`eligibility:`);
       const eligibleElectionIds = new Set();
-      
+
       for (const eligibility of eligibilityKeys) {
-        if (eligibility.user_id === userId && 
-            (eligibility.status === 'approved' || eligibility.status === 'preapproved')) {
+        if (
+          eligibility.user_id === userId &&
+          (eligibility.status === 'approved' || eligibility.status === 'preapproved')
+        ) {
           eligibleElectionIds.add(eligibility.election_id);
         }
       }
@@ -473,7 +486,10 @@ app.post('/make-server-b7b6fbd4/elections/:id/eligibility', async (c) => {
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(accessToken);
     if (authError || !user) {
       return c.json({ error: 'Unauthorized' }, 401);
     }
@@ -501,7 +517,7 @@ app.post('/make-server-b7b6fbd4/elections/:id/eligibility', async (c) => {
 
       const email = voterEmail.trim().toLowerCase();
       const eligibilityId = crypto.randomUUID();
-      
+
       // Check if user exists with this email
       const existingUserId = await kv.get(`user:email:${email}`);
 
@@ -511,7 +527,7 @@ app.post('/make-server-b7b6fbd4/elections/:id/eligibility', async (c) => {
         contact: email,
         user_id: existingUserId || null,
         status: 'preapproved',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
 
       await kv.set(`eligibility:${electionId}:${email}`, eligibility);
@@ -520,7 +536,7 @@ app.post('/make-server-b7b6fbd4/elections/:id/eligibility', async (c) => {
 
     return c.json({
       success: true,
-      message: `Added ${addedCount} voters to eligibility list`
+      message: `Added ${addedCount} voters to eligibility list`,
     });
   } catch (error) {
     console.log('Upload eligibility error:', error);
@@ -535,7 +551,10 @@ app.post('/make-server-b7b6fbd4/elections/:id/access-request', async (c) => {
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(accessToken);
     if (authError || !user) {
       return c.json({ error: 'Unauthorized' }, 401);
     }
@@ -564,8 +583,7 @@ app.post('/make-server-b7b6fbd4/elections/:id/access-request', async (c) => {
     };
 
     const isAlreadyApproved =
-      eligibility &&
-      (eligibility.status === 'approved' || eligibility.status === 'preapproved');
+      eligibility && (eligibility.status === 'approved' || eligibility.status === 'preapproved');
 
     if (isAlreadyApproved) {
       if (existingRequest) {
@@ -573,7 +591,7 @@ app.post('/make-server-b7b6fbd4/elections/:id/access-request', async (c) => {
       }
       return c.json({
         status: 'already-approved',
-        message: 'You are already approved to vote in this election.'
+        message: 'You are already approved to vote in this election.',
       });
     }
 
@@ -584,12 +602,12 @@ app.post('/make-server-b7b6fbd4/elections/:id/access-request', async (c) => {
         await removeExistingRequest(existingRequest);
         return c.json({
           status: 'already-approved',
-          message: 'You are already approved to vote in this election.'
+          message: 'You are already approved to vote in this election.',
         });
       } else {
         return c.json({
           status: existingRequest.status || 'pending',
-          message: 'Access request already exists'
+          message: 'Access request already exists',
         });
       }
     }
@@ -601,7 +619,7 @@ app.post('/make-server-b7b6fbd4/elections/:id/access-request', async (c) => {
       user_id: user.id,
       contact: userData.email,
       status: 'pending',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
 
     await kv.set(`access_request:${electionId}:${user.id}`, accessRequest);
@@ -611,7 +629,7 @@ app.post('/make-server-b7b6fbd4/elections/:id/access-request', async (c) => {
       success: true,
       message: 'Access request submitted',
       status: 'pending',
-      requestId
+      requestId,
     });
   } catch (error) {
     console.log('Access request error:', error);
@@ -626,7 +644,10 @@ app.get('/make-server-b7b6fbd4/elections/:id/access-requests', async (c) => {
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(accessToken);
     if (authError || !user) {
       return c.json({ error: 'Unauthorized' }, 401);
     }
@@ -643,7 +664,7 @@ app.get('/make-server-b7b6fbd4/elections/:id/access-requests', async (c) => {
     }
 
     const allRequests = await kv.getByPrefix(`access_request:${electionId}:`);
-    const requests = allRequests.filter(req => req.election_id === electionId);
+    const requests = allRequests.filter((req) => req.election_id === electionId);
 
     // Enrich with user data
     const enrichedRequests = [];
@@ -652,7 +673,7 @@ app.get('/make-server-b7b6fbd4/elections/:id/access-requests', async (c) => {
       enrichedRequests.push({
         ...request,
         user_name: userData?.name || 'Unknown',
-        user_email: userData?.email || request.contact
+        user_email: userData?.email || request.contact,
       });
     }
 
@@ -670,7 +691,10 @@ app.get('/make-server-b7b6fbd4/elections/:id/preapproved-voters', async (c) => {
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(accessToken);
     if (authError || !user) {
       return c.json({ error: 'Unauthorized' }, 401);
     }
@@ -690,10 +714,7 @@ app.get('/make-server-b7b6fbd4/elections/:id/preapproved-voters', async (c) => {
     const voters = [];
 
     for (const record of eligibilityRecords) {
-      if (
-        !record ||
-        (record.status !== 'preapproved' && record.status !== 'approved')
-      ) {
+      if (!record || (record.status !== 'preapproved' && record.status !== 'approved')) {
         continue;
       }
 
@@ -735,7 +756,10 @@ app.patch('/make-server-b7b6fbd4/elections/:id/access-requests/:requestId', asyn
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(accessToken);
     if (authError || !user) {
       return c.json({ error: 'Unauthorized' }, 401);
     }
@@ -774,7 +798,7 @@ app.patch('/make-server-b7b6fbd4/elections/:id/access-requests/:requestId', asyn
         contact: userData.email,
         user_id: request.user_id,
         status: 'approved',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
 
       await kv.set(`eligibility:${electionId}:${userData.email}`, eligibility);
@@ -790,7 +814,7 @@ app.patch('/make-server-b7b6fbd4/elections/:id/access-requests/:requestId', asyn
 
     return c.json({
       success: true,
-      message: `Access request ${action}d`
+      message: `Access request ${action}d`,
     });
   } catch (error) {
     console.log('Update access request error:', error);
@@ -805,7 +829,10 @@ app.get('/make-server-b7b6fbd4/elections/:id/eligibility-status', async (c) => {
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(accessToken);
     if (authError || !user) {
       return c.json({ error: 'Unauthorized' }, 401);
     }
@@ -819,7 +846,7 @@ app.get('/make-server-b7b6fbd4/elections/:id/eligibility-status', async (c) => {
 
     // Check eligibility
     const eligibility = await kv.get(`eligibility:${electionId}:${userData.email}`);
-    
+
     // Check if already voted
     const ballotLink = await kv.get(`ballot:link:${electionId}:${user.id}`);
 
@@ -840,10 +867,12 @@ app.get('/make-server-b7b6fbd4/elections/:id/eligibility-status', async (c) => {
     return c.json({
       eligible: isEligible,
       hasVoted: !!ballotLink,
-      accessRequest: accessRequest ? {
-        status: accessRequest.status,
-        id: accessRequest.id
-      } : null
+      accessRequest: accessRequest
+        ? {
+            status: accessRequest.status,
+            id: accessRequest.id,
+          }
+        : null,
     });
   } catch (error) {
     console.log('Check eligibility error:', error);
@@ -858,7 +887,10 @@ app.post('/make-server-b7b6fbd4/elections/:id/cast-vote', async (c) => {
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(accessToken);
     if (authError || !user) {
       return c.json({ error: 'Unauthorized' }, 401);
     }
@@ -892,7 +924,10 @@ app.post('/make-server-b7b6fbd4/elections/:id/cast-vote', async (c) => {
     const userData = await kv.get(`user:${user.id}`);
     const eligibility = await kv.get(`eligibility:${electionId}:${userData.email}`);
 
-    if (!eligibility || (eligibility.status !== 'approved' && eligibility.status !== 'preapproved')) {
+    if (
+      !eligibility ||
+      (eligibility.status !== 'approved' && eligibility.status !== 'preapproved')
+    ) {
       return c.json({ error: 'You are not eligible to vote in this election' }, 403);
     }
 
@@ -912,7 +947,7 @@ app.post('/make-server-b7b6fbd4/elections/:id/cast-vote', async (c) => {
       election_id: electionId,
       cast_at: new Date().toISOString(),
       receipt_hash: receiptHash,
-      selections: []
+      selections: [],
     };
 
     // Store selections
@@ -923,7 +958,7 @@ app.post('/make-server-b7b6fbd4/elections/:id/cast-vote', async (c) => {
           ballot.selections.push({
             position_id: positionId,
             candidate_id: selection[i],
-            rank: i + 1
+            rank: i + 1,
           });
         }
       } else {
@@ -931,7 +966,7 @@ app.post('/make-server-b7b6fbd4/elections/:id/cast-vote', async (c) => {
         ballot.selections.push({
           position_id: positionId,
           candidate_id: selection,
-          rank: null
+          rank: null,
         });
       }
     }
@@ -944,7 +979,7 @@ app.post('/make-server-b7b6fbd4/elections/:id/cast-vote', async (c) => {
       election_id: electionId,
       user_id: user.id,
       ballot_id: ballotId,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
 
     await kv.set(`ballot:link:${electionId}:${user.id}`, ballotLink);
@@ -954,7 +989,7 @@ app.post('/make-server-b7b6fbd4/elections/:id/cast-vote', async (c) => {
       id: crypto.randomUUID(),
       ballot_id: ballotId,
       timestamp: new Date().toISOString(),
-      receipt_hash: receiptHash
+      receipt_hash: receiptHash,
     };
 
     await kv.set(`audit:${ballotId}`, auditEntry);
@@ -963,7 +998,7 @@ app.post('/make-server-b7b6fbd4/elections/:id/cast-vote', async (c) => {
       success: true,
       message: 'Vote cast successfully',
       receipt: receiptHash,
-      timestamp: ballot.cast_at
+      timestamp: ballot.cast_at,
     });
   } catch (error) {
     console.log('Cast vote error:', error);
@@ -984,7 +1019,9 @@ app.get('/make-server-b7b6fbd4/elections/:id/results', async (c) => {
     let isCreator = false;
 
     if (accessToken) {
-      const { data: { user } } = await supabase.auth.getUser(accessToken);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser(accessToken);
       isCreator = user && user.id === election.creator_id;
     }
 
@@ -999,7 +1036,7 @@ app.get('/make-server-b7b6fbd4/elections/:id/results', async (c) => {
 
     // Get all ballots for this election
     const allBallots = await kv.getByPrefix(`ballot:`);
-    const electionBallots = allBallots.filter(b => b.election_id === electionId && b.id);
+    const electionBallots = allBallots.filter((b) => b.election_id === electionId && b.id);
 
     // Count votes by position and candidate
     const results = {};
@@ -1007,21 +1044,21 @@ app.get('/make-server-b7b6fbd4/elections/:id/results', async (c) => {
 
     for (const ballot of electionBallots) {
       totalVotes++;
-      
+
       for (const selection of ballot.selections) {
         if (!results[selection.position_id]) {
           results[selection.position_id] = {};
         }
-        
+
         if (!results[selection.position_id][selection.candidate_id]) {
           results[selection.position_id][selection.candidate_id] = {
             votes: 0,
-            ranks: []
+            ranks: [],
           };
         }
-        
+
         results[selection.position_id][selection.candidate_id].votes++;
-        
+
         if (selection.rank !== null) {
           results[selection.position_id][selection.candidate_id].ranks.push(selection.rank);
         }
@@ -1030,14 +1067,13 @@ app.get('/make-server-b7b6fbd4/elections/:id/results', async (c) => {
 
     // Get eligibility count
     const eligibilityRecords = await kv.getByPrefix(`eligibility:${electionId}:`);
-    const eligibleVoters = eligibilityRecords.filter(e => 
-      e.election_id === electionId && 
-      (e.status === 'approved' || e.status === 'preapproved')
+    const eligibleVoters = eligibilityRecords.filter(
+      (e) => e.election_id === electionId && (e.status === 'approved' || e.status === 'preapproved')
     ).length;
 
     // Format results with candidate details
     const formattedResults = {};
-    
+
     for (const positionId of election.positions) {
       const position = await kv.get(`position:${positionId}`);
       if (!position) continue;
@@ -1045,7 +1081,7 @@ app.get('/make-server-b7b6fbd4/elections/:id/results', async (c) => {
       formattedResults[positionId] = {
         position_name: position.name,
         ballot_type: position.ballot_type,
-        candidates: []
+        candidates: [],
       };
 
       for (const candidateId of position.candidates) {
@@ -1060,7 +1096,7 @@ app.get('/make-server-b7b6fbd4/elections/:id/results', async (c) => {
           description: candidate.description,
           photo_url: candidate.photo_url,
           votes: voteData.votes,
-          percentage: totalVotes > 0 ? ((voteData.votes / totalVotes) * 100).toFixed(2) : '0.00'
+          percentage: totalVotes > 0 ? ((voteData.votes / totalVotes) * 100).toFixed(2) : '0.00',
         });
       }
 
@@ -1073,9 +1109,10 @@ app.get('/make-server-b7b6fbd4/elections/:id/results', async (c) => {
       election_title: election.title,
       total_votes: totalVotes,
       eligible_voters: eligibleVoters,
-      turnout_percentage: eligibleVoters > 0 ? ((totalVotes / eligibleVoters) * 100).toFixed(2) : '0.00',
+      turnout_percentage:
+        eligibleVoters > 0 ? ((totalVotes / eligibleVoters) * 100).toFixed(2) : '0.00',
       results: formattedResults,
-      has_ended: hasEnded
+      has_ended: hasEnded,
     });
   } catch (error) {
     console.log('Get results error:', error);

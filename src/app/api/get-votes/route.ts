@@ -1,23 +1,23 @@
-import { NextRequest } from "next/server";
-import { createReadOnlyContract } from "@/utils/blockchain/contract";
-import { validateContractAddress } from "@/utils/validation";
-import { handleApiError, createValidationError } from "@/utils/api/errors";
-import type { VotesResponse, PositionResult, CandidateTally } from "@/types/blockchain";
-import { createClient } from "@/utils/supabase/server";
+import { NextRequest } from 'next/server';
+import { createReadOnlyContract } from '@/utils/blockchain/contract';
+import { validateContractAddress } from '@/utils/validation';
+import { handleApiError, createValidationError } from '@/utils/api/errors';
+import type { VotesResponse, PositionResult, CandidateTally } from '@/types/blockchain';
+import { createClient } from '@/utils/supabase/server';
 
 /**
  * GET /api/get-votes
  * Retrieves all vote tallies from a blockchain contract.
  * Can accept either contractAddress or electionId query parameter.
- * 
+ *
  * @param request - Next.js request object with query parameters
  * @returns JSON response with positions, candidates, and vote counts, or error response
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    let contractAddress = searchParams.get("contractAddress");
-    const electionId = searchParams.get("electionId");
+    let contractAddress = searchParams.get('contractAddress');
+    const electionId = searchParams.get('electionId');
 
     if (!contractAddress && electionId) {
       const supabase = await createClient();
@@ -45,7 +45,8 @@ export async function GET(request: NextRequest) {
     try {
       validateContractAddress(contractAddress);
     } catch (validationError) {
-      const message = validationError instanceof Error ? validationError.message : String(validationError);
+      const message =
+        validationError instanceof Error ? validationError.message : String(validationError);
       return createValidationError(message);
     }
 
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
     if (!positions || positions.length === 0) {
       const response: VotesResponse = {
         positions: [],
-        contractAddress
+        contractAddress,
       };
       return Response.json(response);
     }
@@ -64,31 +65,30 @@ export async function GET(request: NextRequest) {
 
     for (const positionName of positions) {
       const candidates: string[] = await contract.getCandidateList(positionName);
-      
+
       const candidateTallies: CandidateTally[] = [];
 
       for (const candidateName of candidates) {
         const tally: bigint = await contract.getVoteCount(positionName, candidateName);
         candidateTallies.push({
           name: candidateName,
-          votes: tally.toString() // Convert BigInt to string
+          votes: tally.toString(), // Convert BigInt to string
         });
       }
 
       results.push({
         name: positionName,
-        candidates: candidateTallies
+        candidates: candidateTallies,
       });
     }
 
     const response: VotesResponse = {
       positions: results,
-      contractAddress
+      contractAddress,
     };
 
     return Response.json(response);
-    
   } catch (error) {
-    return handleApiError(error, "get-votes");
+    return handleApiError(error, 'get-votes');
   }
 }

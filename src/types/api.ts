@@ -96,4 +96,3 @@ export interface UploadEligibilityResponse {
   added: number;
   message?: string;
 }
-

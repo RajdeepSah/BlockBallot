@@ -1,6 +1,11 @@
 import { NextRequest } from 'next/server';
 
-import { createValidationError, handleApiError, createUnauthorizedError, createNotFoundError } from '@/utils/api/errors';
+import {
+  createValidationError,
+  handleApiError,
+  createUnauthorizedError,
+  createNotFoundError,
+} from '@/utils/api/errors';
 import * as kv from '@/utils/supabase/kvStore';
 import { getAnonServerClient } from '@/utils/supabase/clients';
 import { UserRecord } from '@/types/kv-records';
@@ -9,7 +14,7 @@ const OTP_EXPIRY_MS = 5 * 60 * 1000;
 
 /**
  * Generates a random 6-digit OTP code.
- * 
+ *
  * @returns 6-digit OTP string
  */
 function generateOTP() {
@@ -18,13 +23,13 @@ function generateOTP() {
 
 /**
  * POST /api/auth/login
- * 
+ *
  * Authenticates a user with email and password, then generates an OTP for 2FA.
- * 
+ *
  * Request body:
  * - email: User email address (required)
  * - password: User password (required)
- * 
+ *
  * @param request - Next.js request object containing login credentials
  * @returns JSON response with 2FA requirement, access token, and dev OTP
  * @throws Returns error response if authentication fails or credentials are missing
@@ -77,5 +82,3 @@ export async function POST(request: NextRequest) {
     return handleApiError(error, 'auth/login');
   }
 }
-
-

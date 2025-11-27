@@ -11,7 +11,7 @@ import type { ContractAddress } from '@/types/blockchain';
 /**
  * Creates a read-only contract instance for querying blockchain state.
  * Cannot be used to send transactions.
- * 
+ *
  * @param address - The contract address
  * @returns Contract instance for read-only operations
  */
@@ -23,7 +23,7 @@ export function createReadOnlyContract(address: ContractAddress): Contract {
 /**
  * Creates a writable contract instance that can send transactions.
  * Contract is connected to a wallet for signing transactions.
- * 
+ *
  * @param address - The contract address
  * @returns Contract instance for write operations (voting, etc.)
  */
@@ -31,4 +31,3 @@ export function createWritableContract(address: ContractAddress): Contract {
   const wallet = createWallet();
   return new Contract(address, getContractABI(), wallet);
 }
-

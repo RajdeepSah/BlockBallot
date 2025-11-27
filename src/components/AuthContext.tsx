@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../utils/api';
@@ -14,7 +14,10 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<{ requires2FA: boolean; userId?: string; email?: string }>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ requires2FA: boolean; userId?: string; email?: string }>;
   verify2FA: (email: string, otp: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
@@ -27,7 +30,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 /**
  * Auth provider component that manages authentication state and provides auth methods.
  * Handles user login, registration, 2FA verification, and session management.
- * 
+ *
  * @param props - Component props
  * @param props.children - Child components to wrap with auth context
  * @returns Auth context provider
@@ -62,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const response = await api.login({ email, password });
-    
+
     if (response.requires2FA) {
       setToken(response.accessToken);
       try {
@@ -72,10 +75,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error('Error storing temp token:', error);
       }
-      return { 
-        requires2FA: true, 
+      return {
+        requires2FA: true,
         userId: response.userId,
-        email
+        email,
       };
     }
 
@@ -95,23 +98,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(data.error || '2FA verification failed');
     }
 
-   let tempToken: string | null = null;
-   try {
-     if (typeof window !== 'undefined') {
-       tempToken = localStorage.getItem('tempToken');
-     }
-   } catch (error) {
-     console.error('Error reading temp token:', error);
-   }
+    let tempToken: string | null = null;
+    try {
+      if (typeof window !== 'undefined') {
+        tempToken = localStorage.getItem('tempToken');
+      }
+    } catch (error) {
+      console.error('Error reading temp token:', error);
+    }
 
-   if (tempToken) {
-     const me = await fetch('/api/auth/me', {
+    if (tempToken) {
+      const me = await fetch('/api/auth/me', {
         headers: {
-           'Authorization': `Bearer ${tempToken}`
-        }
-     });
-     
-     if (!me.ok) {
+          Authorization: `Bearer ${tempToken}`,
+        },
+      });
+
+      if (!me.ok) {
         try {
           if (typeof window !== 'undefined') {
             localStorage.removeItem('tempToken');
@@ -120,21 +123,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('Error removing temp token:', error);
         }
         return;
-     }
-     
-     const { user } = await me.json();
-     setToken(tempToken);
-     setUser(user);
-     try {
-       if (typeof window !== 'undefined') {
-         localStorage.setItem('accessToken', tempToken);
-         localStorage.setItem('user', JSON.stringify(user));
-         localStorage.removeItem('tempToken');
-       }
-     } catch (error) {
-       console.error('Error storing auth data:', error);
-     }
-   }
+      }
+
+      const { user } = await me.json();
+      setToken(tempToken);
+      setUser(user);
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('accessToken', tempToken);
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.removeItem('tempToken');
+        }
+      } catch (error) {
+        console.error('Error storing auth data:', error);
+      }
+    }
   };
 
   const register = async (data: RegisterData) => {
@@ -170,7 +173,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, verify2FA, register, logout, resendOTP, loading }}>
+    <AuthContext.Provider
+      value={{ user, token, login, verify2FA, register, logout, resendOTP, loading }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -178,7 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 /**
  * Hook to access authentication context.
- * 
+ *
  * @returns Authentication context with user, token, and auth methods
  * @throws Error if used outside of AuthProvider
  */

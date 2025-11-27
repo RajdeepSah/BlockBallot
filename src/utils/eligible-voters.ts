@@ -9,7 +9,7 @@ export interface EligibleVoter {
 
 /**
  * Fetches the list of eligible voters for an election from the API.
- * 
+ *
  * @param electionId - The election ID to fetch voters for
  * @returns Promise resolving to array of eligible voters
  * @throws Error if the API request fails

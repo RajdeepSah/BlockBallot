@@ -6,9 +6,7 @@ const KV_TABLE = 'kv_store_b7b6fbd4';
 const supabaseUrl = process.env.SUPABASE_URL ?? `https://${projectId}.supabase.co`;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 
-const supabaseServerClient = serviceRoleKey
-  ? createClient(supabaseUrl, serviceRoleKey)
-  : null;
+const supabaseServerClient = serviceRoleKey ? createClient(supabaseUrl, serviceRoleKey) : null;
 
 type EligibilityRecord = {
   id: string;
@@ -33,18 +31,14 @@ function requireSupabase() {
 
 /**
  * Retrieves a value from the KV store by key.
- * 
+ *
  * @param key - The key to look up
  * @returns The value if found, null otherwise
  * @throws Error if KV read fails
  */
 async function getKvValue<T>(key: string): Promise<T | null> {
   const client = requireSupabase();
-  const { data, error } = await client
-    .from(KV_TABLE)
-    .select('value')
-    .eq('key', key)
-    .maybeSingle();
+  const { data, error } = await client.from(KV_TABLE).select('value').eq('key', key).maybeSingle();
 
   if (error) {
     throw new Error(error.message);
@@ -55,7 +49,7 @@ async function getKvValue<T>(key: string): Promise<T | null> {
 
 /**
  * Resolves a user's display name from their user ID or email.
- * 
+ *
  * @param userId - Optional user ID to look up
  * @param fallbackEmail - Fallback email if user ID is not available
  * @returns User's display name, email, or "Pending Registration"
@@ -84,13 +78,13 @@ async function resolveUserName(userId?: string, fallbackEmail?: string) {
 
 /**
  * POST /api/eligible-voters
- * 
+ *
  * Retrieves the list of eligible voters for an election.
  * Returns pre-approved and approved voters with their display names.
- * 
+ *
  * Request body:
  * - electionId: The election ID (required)
- * 
+ *
  * @param request - The incoming request object
  * @returns JSON response with voters array
  * @throws Returns error response if election ID is missing or loading fails
@@ -121,9 +115,7 @@ export async function POST(request: Request) {
     const preapproved = eligibilityRecords
       .map((row) => row.value)
       .filter(
-        (record) =>
-          record &&
-          (record.status === 'preapproved' || record.status === 'approved')
+        (record) => record && (record.status === 'preapproved' || record.status === 'approved')
       );
 
     const voters = await Promise.all(

@@ -8,7 +8,7 @@ import { Vote, UserPlus, Search, TrendingUp, CheckCircle, X } from 'lucide-react
 /**
  * Welcome guide component displayed on first visit to the dashboard.
  * Shows users how to use the platform and can be dismissed.
- * 
+ *
  * @returns Welcome guide modal or null if already seen
  */
 export function WelcomeGuide() {
@@ -43,13 +43,13 @@ export function WelcomeGuide() {
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <Card className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-indigo-600 rounded-lg">
-                <Vote className="w-6 h-6 text-white" />
+              <div className="rounded-lg bg-indigo-600 p-2">
+                <Vote className="h-6 w-6 text-white" />
               </div>
               <div>
                 <CardTitle className="text-2xl">Welcome to BlockBallot!</CardTitle>
@@ -59,27 +59,27 @@ export function WelcomeGuide() {
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={handleClose}>
-              <X className="w-4 h-4" />
+              <X className="h-4 w-4" />
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Alert className="bg-yellow-50 border-yellow-200">
+          <Alert className="border-yellow-200 bg-yellow-50">
             <AlertDescription className="text-sm">
-              <strong>⚠️ Demo Environment:</strong> This is a demonstration platform. 
-              Do not use for sensitive elections or real personal data.
+              <strong>⚠️ Demo Environment:</strong> This is a demonstration platform. Do not use for
+              sensitive elections or real personal data.
             </AlertDescription>
           </Alert>
 
           <div className="space-y-4">
             <h3 className="flex items-center">
-              <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
+              <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
               Quick Start Guide
             </h3>
 
             <div className="space-y-4">
-              <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
-                <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm">
+              <div className="flex items-start space-x-3 rounded-lg bg-blue-50 p-3">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm text-white">
                   1
                 </div>
                 <div className="flex-1">
@@ -88,11 +88,11 @@ export function WelcomeGuide() {
                     Enter a 7-digit election code to join and vote in elections
                   </p>
                 </div>
-                <Search className="w-5 h-5 text-blue-600 mt-1" />
+                <Search className="mt-1 h-5 w-5 text-blue-600" />
               </div>
 
-              <div className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg">
-                <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm">
+              <div className="flex items-start space-x-3 rounded-lg bg-green-50 p-3">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-600 text-sm text-white">
                   2
                 </div>
                 <div className="flex-1">
@@ -101,11 +101,11 @@ export function WelcomeGuide() {
                     Create elections, set up positions & candidates, and manage voter eligibility
                   </p>
                 </div>
-                <UserPlus className="w-5 h-5 text-green-600 mt-1" />
+                <UserPlus className="mt-1 h-5 w-5 text-green-600" />
               </div>
 
-              <div className="flex items-start space-x-3 p-3 bg-purple-50 rounded-lg">
-                <div className="flex-shrink-0 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm">
+              <div className="flex items-start space-x-3 rounded-lg bg-purple-50 p-3">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-purple-600 text-sm text-white">
                   3
                 </div>
                 <div className="flex-1">
@@ -114,7 +114,7 @@ export function WelcomeGuide() {
                     See live results (admin) or public results after elections close
                   </p>
                 </div>
-                <TrendingUp className="w-5 h-5 text-purple-600 mt-1" />
+                <TrendingUp className="mt-1 h-5 w-5 text-purple-600" />
               </div>
             </div>
           </div>
@@ -143,10 +143,16 @@ export function WelcomeGuide() {
 
           <div className="border-t pt-4">
             <h3 className="mb-2">Ballot Types Supported</h3>
-            <ul className="text-sm space-y-1 text-gray-600">
-              <li>• <strong>Single Choice:</strong> Vote for one candidate</li>
-              <li>• <strong>Multiple Choice:</strong> Vote for multiple candidates</li>
-              <li>• <strong>Ranked Choice:</strong> Rank candidates by preference</li>
+            <ul className="space-y-1 text-sm text-gray-600">
+              <li>
+                • <strong>Single Choice:</strong> Vote for one candidate
+              </li>
+              <li>
+                • <strong>Multiple Choice:</strong> Vote for multiple candidates
+              </li>
+              <li>
+                • <strong>Ranked Choice:</strong> Rank candidates by preference
+              </li>
             </ul>
           </div>
 

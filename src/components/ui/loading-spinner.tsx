@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React from "react";
-import { cn } from "./utils";
+import React from 'react';
+import { cn } from './utils';
 
 interface LoadingSpinnerProps {
   /** Message to display below the spinner */
@@ -14,29 +14,26 @@ interface LoadingSpinnerProps {
 
 /**
  * LoadingSpinner - Consistent loading indicator
- * 
+ *
  * Design customization: Modify spinner size, color, and animation here.
  */
-export function LoadingSpinner({ 
-  message = 'Loading...', 
+export function LoadingSpinner({
+  message = 'Loading...',
   fullScreen = true,
-  className 
+  className,
 }: LoadingSpinnerProps) {
   const content = (
-    <div className={cn("text-center", className)}>
-      <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+    <div className={cn('text-center', className)}>
+      <div className="inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-indigo-600" />
       {message && <p className="mt-4 text-gray-600">{message}</p>}
     </div>
   );
 
   if (fullScreen) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        {content}
-      </div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">{content}</div>
     );
   }
 
   return content;
 }
-

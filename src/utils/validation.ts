@@ -7,7 +7,7 @@ import type { VoteInput, PositionInput } from '@/types/blockchain';
 
 /**
  * Validates that a string is a valid Ethereum address format.
- * 
+ *
  * @param address - The address string to validate
  * @throws Error if address is missing, not a string, or invalid format
  */
@@ -23,7 +23,7 @@ export function validateContractAddress(address: string): void {
 
 /**
  * Validates that a vote input has the required position and candidate fields.
- * 
+ *
  * @param vote - The vote input to validate
  * @throws Error if vote is missing position or candidate
  */
@@ -39,7 +39,7 @@ export function validateVoteInput(vote: VoteInput): void {
 
 /**
  * Validates an array of vote inputs, ensuring all votes are valid.
- * 
+ *
  * @param votes - Array of vote inputs to validate
  * @throws Error if array is empty or any vote is invalid
  */
@@ -60,7 +60,7 @@ export function validateVotesArray(votes: VoteInput[]): void {
 
 /**
  * Validates that a position input has required name and candidates.
- * 
+ *
  * @param position - The position input to validate
  * @throws Error if position is missing name or has no candidates
  */
@@ -81,7 +81,7 @@ export function validatePositionInput(position: PositionInput): void {
     if (!candidate.name || typeof candidate.name !== 'string') {
       throw new Error(
         `All candidates in "${position.name}" must have a name ` +
-        `(candidate at index ${index} is missing name)`
+          `(candidate at index ${index} is missing name)`
       );
     }
   });
@@ -89,7 +89,7 @@ export function validatePositionInput(position: PositionInput): void {
 
 /**
  * Validates an array of position inputs, ensuring all positions are valid.
- * 
+ *
  * @param positions - Array of position inputs to validate
  * @throws Error if array is empty or any position is invalid
  */
@@ -111,7 +111,7 @@ export function validatePositionsArray(positions: PositionInput[]): void {
 /**
  * Sanitizes a string by trimming whitespace and removing control characters.
  * Preserves newlines and tabs for use in descriptions.
- * 
+ *
  * @param input - The string to sanitize
  * @returns Sanitized string, or empty string if input is not a string
  */
@@ -126,7 +126,7 @@ export function sanitizeString(input: string): string {
 /**
  * Sanitizes text input for descriptions, preserving newlines and tabs.
  * Removes control characters but keeps formatting characters.
- * 
+ *
  * @param input - The text to sanitize
  * @returns Sanitized text, or empty string if input is not a string
  */
@@ -141,7 +141,7 @@ export function sanitizeText(input: string): string {
 /**
  * Validates that a position has no duplicate candidate names.
  * Comparison is case-insensitive and uses sanitized names.
- * 
+ *
  * @param position - The position to validate
  * @throws Error if duplicate candidate names are found
  */
@@ -151,12 +151,10 @@ export function validateNoDuplicateCandidates(position: PositionInput): void {
   }
 
   const candidateNames = position.candidates
-    .map(c => sanitizeString(c.name).toLowerCase())
-    .filter(name => name.length > 0); // Only check non-empty names
+    .map((c) => sanitizeString(c.name).toLowerCase())
+    .filter((name) => name.length > 0); // Only check non-empty names
 
-  const duplicates = candidateNames.filter((name, index) => 
-    candidateNames.indexOf(name) !== index
-  );
+  const duplicates = candidateNames.filter((name, index) => candidateNames.indexOf(name) !== index);
 
   if (duplicates.length > 0) {
     const uniqueDuplicates = [...new Set(duplicates)];
@@ -168,7 +166,7 @@ export function validateNoDuplicateCandidates(position: PositionInput): void {
 
 /**
  * Validates that all positions have no duplicate candidate names.
- * 
+ *
  * @param positions - Array of positions to validate
  * @throws Error if any position has duplicate candidates
  */
@@ -190,7 +188,7 @@ export function validateNoDuplicateCandidatesInPositions(positions: PositionInpu
 /**
  * Validates that there are no duplicate position names across all positions.
  * Comparison is case-insensitive and uses sanitized names.
- * 
+ *
  * @param positions - Array of positions to validate
  * @throws Error if duplicate position names are found
  */
@@ -200,18 +198,13 @@ export function validateNoDuplicatePositions(positions: PositionInput[]): void {
   }
 
   const positionNames = positions
-    .map(p => sanitizeString(p.name).toLowerCase())
-    .filter(name => name.length > 0); // Only check non-empty names
+    .map((p) => sanitizeString(p.name).toLowerCase())
+    .filter((name) => name.length > 0); // Only check non-empty names
 
-  const duplicates = positionNames.filter((name, index) => 
-    positionNames.indexOf(name) !== index
-  );
+  const duplicates = positionNames.filter((name, index) => positionNames.indexOf(name) !== index);
 
   if (duplicates.length > 0) {
     const uniqueDuplicates = [...new Set(duplicates)];
-    throw new Error(
-      `Duplicate position names found: ${uniqueDuplicates.join(', ')}`
-    );
+    throw new Error(`Duplicate position names found: ${uniqueDuplicates.join(', ')}`);
   }
 }
-

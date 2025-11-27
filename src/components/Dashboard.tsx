@@ -19,7 +19,7 @@ interface DashboardProps {
 
 /**
  * Dashboard component displaying user's elections and election search functionality.
- * 
+ *
  * @param props - Component props
  * @param props.onCreateElection - Callback to navigate to election creation
  * @param props.onViewElection - Callback to view an election by ID
@@ -59,7 +59,7 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
 
     try {
       const response = await api.searchElections(searchCode.trim().toUpperCase());
-      
+
       if (response.elections && response.elections.length > 0) {
         const election = response.elections[0];
         if (election.id) {
@@ -78,7 +78,7 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
 
   /**
    * Determines the status badge for an election based on current time.
-   * 
+   *
    * @param election - The election to check status for
    * @returns Object with label and variant for the status badge
    */
@@ -92,18 +92,18 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
     return { label: 'Active', variant: 'default' as const };
   };
 
-  const myElections = elections.filter(e => e.creator_id === user?.id);
-  const participatingElections = elections.filter(e => e.creator_id !== user?.id);
+  const myElections = elections.filter((e) => e.creator_id === user?.id);
+  const participatingElections = elections.filter((e) => e.creator_id !== user?.id);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <WelcomeGuide />
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="border-b bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-indigo-600 rounded-lg">
-                <Vote className="w-6 h-6 text-white" />
+              <div className="rounded-lg bg-indigo-600 p-2">
+                <Vote className="h-6 w-6 text-white" />
               </div>
               <div>
                 <h1 className="text-xl">BlockBallot</h1>
@@ -111,19 +111,19 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
               </div>
             </div>
             <Button onClick={logout} variant="outline" size="sm">
-              <LogOut className="w-4 h-4 mr-2" />
+              <LogOut className="mr-2 h-4 w-4" />
               Sign Out
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Search className="w-5 h-5 mr-2" />
+                <Search className="mr-2 h-5 w-5" />
                 Join Election
               </CardTitle>
               <CardDescription>Enter a 7-digit election code</CardDescription>
@@ -153,17 +153,17 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus className="mr-2 h-5 w-5" />
                 Create Election
               </CardTitle>
               <CardDescription>Host your own secure election</CardDescription>
             </CardHeader>
             <CardContent>
               <Button onClick={onCreateElection} className="w-full" size="lg">
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus className="mr-2 h-5 w-5" />
                 New Election
               </Button>
-              <p className="text-xs text-gray-500 mt-4">
+              <p className="mt-4 text-xs text-gray-500">
                 Create elections for clubs, organizations, or communities
               </p>
             </CardContent>
@@ -172,47 +172,51 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
 
         {myElections.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl mb-4 flex items-center">
-              <Calendar className="w-5 h-5 mr-2" />
+            <h2 className="mb-4 flex items-center text-xl">
+              <Calendar className="mr-2 h-5 w-5" />
               Elections I&apos;m Hosting
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {myElections.map((election) => {
                 const status = getElectionStatus(election);
                 return (
-                  <Card key={election.id} className="hover:shadow-lg transition-shadow">
+                  <Card key={election.id} className="transition-shadow hover:shadow-lg">
                     <CardHeader>
                       <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-lg min-w-0 flex-1 line-clamp-2">{election.title}</CardTitle>
-                        <Badge variant={status.variant} className="flex-shrink-0">{status.label}</Badge>
+                        <CardTitle className="line-clamp-2 min-w-0 flex-1 text-lg">
+                          {election.title}
+                        </CardTitle>
+                        <Badge variant={status.variant} className="flex-shrink-0">
+                          {status.label}
+                        </Badge>
                       </div>
                       <CardDescription className="line-clamp-2">
                         {election.description || 'No description'}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-2 text-sm text-gray-600 mb-4">
+                      <div className="mb-4 space-y-2 text-sm text-gray-600">
                         <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-2" />
+                          <Calendar className="mr-2 h-4 w-4" />
                           {new Date(election.starts_at).toLocaleDateString()}
                         </div>
                         <div className="flex items-center">
-                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                          <span className="rounded bg-gray-100 px-2 py-1 text-xs">
                             Code: <strong>{election.code}</strong>
                           </span>
                         </div>
                       </div>
                       <div className="flex space-x-2">
-                        <Button 
+                        <Button
                           onClick={() => election.id && onManageElection(election.id)}
                           variant="outline"
                           size="sm"
                           className="flex-1"
                         >
-                          <TrendingUp className="w-4 h-4 mr-1" />
+                          <TrendingUp className="mr-1 h-4 w-4" />
                           Manage
                         </Button>
-                        <Button 
+                        <Button
                           onClick={() => election.id && onViewElection(election.id)}
                           size="sm"
                           className="flex-1"
@@ -230,32 +234,36 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
 
         {participatingElections.length > 0 && (
           <div>
-            <h2 className="text-xl mb-4 flex items-center">
-              <Users className="w-5 h-5 mr-2" />
+            <h2 className="mb-4 flex items-center text-xl">
+              <Users className="mr-2 h-5 w-5" />
               Elections I Can Vote In
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {participatingElections.map((election) => {
                 const status = getElectionStatus(election);
                 return (
-                  <Card key={election.id} className="hover:shadow-lg transition-shadow">
+                  <Card key={election.id} className="transition-shadow hover:shadow-lg">
                     <CardHeader>
                       <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-lg min-w-0 flex-1 line-clamp-2">{election.title}</CardTitle>
-                        <Badge variant={status.variant} className="flex-shrink-0">{status.label}</Badge>
+                        <CardTitle className="line-clamp-2 min-w-0 flex-1 text-lg">
+                          {election.title}
+                        </CardTitle>
+                        <Badge variant={status.variant} className="flex-shrink-0">
+                          {status.label}
+                        </Badge>
                       </div>
                       <CardDescription className="line-clamp-2">
                         {election.description || 'No description'}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-2 text-sm text-gray-600 mb-4">
+                      <div className="mb-4 space-y-2 text-sm text-gray-600">
                         <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-2" />
+                          <Calendar className="mr-2 h-4 w-4" />
                           {new Date(election.starts_at).toLocaleDateString()}
                         </div>
                       </div>
-                      <Button 
+                      <Button
                         onClick={() => election.id && onViewElection(election.id)}
                         className="w-full"
                         size="sm"
@@ -271,15 +279,15 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
         )}
 
         {!loading && elections.length === 0 && (
-          <Card className="text-center py-12">
+          <Card className="py-12 text-center">
             <CardContent>
-              <Vote className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl mb-2">No Elections Yet</h3>
-              <p className="text-gray-600 mb-6">
+              <Vote className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+              <h3 className="mb-2 text-xl">No Elections Yet</h3>
+              <p className="mb-6 text-gray-600">
                 Create your first election or join one using a code
               </p>
               <Button onClick={onCreateElection}>
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus className="mr-2 h-5 w-5" />
                 Create Election
               </Button>
             </CardContent>

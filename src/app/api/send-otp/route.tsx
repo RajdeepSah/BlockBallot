@@ -19,7 +19,7 @@ const RESEND_API_URL = 'https://api.resend.com/emails';
 
 /**
  * Sends an OTP email using the Resend API.
- * 
+ *
  * @param email - Recipient email address
  * @param code - OTP code to send
  * @throws Error if API key is missing or email sending fails
@@ -59,7 +59,7 @@ async function sendOtpEmail(email: string, code: string) {
  * POST /api/send-otp
  * Generates and sends an OTP code to the provided email address.
  * Enforces rate limiting to prevent abuse.
- * 
+ *
  * @param request - Request object containing email in JSON body
  * @returns JSON response with success status, or error response
  */
@@ -79,10 +79,7 @@ export async function POST(request: Request) {
       throw new Error('Unable to read OTP data store.');
     });
 
-    if (
-      existingRecord &&
-      Date.now() - existingRecord.lastSentAt < OTP_RATE_LIMIT_WINDOW_MS
-    ) {
+    if (existingRecord && Date.now() - existingRecord.lastSentAt < OTP_RATE_LIMIT_WINDOW_MS) {
       return NextResponse.json(
         { error: 'OTP already sent. Please wait before requesting another code.' },
         { status: 429 }

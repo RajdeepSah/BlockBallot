@@ -14,7 +14,7 @@ interface ApiOptions {
 
 /**
  * Makes an API call to the Supabase Edge Function.
- * 
+ *
  * @param endpoint - API endpoint path
  * @param options - Request options (method, body, token)
  * @returns Promise resolving to API response data
@@ -55,7 +55,7 @@ export async function apiCall(endpoint: string, options: ApiOptions = {}) {
 export const api = {
   /**
    * Registers a new user account.
-   * 
+   *
    * @param data - Registration data (name, email, password, optional phone)
    * @returns Promise resolving to registration response
    * @throws Error if registration fails
@@ -74,7 +74,7 @@ export const api = {
   },
   /**
    * Logs in a user with email and password.
-   * 
+   *
    * @param data - Login credentials (email, password)
    * @returns Promise resolving to login response with 2FA requirement
    * @throws Error if login fails
@@ -93,7 +93,7 @@ export const api = {
   },
   /**
    * Verifies 2FA OTP code for user authentication.
-   * 
+   *
    * @param data - 2FA verification data (email, otp)
    * @returns Promise resolving to verification response
    * @throws Error if verification fails
@@ -112,7 +112,7 @@ export const api = {
   },
   /**
    * Resends OTP code to user's email.
-   * 
+   *
    * @param data - Resend OTP data (email)
    * @returns Promise resolving to resend response
    * @throws Error if resend fails
@@ -131,7 +131,7 @@ export const api = {
   },
   /**
    * Gets current authenticated user information.
-   * 
+   *
    * @param token - Authentication token
    * @returns Promise resolving to user data
    * @throws Error if request fails
@@ -140,7 +140,7 @@ export const api = {
 
   /**
    * Retrieves a single election by ID.
-   * 
+   *
    * @param id - Election ID
    * @returns Promise resolving to election data
    * @throws Error if election not found or request fails
@@ -155,7 +155,7 @@ export const api = {
   },
   /**
    * Searches for elections by code or gets user's elections.
-   * 
+   *
    * @param code - Optional 7-digit election code to search for
    * @param token - Optional authentication token to get user's elections
    * @returns Promise resolving to elections array
@@ -164,7 +164,7 @@ export const api = {
   searchElections: async (code?: string, token?: string) => {
     const query = code ? `?code=${code}` : '';
     const headers: Record<string, string> = {};
-    
+
     if (token) {
       const validToken = await getValidAccessToken();
       if (!validToken) {
@@ -173,20 +173,20 @@ export const api = {
       }
       headers['Authorization'] = `Bearer ${validToken}`;
     }
-    
+
     const response = await authenticatedFetch(`/api/elections${query}`, { headers });
-    
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to search elections');
     }
-    
+
     return await response.json();
   },
-  
+
   /**
    * Uploads a voter eligibility list for an election.
-   * 
+   *
    * @param electionId - The election ID
    * @param voters - Array of email addresses to add to eligibility
    * @param _token - Authentication token (unused, uses refreshed token internally)
@@ -203,21 +203,21 @@ export const api = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${validToken}`
+        Authorization: `Bearer ${validToken}`,
       },
-      body: JSON.stringify({ voters })
+      body: JSON.stringify({ voters }),
     });
-    
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to upload eligibility list');
     }
-    
+
     return await response.json();
   },
   /**
    * Checks if the current user is eligible to vote in an election.
-   * 
+   *
    * @param electionId - The election ID
    * @param _token - Authentication token (unused, uses refreshed token internally)
    * @returns Promise resolving to eligibility status
@@ -231,21 +231,21 @@ export const api = {
     }
     const response = await authenticatedFetch(`/api/elections/${electionId}/eligibility-status`, {
       headers: {
-        'Authorization': `Bearer ${validToken}`
-      }
+        Authorization: `Bearer ${validToken}`,
+      },
     });
-    
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to check eligibility');
     }
-    
+
     return await response.json();
   },
 
   /**
    * Requests access to vote in an election.
-   * 
+   *
    * @param electionId - The election ID
    * @param _token - Authentication token (unused, uses refreshed token internally)
    * @returns Promise resolving to access request response
@@ -260,20 +260,20 @@ export const api = {
     const response = await authenticatedFetch(`/api/elections/${electionId}/access-request`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${validToken}`
-      }
+        Authorization: `Bearer ${validToken}`,
+      },
     });
-    
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to request access');
     }
-    
+
     return await response.json();
   },
   /**
    * Gets all access requests for an election (admin only).
-   * 
+   *
    * @param electionId - The election ID
    * @param _token - Authentication token (unused, uses refreshed token internally)
    * @returns Promise resolving to access requests array
@@ -287,20 +287,20 @@ export const api = {
     }
     const response = await authenticatedFetch(`/api/elections/${electionId}/access-requests`, {
       headers: {
-        'Authorization': `Bearer ${validToken}`
-      }
+        Authorization: `Bearer ${validToken}`,
+      },
     });
-    
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to get access requests');
     }
-    
+
     return await response.json();
   },
   /**
    * Updates an access request status (approve or deny).
-   * 
+   *
    * @param electionId - The election ID
    * @param requestId - The access request ID
    * @param action - Action to take ('approve' or 'deny')
@@ -308,32 +308,40 @@ export const api = {
    * @returns Promise resolving to update response
    * @throws Error if update fails or user is not election creator
    */
-  updateAccessRequest: async (electionId: string, requestId: string, action: 'approve' | 'deny', _token: string) => {
+  updateAccessRequest: async (
+    electionId: string,
+    requestId: string,
+    action: 'approve' | 'deny',
+    _token: string
+  ) => {
     const validToken = await getValidAccessToken();
     if (!validToken) {
       handleUnauthorizedError();
       throw new Error('Unauthorized');
     }
-    const response = await authenticatedFetch(`/api/elections/${electionId}/access-requests/${requestId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${validToken}`
-      },
-      body: JSON.stringify({ action })
-    });
-    
+    const response = await authenticatedFetch(
+      `/api/elections/${electionId}/access-requests/${requestId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${validToken}`,
+        },
+        body: JSON.stringify({ action }),
+      }
+    );
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to update access request');
     }
-    
+
     return await response.json();
   },
 
   /**
    * Gets election results from the blockchain.
-   * 
+   *
    * @param electionId - The election ID
    * @returns Promise resolving to election results
    * @throws Error if results not available or request fails
@@ -349,7 +357,7 @@ export const api = {
 
   /**
    * Casts a vote in an election by submitting to the blockchain contract.
-   * 
+   *
    * @param electionId - The election ID
    * @param selections - Vote selections mapping position IDs to candidate IDs or arrays
    * @param election - The election object with contract address
@@ -357,7 +365,12 @@ export const api = {
    * @returns Promise resolving to vote receipt with transaction hash
    * @throws Error if voting fails, user is ineligible, or has already voted
    */
-  castVote: async (electionId: string, selections: VoteSelections, election: Election, _token: string) => {
+  castVote: async (
+    electionId: string,
+    selections: VoteSelections,
+    election: Election,
+    _token: string
+  ) => {
     const validToken = await getValidAccessToken();
     if (!validToken) {
       handleUnauthorizedError();
@@ -371,7 +384,7 @@ export const api = {
 
     // Transform selections (positionId -> candidateId) to votes array (position name -> candidate name)
     const votes: Array<{ position: string; candidate: string }> = [];
-    
+
     for (const position of election.positions) {
       const selection = selections[position.id];
       if (!selection) continue;
@@ -402,13 +415,13 @@ export const api = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${validToken}`
+        Authorization: `Bearer ${validToken}`,
       },
       body: JSON.stringify({
         electionId,
         contractAddress: election.contract_address,
-        votes
-      })
+        votes,
+      }),
     });
 
     if (!response.ok) {
@@ -419,7 +432,7 @@ export const api = {
     const result = await response.json();
     return {
       receipt: result.txHash,
-      ...result
+      ...result,
     };
   },
 };

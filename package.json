@@ -79,6 +79,8 @@
     "dev": "next dev",
     "build": "npm run compile-contract && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   }
 }

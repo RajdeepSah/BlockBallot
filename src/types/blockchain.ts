@@ -72,4 +72,3 @@ export interface PositionInput {
   name: string;
   candidates: Array<{ name: string }>;
 }
-

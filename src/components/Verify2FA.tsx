@@ -17,7 +17,7 @@ interface Verify2FAProps {
 /**
  * Verify2FA component for entering and verifying OTP codes.
  * Handles 2FA verification flow after initial login.
- * 
+ *
  * @param props - Component props
  * @param props.email - Email address receiving the OTP
  * @param props.onSuccess - Callback when verification succeeds
@@ -29,7 +29,7 @@ export function Verify2FA({ email, onSuccess, onBack }: Verify2FAProps) {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -64,15 +64,13 @@ export function Verify2FA({ email, onSuccess, onBack }: Verify2FAProps) {
     <AuthLayout>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-indigo-600 rounded-full">
-              <Shield className="w-8 h-8 text-white" />
+          <div className="mb-4 flex justify-center">
+            <div className="rounded-full bg-indigo-600 p-3">
+              <Shield className="h-8 w-8 text-white" />
             </div>
           </div>
           <CardTitle className="text-2xl">Two-Factor Authentication</CardTitle>
-          <CardDescription>
-            Enter the 6-digit code sent to your email
-          </CardDescription>
+          <CardDescription>Enter the 6-digit code sent to your email</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -88,8 +86,9 @@ export function Verify2FA({ email, onSuccess, onBack }: Verify2FAProps) {
                 maxLength={6}
                 className="text-center text-2xl tracking-widest"
               />
-              <p className="text-xs text-gray-500 text-center">
-                Code was sent to <span className="font-medium text-gray-700">{email}</span> and expires in 5 minutes.
+              <p className="text-center text-xs text-gray-500">
+                Code was sent to <span className="font-medium text-gray-700">{email}</span> and
+                expires in 5 minutes.
               </p>
             </div>
 
@@ -98,11 +97,7 @@ export function Verify2FA({ email, onSuccess, onBack }: Verify2FAProps) {
             </Button>
 
             <div className="flex items-center justify-between text-sm">
-              <button
-                type="button"
-                onClick={onBack}
-                className="text-gray-600 hover:underline"
-              >
+              <button type="button" onClick={onBack} className="text-gray-600 hover:underline">
                 ← Back to login
               </button>
               <button

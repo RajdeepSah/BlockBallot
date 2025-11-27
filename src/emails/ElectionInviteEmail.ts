@@ -16,7 +16,7 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
 
 /**
  * Formats a date string for display in invitation emails.
- * 
+ *
  * @param value - ISO date string to format
  * @returns Formatted date string or original value if invalid
  */
@@ -31,7 +31,7 @@ export function formatInviteDate(value: string): string {
 
 /**
  * Builds an HTML email template for election invitations.
- * 
+ *
  * @param options - Election invite email options
  * @returns HTML string for the email
  */
@@ -80,7 +80,7 @@ export function buildElectionInviteEmail(options: ElectionInviteEmailOptions) {
 
 /**
  * Builds a plain text version of the election invitation email.
- * 
+ *
  * @param options - Election invite email options
  * @returns Plain text string for the email
  */
@@ -105,7 +105,7 @@ Thank you for participating!
 
 /**
  * Gets a preview of the election invitation email (plain text format).
- * 
+ *
  * @param options - Election invite email options
  * @returns Plain text preview string
  */

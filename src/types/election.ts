@@ -37,7 +37,7 @@ export interface Election {
   status: 'draft' | 'active' | 'ended';
   positions: Position[];
   time_zone: string;
-  contract_address?: string; 
+  contract_address?: string;
 }
 
 /**
@@ -100,4 +100,3 @@ export interface EligibilityStatus {
 export interface AccessRequestsResponse {
   requests: AccessRequest[];
 }
-

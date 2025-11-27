@@ -56,4 +56,3 @@ export interface BallotLinkRecord {
   created_at: string;
   tx_hash?: string;
 }
-

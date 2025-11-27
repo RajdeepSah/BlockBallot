@@ -17,7 +17,7 @@ interface SignInProps {
 /**
  * SignIn component for user authentication.
  * Handles login flow and triggers 2FA when required.
- * 
+ *
  * @param props - Component props
  * @param props.onToggleMode - Callback to switch to sign up
  * @param props.onSuccess - Callback when login succeeds without 2FA
@@ -53,7 +53,7 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
 
     try {
       const result = await login(normalizedEmail, password);
-      
+
       if (result.requires2FA) {
         if (!result.userId) {
           throw new Error('Unable to start verification flow. Missing user ID.');
@@ -77,15 +77,13 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
     <AuthLayout>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-indigo-600 rounded-full">
-              <Vote className="w-8 h-8 text-white" />
+          <div className="mb-4 flex justify-center">
+            <div className="rounded-full bg-indigo-600 p-3">
+              <Vote className="h-8 w-8 text-white" />
             </div>
           </div>
           <CardTitle className="text-2xl">BlockBallot</CardTitle>
-          <CardDescription>
-            Your voice. Your vote.
-          </CardDescription>
+          <CardDescription>Your voice. Your vote.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -130,7 +128,7 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
             <div className="text-right">
               <button
                 type="button"
-                onClick={() => window.location.href = '/forgot-password'}
+                onClick={() => (window.location.href = '/forgot-password')}
                 className="text-sm text-indigo-600 hover:underline"
               >
                 Forgot password?
