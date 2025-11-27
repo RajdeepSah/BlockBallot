@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { api } from '../utils/api';
 import { Button } from './ui/button';
@@ -46,7 +46,7 @@ interface ChartDataEntry {
 }
 
 export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) {
-  const { token, user } = useAuth();
+  const { user } = useAuth();
   const [results, setResults] = useState<ElectionResults | null>(null);
   const [election, setElection] = useState<Election | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,27 +56,16 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
   const [eligibleError, setEligibleError] = useState('');
   const [eligibleVoters, setEligibleVoters] = useState<EligibleVoter[]>([]);
 
-  useEffect(() => {
-    loadResults();
-    loadElection();
-  }, [electionId]);
-
-  useEffect(() => {
-    if (eligibleDialogOpen) {
-      void loadEligibleVoters();
-    }
-  }, [eligibleDialogOpen, electionId, token]);
-
-  const loadElection = async () => {
+  const loadElection = useCallback(async () => {
     try {
       const response = await api.getElection(electionId);
       setElection(response);
     } catch (err) {
       console.error('Failed to load election:', err);
     }
-  };
+  }, [electionId]);
 
-  const loadResults = async () => {
+  const loadResults = useCallback(async () => {
     try {
       const response = await api.getResults(electionId);
       setResults(response);
@@ -86,9 +75,9 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [electionId]);
 
-  const loadEligibleVoters = async () => {
+  const loadEligibleVoters = useCallback(async () => {
     setEligibleLoading(true);
     setEligibleError('');
     try {
@@ -102,7 +91,18 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
     } finally {
       setEligibleLoading(false);
     }
-  };
+  }, [electionId]);
+
+  useEffect(() => {
+    loadResults();
+    loadElection();
+  }, [loadResults, loadElection]);
+
+  useEffect(() => {
+    if (eligibleDialogOpen) {
+      void loadEligibleVoters();
+    }
+  }, [eligibleDialogOpen, loadEligibleVoters]);
 
   const exportResults = () => {
     if (!results) return;

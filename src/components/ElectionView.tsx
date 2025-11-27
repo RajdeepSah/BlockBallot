@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { api } from '../utils/api';
 import { Button } from './ui/button';
@@ -34,12 +34,7 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
   // Vote selections
   const [selections, setSelections] = useState<VoteSelections>({});
 
-  useEffect(() => {
-    loadElection();
-    checkEligibility();
-  }, [electionId]);
-
-  const loadElection = async () => {
+  const loadElection = useCallback(async () => {
     try {
       const response = await api.getElection(electionId);
       // Ensure positions and candidates have IDs
@@ -66,16 +61,21 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
     } finally {
       setLoading(false);
     }
-  };
+  }, [electionId]);
 
-  const checkEligibility = async () => {
+  const checkEligibility = useCallback(async () => {
     try {
       const response = await api.checkEligibility(electionId, token!);
       setEligibility(response);
     } catch (err) {
       console.error('Failed to check eligibility:', err);
     }
-  };
+  }, [electionId, token]);
+
+  useEffect(() => {
+    loadElection();
+    checkEligibility();
+  }, [loadElection, checkEligibility]);
 
   const handleRequestAccess = async () => {
     try {

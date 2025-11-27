@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { api } from '../utils/api';
 import { Button } from './ui/button';
@@ -25,11 +25,7 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    loadElections();
-  }, []);
-
-  const loadElections = async () => {
+  const loadElections = useCallback(async () => {
     try {
       setLoading(true);
       const response = await api.searchElections(undefined, token!);
@@ -39,7 +35,11 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    loadElections();
+  }, [loadElections]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();

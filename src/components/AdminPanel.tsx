@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { api } from '../utils/api';
 import { Button } from './ui/button';
@@ -35,16 +35,7 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
   const [preapprovedVoters, setPreapprovedVoters] = useState<EligibleVoter[]>([]);
   const [loadingPreapproved, setLoadingPreapproved] = useState(false);
 
-  useEffect(() => {
-    loadElection();
-  }, [electionId]);
-
-  useEffect(() => {
-    loadAccessRequests();
-    loadPreapprovedVoters();
-  }, [electionId, token]);
-
-  const loadElection = async () => {
+  const loadElection = useCallback(async () => {
     try {
       const response = await api.getElection(electionId);
       setElection(response);
@@ -54,9 +45,9 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
     } finally {
       setLoading(false);
     }
-  };
+  }, [electionId]);
 
-  const loadAccessRequests = async () => {
+  const loadAccessRequests = useCallback(async () => {
     if (!token) return;
     try {
       const response = await api.getAccessRequests(electionId, token);
@@ -64,9 +55,9 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
     } catch (err) {
       console.error('Failed to load access requests:', err);
     }
-  };
+  }, [electionId, token]);
 
-  const loadPreapprovedVoters = async () => {
+  const loadPreapprovedVoters = useCallback(async () => {
     setLoadingPreapproved(true);
     try {
       // The helper hits our sanitized Next.js API, preventing the JSON parsing errors we saw earlier.
@@ -77,7 +68,16 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
     } finally {
       setLoadingPreapproved(false);
     }
-  };
+  }, [electionId]);
+
+  useEffect(() => {
+    loadElection();
+  }, [loadElection]);
+
+  useEffect(() => {
+    loadAccessRequests();
+    loadPreapprovedVoters();
+  }, [loadAccessRequests, loadPreapprovedVoters]);
 
   const handleUploadVoters = async () => {
     if (!voterList.trim()) {
