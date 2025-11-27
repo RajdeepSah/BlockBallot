@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    const existingUser = await kv.get(`user:email:${normalizedEmail}`);
+    const existingUser = await kv.get<string>(`user:email:${normalizedEmail}`);
     if (existingUser) {
       return createValidationError('Email already registered');
     }

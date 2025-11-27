@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
 
-import { createValidationError, handleApiError } from '@/utils/api/errors';
+import { createValidationError, handleApiError, createNotFoundError, createUnauthorizedError } from '@/utils/api/errors';
 import * as kv from '@/utils/supabase/kvStore';
+import { OtpRecord, UserRecord } from '@/types/kv-records';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,25 +12,25 @@ export async function POST(request: NextRequest) {
       return createValidationError('Missing OTP or user ID');
     }
 
-    const otpData = await kv.get(`otp:${userId}`);
+    const otpData = await kv.get<OtpRecord>(`otp:${userId}`);
     if (!otpData) {
-      return Response.json({ error: 'No OTP found for this user' }, { status: 404 });
+      return createNotFoundError('OTP');
     }
 
     if (Date.now() > otpData.expires_at) {
       await kv.del(`otp:${userId}`);
-      return Response.json({ error: 'OTP expired' }, { status: 401 });
+      return createUnauthorizedError();
     }
 
     if (otpData.otp !== otp) {
-      return Response.json({ error: 'Invalid OTP' }, { status: 401 });
+      return createUnauthorizedError();
     }
 
     await kv.del(`otp:${userId}`);
 
-    const userData = await kv.get(`user:${userId}`);
+    const userData = await kv.get<UserRecord>(`user:${userId}`);
     if (!userData) {
-      return Response.json({ error: 'User not found' }, { status: 404 });
+      return createNotFoundError('User');
     }
 
     return Response.json({

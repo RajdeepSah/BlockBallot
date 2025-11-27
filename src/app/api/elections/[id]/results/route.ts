@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 
 import { authenticateUser } from '@/utils/api/auth';
-import { handleApiError, createNotFoundError } from '@/utils/api/errors';
+import { handleApiError, createNotFoundError, createForbiddenError, createBadRequestError } from '@/utils/api/errors';
 import { createReadOnlyContract } from '@/utils/blockchain/contract';
 import * as kv from '@/utils/supabase/kvStore';
 import { getServiceRoleClient } from '@/utils/supabase/clients';
@@ -19,22 +19,23 @@ async function retryWithBackoff<T>(
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await fn();
-    } catch (error: any) {
-      lastError = error;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
       
       // Check if it's a rate limit error
-      const isRateLimit = error?.message?.includes('Too Many Requests') || 
-                         error?.code === 'BAD_DATA' ||
-                         error?.shortMessage?.includes('missing response');
+      const err = error as Record<string, unknown>;
+      const isRateLimit = (typeof err?.message === 'string' && err.message.includes('Too Many Requests')) || 
+                         err?.code === 'BAD_DATA' ||
+                         (typeof err?.shortMessage === 'string' && err.shortMessage.includes('missing response'));
       
       if (!isRateLimit || attempt === maxRetries) {
         throw error;
       }
       
       // Exponential backoff: 1s, 2s, 4s
-      const delay = baseDelay * Math.pow(2, attempt);
-      console.log(`Rate limit hit, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      const delayMs = baseDelay * Math.pow(2, attempt);
+      console.log(`Rate limit hit, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
   
@@ -47,6 +48,8 @@ async function retryWithBackoff<T>(
 function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+import { EligibilityRecord } from "@/types/kv-records";
 
 interface PositionRecord {
   id?: string;
@@ -89,11 +92,11 @@ export async function GET(
     const hasEnded = now > endsAt;
 
     if (!hasEnded && requesterId !== election.creator_id) {
-      return Response.json({ error: 'Results not available yet' }, { status: 403 });
+      return createForbiddenError('Results not available yet');
     }
 
     if (!election.contract_address) {
-      return Response.json({ error: 'Election contract address missing' }, { status: 400 });
+      return createBadRequestError('Election contract address missing');
     }
 
     const contract = createReadOnlyContract(election.contract_address);
@@ -132,14 +135,29 @@ export async function GET(
       return !suffix.includes(':');
     }).length || 0;
 
-    const eligibilityRecords = await kv.getByPrefix(`eligibility:${electionId}:`);
+    const eligibilityRecords = await kv.getByPrefix<EligibilityRecord>(`eligibility:${electionId}:`);
     const eligibleVoters = eligibilityRecords.filter(
       (record) =>
         record?.election_id === electionId &&
         (record?.status === 'approved' || record?.status === 'preapproved')
     ).length;
 
-    const formattedResults: Record<string, any> = {};
+    interface FormattedCandidate {
+      id: string;
+      name: string;
+      description: string;
+      photo_url: string | null;
+      votes: number;
+      percentage: string;
+    }
+
+    interface FormattedPosition {
+      position_name: string;
+      ballot_type: string;
+      candidates: FormattedCandidate[];
+    }
+
+    const formattedResults: Record<string, FormattedPosition> = {};
 
     for (let positionIndex = 0; positionIndex < positionNames.length; positionIndex++) {
       const positionName = positionNames[positionIndex];
@@ -200,8 +218,8 @@ export async function GET(
       eligibleVoters > 0 ? ((totalVotes / eligibleVoters) * 100).toFixed(2) : '0.00';
 
     if (totalVotes > 0) {
-      Object.values(formattedResults).forEach((position: any) => {
-        position.candidates = position.candidates.map((candidate: any) => ({
+      Object.values(formattedResults).forEach((position: FormattedPosition) => {
+        position.candidates = position.candidates.map((candidate: FormattedCandidate) => ({
           ...candidate,
           percentage: ((candidate.votes / totalVotes) * 100).toFixed(2),
         }));

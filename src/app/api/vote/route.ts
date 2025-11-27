@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server";
 import { createWritableContract } from "@/utils/blockchain/contract";
 import { validateContractAddress, validateVotesArray } from "@/utils/validation";
-import { handleApiError, createValidationError, createNotFoundError } from "@/utils/api/errors";
+import { handleApiError, createValidationError, createNotFoundError, createBadRequestError, createForbiddenError } from "@/utils/api/errors";
 import { authenticateUser } from "@/utils/api/auth";
 import { createClient } from "@/utils/supabase/server";
 import * as kv from "@/utils/supabase/kvStore";
 import type { VoteInput, VoteResponse } from "@/types/blockchain";
+import { UserRecord, EligibilityRecord, BallotLinkRecord } from "@/types/kv-records";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,8 +16,7 @@ export async function POST(request: NextRequest) {
     // Authenticate user
     const authHeader = request.headers.get('Authorization');
     const user = await authenticateUser(authHeader);
-    console.log(`body: ${JSON.stringify(body)}`);
-    console.log(`positions: ${positions}, candidates: ${candidates}, votes: ${votes}`);
+
     // Validate contract address
     try {
       validateContractAddress(contractAddress);
@@ -88,34 +88,34 @@ export async function POST(request: NextRequest) {
     const endsAt = new Date(election.ends_at);
 
     if (now < startsAt) {
-      return Response.json({ error: 'Election has not started yet' }, { status: 400 });
+      return createBadRequestError('Election has not started yet');
     }
 
     if (now > endsAt) {
-      return Response.json({ error: 'Election has ended' }, { status: 400 });
+      return createBadRequestError('Election has ended');
     }
 
     // Get user data from KV store
-    const userData = await kv.get(`user:${user.id}`);
+    const userData = await kv.get<UserRecord>(`user:${user.id}`);
     if (!userData) {
-      return Response.json({ error: 'User data not found' }, { status: 404 });
+      return createNotFoundError('User data');
     }
 
     // Check eligibility
-    const eligibility = await kv.get(`eligibility:${electionId}:${userData.email}`);
+    const eligibility = await kv.get<EligibilityRecord>(`eligibility:${electionId}:${userData.email}`);
     if (!eligibility || (eligibility.status !== 'approved' && eligibility.status !== 'preapproved')) {
-      return Response.json({ error: 'You are not eligible to vote in this election' }, { status: 403 });
+      return createForbiddenError('You are not eligible to vote in this election');
     }
 
     // Check if already voted using prefix search to detect any locks or completed votes
     // This prevents race conditions by checking for ANY key matching the pattern
     const voteKeyPrefix = `ballot:link:${electionId}:${user.id}`;
     const finalVoteKey = voteKeyPrefix; // Final key without timestamp
-    const existingLocks = await kv.getByPrefix(`${voteKeyPrefix}:`); // Check for timestamped locks
-    const finalVote = await kv.get(finalVoteKey); // Check for completed vote
+    const existingLocks = await kv.getByPrefix<BallotLinkRecord>(`${voteKeyPrefix}:`); // Check for timestamped locks
+    const finalVote = await kv.get<BallotLinkRecord>(finalVoteKey); // Check for completed vote
     
     if (existingLocks.length > 0 || finalVote) {
-      return Response.json({ error: 'You have already voted in this election' }, { status: 400 });
+      return createBadRequestError('You have already voted in this election');
     }
 
     // Create unique timestamped lock to prevent race condition
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
     if (verifyFinalVote) {
       // Another request completed voting between our prefix check and lock creation
       await kv.del(lockKey); // Clean up our lock
-      return Response.json({ error: 'You have already voted in this election' }, { status: 400 });
+      return createBadRequestError('You have already voted in this election');
     }
 
     // Lock acquired - proceed with blockchain transaction

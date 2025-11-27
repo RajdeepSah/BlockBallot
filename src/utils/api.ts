@@ -1,12 +1,14 @@
 import { projectId, publicAnonKey } from './supabase/info';
 import { getValidAccessToken } from './auth/tokenRefresh';
 import { authenticatedFetch, handleUnauthorizedError } from './auth/errorHandler';
+import { RegisterData, LoginData, Verify2FAData, ResendOTPData, VoteSelections } from '@/types/api';
+import { Election, Candidate } from '@/types/election';
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-b7b6fbd4`;
 
 interface ApiOptions {
   method?: string;
-  body?: any;
+  body?: unknown;
   token?: string;
 }
 
@@ -44,7 +46,7 @@ export async function apiCall(endpoint: string, options: ApiOptions = {}) {
 
 export const api = {
   // Auth - Now using Next.js API routes
-  register: async (data: any) => {
+  register: async (data: RegisterData) => {
     const response = await authenticatedFetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -56,7 +58,7 @@ export const api = {
     }
     return await response.json();
   },
-  login: async (data: any) => {
+  login: async (data: LoginData) => {
     const response = await authenticatedFetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -68,7 +70,7 @@ export const api = {
     }
     return await response.json();
   },
-  verify2FA: async (data: any) => {
+  verify2FA: async (data: Verify2FAData) => {
     const response = await authenticatedFetch('/api/auth/verify-2fa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -80,7 +82,7 @@ export const api = {
     }
     return await response.json();
   },
-  resendOTP: async (data: any) => {
+  resendOTP: async (data: ResendOTPData) => {
     const response = await authenticatedFetch('/api/auth/resend-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -126,7 +128,7 @@ export const api = {
     return await response.json();
   },
   
-  uploadEligibility: async (electionId: string, voters: string[], token: string) => {
+  uploadEligibility: async (electionId: string, voters: string[], _token: string) => {
     const validToken = await getValidAccessToken();
     if (!validToken) {
       handleUnauthorizedError();
@@ -148,7 +150,7 @@ export const api = {
     
     return await response.json();
   },
-  checkEligibility: async (electionId: string, token: string) => {
+  checkEligibility: async (electionId: string, _token: string) => {
     const validToken = await getValidAccessToken();
     if (!validToken) {
       handleUnauthorizedError();
@@ -169,7 +171,7 @@ export const api = {
   },
 
   // Access Requests - Now using Next.js API routes
-  requestAccess: async (electionId: string, token: string) => {
+  requestAccess: async (electionId: string, _token: string) => {
     const validToken = await getValidAccessToken();
     if (!validToken) {
       handleUnauthorizedError();
@@ -189,7 +191,7 @@ export const api = {
     
     return await response.json();
   },
-  getAccessRequests: async (electionId: string, token: string) => {
+  getAccessRequests: async (electionId: string, _token: string) => {
     const validToken = await getValidAccessToken();
     if (!validToken) {
       handleUnauthorizedError();
@@ -208,7 +210,7 @@ export const api = {
     
     return await response.json();
   },
-  updateAccessRequest: async (electionId: string, requestId: string, action: 'approve' | 'deny', token: string) => {
+  updateAccessRequest: async (electionId: string, requestId: string, action: 'approve' | 'deny', _token: string) => {
     const validToken = await getValidAccessToken();
     if (!validToken) {
       handleUnauthorizedError();
@@ -242,7 +244,7 @@ export const api = {
   },
 
   // Voting
-  castVote: async (electionId: string, selections: Record<string, any>, election: any, token: string) => {
+  castVote: async (electionId: string, selections: VoteSelections, election: Election, _token: string) => {
     const validToken = await getValidAccessToken();
     if (!validToken) {
       handleUnauthorizedError();
@@ -265,14 +267,14 @@ export const api = {
       if (Array.isArray(selection)) {
         // Multiple choice or ranked choice - add each selection
         for (const candidateId of selection) {
-          const candidate = position.candidates.find((c: any) => c.id === candidateId);
+          const candidate = position.candidates.find((c: Candidate) => c.id === candidateId);
           if (candidate) {
             votes.push({ position: position.name, candidate: candidate.name });
           }
         }
       } else {
         // Single choice
-        const candidate = position.candidates.find((c: any) => c.id === selection);
+        const candidate = position.candidates.find((c: Candidate) => c.id === selection);
         if (candidate) {
           votes.push({ position: position.name, candidate: candidate.name });
         }

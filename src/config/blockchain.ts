@@ -10,7 +10,6 @@ const requiredEnvVars = {
 
 // Validate required environment variables
 for (const [key, value] of Object.entries(requiredEnvVars)) {
-   console.log(`Checking environment variable: ${key}: ${value}`);
   if (!value) {
     throw new Error(
       `Missing required environment variable: ${key}. ` +

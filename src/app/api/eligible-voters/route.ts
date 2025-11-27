@@ -117,11 +117,8 @@ export async function POST(request: Request) {
     // which is why clients saw "Unexpected non-whitespace character" parse errors.
     // Returning with NextResponse.json guarantees the response is pure JSON.
     return NextResponse.json({ voters });
-  } catch (error: any) {
-    const message =
-      typeof error?.message === 'string'
-        ? error.message
-        : 'Unable to load eligible voters.';
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unable to load eligible voters.';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

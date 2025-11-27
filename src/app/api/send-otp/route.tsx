@@ -97,8 +97,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    const message = error?.message ?? 'Failed to send verification code.';
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to send verification code.';
     const status = message.includes('Supabase') || message.includes('RESEND') ? 500 : 400;
     return NextResponse.json({ error: message }, { status });
   }

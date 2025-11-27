@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { authenticateUser } from "@/utils/api/auth";
 import * as kv from "@/utils/supabase/kvStore";
-import { handleApiError } from "@/utils/api/errors";
+import { handleApiError, createNotFoundError, createUnauthorizedError } from "@/utils/api/errors";
+import { UserRecord, EligibilityRecord, AccessRequestRecord } from "@/types/kv-records";
 
 /**
  * GET /api/elections/[id]/eligibility-status
@@ -20,19 +21,19 @@ export async function GET(
     const user = await authenticateUser(authHeader);
     
     // Get user data from KV store
-    const userData = await kv.get(`user:${user.id}`);
+    const userData = await kv.get<UserRecord>(`user:${user.id}`);
     if (!userData) {
-      return Response.json({ error: 'User not found' }, { status: 404 });
+      return createNotFoundError('User');
     }
 
     // Check eligibility
-    const eligibility = await kv.get(`eligibility:${electionId}:${userData.email}`);
+    const eligibility = await kv.get<EligibilityRecord>(`eligibility:${electionId}:${userData.email}`);
     
     // Check if already voted
     const ballotLink = await kv.get(`ballot:link:${electionId}:${user.id}`);
 
     // Check access request
-    const accessRequest = await kv.get(`access_request:${electionId}:${user.id}`);
+    const accessRequest = await kv.get<AccessRequestRecord>(`access_request:${electionId}:${user.id}`);
 
     return Response.json({
       eligible: eligibility && (eligibility.status === 'approved' || eligibility.status === 'preapproved'),
@@ -42,9 +43,9 @@ export async function GET(
         id: accessRequest.id
       } : null
     });
-  } catch (error: any) {
-    if (error.message === 'Unauthorized') {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return createUnauthorizedError();
     }
     console.error('Check eligibility error:', error);
     return handleApiError(error, 'check-eligibility');

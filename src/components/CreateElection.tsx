@@ -5,14 +5,13 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { Election } from '@/types/election';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ArrowLeft, Plus, Trash2, Vote } from 'lucide-react';
 import { getEtherscanUrl } from '@/utils/blockchain/utils';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
-import { Position, Candidate } from '@/types/election';
+import { Position } from '@/types/election';
 import { sanitizeString, sanitizeText, validateNoDuplicateCandidatesInPositions, validateNoDuplicatePositions } from '@/utils/validation';
 const generateTempId = (() => {
   let counter = 0;
@@ -36,7 +35,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
   const [description, setDescription] = useState('');
   const [startsAt, setStartsAt] = useState(currentLocalTime(new Date()));
   const [endsAt, setEndsAt] = useState('');
-  const [timeZone, setTimeZone] = useState('UTC');
+  const [timeZone] = useState('UTC');
   const [deployInfo, setDeployInfo] = useState<{ txHash: string; contractAddress: string } | null>(null);
   const [electionID, setElectionID] = useState('');
 
@@ -81,7 +80,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
     setPositions(positions.filter(p => p.id !== id));
   };
 
-  const updatePosition = (id: string, field: string, value: any) => {
+  const updatePosition = (id: string, field: string, value: string | Position['ballot_type']) => {
     setPositions(positions.map(p => 
       p.id === id ? { ...p, [field]: value } : p
     ));
@@ -173,7 +172,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
     const duplicates: string[] = [];
     const seen = new Set<string>();
     
-    candidateNames.forEach((name, index) => {
+    candidateNames.forEach((name) => {
       if (seen.has(name) && !duplicates.includes(name)) {
         duplicates.push(name);
       }
@@ -204,7 +203,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
     const duplicates: string[] = [];
     const seen = new Set<string>();
     
-    positionNames.forEach((name, index) => {
+    positionNames.forEach((name) => {
       if (seen.has(name) && !duplicates.includes(name)) {
         duplicates.push(name);
       }
@@ -278,8 +277,9 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
         }))
       }));
       validateNoDuplicatePositions(positionsForValidation);
-    } catch (validationError: any) {
-      setError(validationError.message || 'Duplicate position names found');
+    } catch (validationError) {
+      const message = validationError instanceof Error ? validationError.message : 'Duplicate position names found';
+      setError(message);
       return;
     }
 
@@ -295,8 +295,9 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
         }))
       }));
       validateNoDuplicateCandidatesInPositions(positionsForValidation);
-    } catch (validationError: any) {
-      setError(validationError.message || 'Duplicate candidates found in one or more positions');
+    } catch (validationError) {
+      const message = validationError instanceof Error ? validationError.message : 'Duplicate candidates found in one or more positions';
+      setError(message);
       return;
     }
     
@@ -330,7 +331,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
          })),
          contractAddress: undefined // If deployed successfully, this will be replaced with the actual address  
       };
-      console.log(electionPayload)
+
       const deployResponse = await authenticatedFetch('/api/deploy', {
         method: 'POST',
         headers: {
@@ -343,7 +344,6 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
 
       if (deployResponse.ok) { // YAY
          const { txHash, contractAddress, electionId } = data;
-         console.log("Deploy response: ", data);
 
          // Set the election ID so we can navigate to it
          setElectionID(electionId);
@@ -358,8 +358,9 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
          // If the server returns an error (e.g., failed deployment, missing key)
          throw new Error(data.message || `Deployment request failed: ${data.message}`);
       }
-    } catch (err: any) {
-      setError('Failed to deploy election contract: '+err.message );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError('Failed to deploy election contract: ' + message);
     } finally {
       setLoading(false);
     }

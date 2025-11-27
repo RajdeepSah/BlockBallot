@@ -58,8 +58,8 @@ export async function POST(request: Request) {
     await deleteOtpRecord(normalizedEmail);
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    const message = error?.message ?? 'Failed to verify code.';
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to verify code.';
     const status = message.includes('Supabase') ? 500 : 400;
     return NextResponse.json({ error: message }, { status });
   }

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 
-import { createValidationError, handleApiError } from '@/utils/api/errors';
+import { createValidationError, handleApiError, createUnauthorizedError } from '@/utils/api/errors';
 import { getAnonServerClient } from '@/utils/supabase/clients';
 
 export async function POST(request: NextRequest) {
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (error || !data.session) {
-      return Response.json({ error: 'Failed to refresh session' }, { status: 401 });
+      return createUnauthorizedError();
     }
 
     return Response.json({

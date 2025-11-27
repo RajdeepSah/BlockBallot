@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import { authenticateUser } from "@/utils/api/auth";
 import { createClient } from "@/utils/supabase/server";
 import * as kv from "@/utils/supabase/kvStore";
-import { handleApiError, createNotFoundError } from "@/utils/api/errors";
+import { handleApiError, createNotFoundError, createForbiddenError, createUnauthorizedError } from "@/utils/api/errors";
+import { UserRecord, AccessRequestRecord } from "@/types/kv-records";
 
 /**
  * GET /api/elections/[id]/access-requests
@@ -34,28 +35,28 @@ export async function GET(
 
     // Verify user is the election creator
     if (election.creator_id !== user.id) {
-      return Response.json({ error: 'Only election creator can view access requests' }, { status: 403 });
+      return createForbiddenError('Only election creator can view access requests');
     }
 
     // Get all access requests for this election
-    const allRequests = await kv.getByPrefix(`access_request:${electionId}:`);
+    const allRequests = await kv.getByPrefix<AccessRequestRecord>(`access_request:${electionId}:`);
     const requests = allRequests.filter(req => req.election_id === electionId);
 
     // Enrich with user data
     const enrichedRequests = [];
-    for (const request of requests) {
-      const userData = await kv.get(`user:${request.user_id}`);
+    for (const req of requests) {
+      const userData = await kv.get<UserRecord>(`user:${req.user_id}`);
       enrichedRequests.push({
-        ...request,
+        ...req,
         user_name: userData?.name || 'Unknown',
-        user_email: userData?.email || request.contact
+        user_email: userData?.email || req.contact
       });
     }
 
     return Response.json({ requests: enrichedRequests });
-  } catch (error: any) {
-    if (error.message === 'Unauthorized') {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return createUnauthorizedError();
     }
     console.error('Get access requests error:', error);
     return handleApiError(error, 'get-access-requests');

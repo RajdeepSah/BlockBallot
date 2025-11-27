@@ -15,8 +15,11 @@ const ARTIFACTS_PATH = path.join(
   `${CONTRACT_NAME}.json`
 );
 
+// ABI fragment can be a function, event, or other contract element
+type ABIFragment = Record<string, unknown>;
+
 interface ContractArtifact {
-  abi: any[];
+  abi: ABIFragment[];
   bytecode: string;
 }
 
@@ -61,7 +64,7 @@ export function loadContractArtifact(): ContractArtifact {
 /**
  * Get contract ABI
  */
-export function getContractABI(): any[] {
+export function getContractABI(): ABIFragment[] {
   return loadContractArtifact().abi;
 }
 

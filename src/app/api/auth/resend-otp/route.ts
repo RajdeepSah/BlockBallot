@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
 
-import { createValidationError, handleApiError } from '@/utils/api/errors';
+import { createValidationError, handleApiError, createNotFoundError } from '@/utils/api/errors';
 import * as kv from '@/utils/supabase/kvStore';
+import { UserRecord } from '@/types/kv-records';
 
 const OTP_EXPIRY_MS = 5 * 60 * 1000;
 
@@ -17,9 +18,9 @@ export async function POST(request: NextRequest) {
       return createValidationError('Missing user ID');
     }
 
-    const userData = await kv.get(`user:${userId}`);
+    const userData = await kv.get<UserRecord>(`user:${userId}`);
     if (!userData) {
-      return Response.json({ error: 'User not found' }, { status: 404 });
+      return createNotFoundError('User');
     }
 
     const otp = generateOTP();

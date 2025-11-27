@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { authenticateUser } from "@/utils/api/auth";
 import { createClient } from "@/utils/supabase/server";
 import * as kv from "@/utils/supabase/kvStore";
-import { handleApiError, createNotFoundError } from "@/utils/api/errors";
+import { handleApiError, createNotFoundError, createForbiddenError, createBadRequestError, createUnauthorizedError } from "@/utils/api/errors";
 
 /**
  * POST /api/elections/[id]/eligibility
@@ -34,13 +34,13 @@ export async function POST(
 
     // Verify user is the election creator
     if (election.creator_id !== user.id) {
-      return Response.json({ error: 'Only election creator can upload eligibility list' }, { status: 403 });
+      return createForbiddenError('Only election creator can upload eligibility list');
     }
 
     // Parse request body
     const { voters } = await request.json();
     if (!voters || !Array.isArray(voters)) {
-      return Response.json({ error: 'Invalid voter list' }, { status: 400 });
+      return createBadRequestError('Invalid voter list');
     }
 
     let addedCount = 0;
@@ -51,7 +51,7 @@ export async function POST(
       const eligibilityId = crypto.randomUUID();
       
       // Check if user exists with this email
-      const existingUserId = await kv.get(`user:email:${email}`);
+      const existingUserId = await kv.get<string>(`user:email:${email}`);
 
       const eligibility = {
         id: eligibilityId,
@@ -70,9 +70,9 @@ export async function POST(
       success: true,
       message: `Added ${addedCount} voters to eligibility list`
     });
-  } catch (error: any) {
-    if (error.message === 'Unauthorized') {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return createUnauthorizedError();
     }
     console.error('Upload eligibility error:', error);
     return handleApiError(error, 'upload-eligibility');

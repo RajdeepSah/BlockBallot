@@ -48,15 +48,6 @@ interface InviteHistoryRecord {
   emails: Record<string, number>;
 }
 
-type ElectionRecord = {
-  id: string;
-  title: string;
-  code: string;
-  creator_id: string;
-  starts_at: string;
-  ends_at: string;
-};
-
 type EligibilityRecord = {
   id: string;
   contact: string;
@@ -70,9 +61,13 @@ type VerifiedVoter = {
 
 type NormalizedVoter = VerifiedVoter & { normalizedEmail: string };
 
-function httpError(status: number, message: string) {
-  const error = new Error(message);
-  (error as any).status = status;
+interface HttpError extends Error {
+  status: number;
+}
+
+function httpError(status: number, message: string): HttpError {
+  const error = new Error(message) as HttpError;
+  error.status = status;
   return error;
 }
 
@@ -142,19 +137,6 @@ async function enforceRateLimit(electionId: string) {
 async function updateRateLimit(electionId: string) {
   const key = `${RATE_LIMIT_KEY_PREFIX}${electionId}`;
   await setKvValue<RateLimitRecord>(key, { lastSentAt: Date.now() });
-}
-
-async function getElection(electionId: string): Promise<ElectionRecord> {
-   const supabase = await createServerClient();
-  const { data: election, error: electionError } = await supabase
-      .from('elections')
-      .select('*')
-      .eq('id', electionId)
-      .single();
-  if (!election) {
-    throw httpError(404, 'Election not found.');
-  }
-  return election;
 }
 
 async function getPreapprovedVoters(electionId: string): Promise<VerifiedVoter[]> {
@@ -321,12 +303,16 @@ export async function POST(request: Request) {
     if (!payload || !payload.electionId) {
       throw httpError(400, 'electionId is required.');
     }
-   const supabase = await createServerClient();
-   const { data: election, error: electionError } = await supabase
+    const supabase = await createServerClient();
+    const { data: election } = await supabase
       .from('elections')
       .select('*')   
       .eq('id', payload.electionId)
       .single();
+
+    if (!election) {
+      throw httpError(404, 'Election not found.');
+    }
 
     if (election.creator_id !== userId) {
       throw httpError(403, 'Only the election creator can send invitations.');
@@ -388,12 +374,10 @@ export async function POST(request: Request) {
       success: true,
       sentCount,
     });
-  } catch (error: any) {
-    const status = error?.status ?? 500;
-    const message =
-      typeof error?.message === 'string'
-        ? error.message
-        : 'Failed to send election invitations.';
+  } catch (error) {
+    const httpErr = error as HttpError;
+    const status = httpErr?.status ?? 500;
+    const message = error instanceof Error ? error.message : 'Failed to send election invitations.';
     return NextResponse.json({ error: message }, { status });
   }
 }

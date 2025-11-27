@@ -1,8 +1,9 @@
 import { NextRequest } from 'next/server';
 
-import { createValidationError, handleApiError } from '@/utils/api/errors';
+import { createValidationError, handleApiError, createUnauthorizedError, createNotFoundError } from '@/utils/api/errors';
 import * as kv from '@/utils/supabase/kvStore';
 import { getAnonServerClient } from '@/utils/supabase/clients';
+import { UserRecord } from '@/types/kv-records';
 
 const OTP_EXPIRY_MS = 5 * 60 * 1000;
 
@@ -25,13 +26,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (signInError || !sessionData.user || !sessionData.session) {
-      return Response.json({ error: 'Invalid credentials' }, { status: 401 });
+      return createUnauthorizedError();
     }
 
     const userId = sessionData.user.id;
-    const userData = await kv.get(`user:${userId}`);
+    const userData = await kv.get<UserRecord>(`user:${userId}`);
     if (!userData) {
-      return Response.json({ error: 'User data not found' }, { status: 404 });
+      return createNotFoundError('User data');
     }
 
     const otp = generateOTP();

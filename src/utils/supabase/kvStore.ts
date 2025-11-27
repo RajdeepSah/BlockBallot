@@ -31,7 +31,7 @@ const getServiceClient = () => {
 };
 
 // Set stores a key-value pair in the database.
-export const set = async (key: string, value: any): Promise<void> => {
+export const set = async <T = unknown>(key: string, value: T): Promise<void> => {
   const supabase = getServiceClient();
   const { error } = await supabase.from('kv_store_b7b6fbd4').upsert({
     key,
@@ -43,7 +43,7 @@ export const set = async (key: string, value: any): Promise<void> => {
 };
 
 // Get retrieves a key-value pair from the database.
-export const get = async (key: string): Promise<any> => {
+export const get = async <T = unknown>(key: string): Promise<T | undefined> => {
   const supabase = getServiceClient();
   const { data, error } = await supabase
     .from('kv_store_b7b6fbd4')
@@ -53,7 +53,7 @@ export const get = async (key: string): Promise<any> => {
   if (error) {
     throw new Error(error.message);
   }
-  return data?.value;
+  return data?.value as T | undefined;
 };
 
 // Delete deletes a key-value pair from the database.
@@ -69,7 +69,7 @@ export const del = async (key: string): Promise<void> => {
 };
 
 // Sets multiple key-value pairs in the database.
-export const mset = async (keys: string[], values: any[]): Promise<void> => {
+export const mset = async <T = unknown>(keys: string[], values: T[]): Promise<void> => {
   const supabase = getServiceClient();
   const { error } = await supabase
     .from('kv_store_b7b6fbd4')
@@ -80,7 +80,7 @@ export const mset = async (keys: string[], values: any[]): Promise<void> => {
 };
 
 // Gets multiple key-value pairs from the database.
-export const mget = async (keys: string[]): Promise<any[]> => {
+export const mget = async <T = unknown>(keys: string[]): Promise<T[]> => {
   const supabase = getServiceClient();
   const { data, error } = await supabase
     .from('kv_store_b7b6fbd4')
@@ -89,7 +89,7 @@ export const mget = async (keys: string[]): Promise<any[]> => {
   if (error) {
     throw new Error(error.message);
   }
-  return data?.map((d) => d.value) ?? [];
+  return (data?.map((d) => d.value) ?? []) as T[];
 };
 
 // Deletes multiple key-value pairs from the database.
@@ -105,7 +105,7 @@ export const mdel = async (keys: string[]): Promise<void> => {
 };
 
 // Search for key-value pairs by prefix.
-export const getByPrefix = async (prefix: string): Promise<any[]> => {
+export const getByPrefix = async <T = unknown>(prefix: string): Promise<T[]> => {
   const supabase = getServiceClient();
   const { data, error } = await supabase
     .from('kv_store_b7b6fbd4')
@@ -114,6 +114,6 @@ export const getByPrefix = async (prefix: string): Promise<any[]> => {
   if (error) {
     throw new Error(error.message);
   }
-  return data?.map((d) => d.value) ?? [];
+  return (data?.map((d) => d.value) ?? []) as T[];
 };
 

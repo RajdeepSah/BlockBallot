@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../utils/api';
+import { RegisterData } from '@/types/api';
 
 interface User {
   id: string;
@@ -15,7 +16,7 @@ interface AuthContextType {
   token: string | null;
   login: (email: string, password: string) => Promise<{ requires2FA: boolean; userId?: string; email?: string }>;
   verify2FA: (email: string, otp: string) => Promise<void>;
-  register: (data: any) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   resendOTP: (email: string) => Promise<void>;
   loading: boolean;
@@ -93,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    }
   };
 
-  const register = async (data: any) => {
+  const register = async (data: RegisterData) => {
     await api.register(data);
   };
 

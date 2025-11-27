@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import { authenticateUser } from "@/utils/api/auth";
 import { createClient } from "@/utils/supabase/server";
 import * as kv from "@/utils/supabase/kvStore";
-import { handleApiError, createNotFoundError } from "@/utils/api/errors";
+import { handleApiError, createNotFoundError, createBadRequestError, createUnauthorizedError } from "@/utils/api/errors";
+import { UserRecord, AccessRequestRecord } from "@/types/kv-records";
 
 /**
  * POST /api/elections/[id]/access-request
@@ -33,18 +34,15 @@ export async function POST(
     }
 
     // Get user data
-    const userData = await kv.get(`user:${user.id}`);
+    const userData = await kv.get<UserRecord>(`user:${user.id}`);
     if (!userData) {
-      return Response.json({ error: 'User data not found' }, { status: 404 });
+      return createNotFoundError('User data');
     }
     
     // Check for existing request
-    const existingRequest = await kv.get(`access_request:${electionId}:${user.id}`);
+    const existingRequest = await kv.get<AccessRequestRecord>(`access_request:${electionId}:${user.id}`);
     if (existingRequest) {
-      return Response.json({ 
-        error: 'Access request already exists', 
-        status: existingRequest.status 
-      }, { status: 400 });
+      return createBadRequestError('Access request already exists');
     }
 
     const requestId = crypto.randomUUID();
@@ -65,9 +63,9 @@ export async function POST(
       message: 'Access request submitted',
       requestId
     });
-  } catch (error: any) {
-    if (error.message === 'Unauthorized') {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return createUnauthorizedError();
     }
     console.error('Access request error:', error);
     return handleApiError(error, 'submit-access-request');

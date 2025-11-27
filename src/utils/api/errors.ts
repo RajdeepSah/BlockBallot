@@ -46,16 +46,17 @@ export function handleApiError(error: unknown, context?: string): NextResponse<A
   } else if (typeof error === 'string') {
     errorMessage = error;
   } else if (error && typeof error === 'object') {
-    const err = error as any;
+    // Type guard for ethers.js and similar error objects
+    const err = error as Record<string, unknown>;
     
     // Handle ethers.js errors
-    if (err.reason) {
+    if (typeof err.reason === 'string') {
       errorMessage = err.reason; // Contract require() messages
-    } else if (err.message) {
+    } else if (typeof err.message === 'string') {
       errorMessage = err.message;
     }
     
-    if (err.code) {
+    if (typeof err.code === 'string' || typeof err.code === 'number') {
       details = `Error code: ${err.code}`;
     }
   }
@@ -82,5 +83,19 @@ export function createNotFoundError(resource: string): NextResponse<ApiErrorResp
  */
 export function createUnauthorizedError(): NextResponse<ApiErrorResponse> {
   return createErrorResponse('Unauthorized', 401);
+}
+
+/**
+ * Create forbidden error response (403)
+ */
+export function createForbiddenError(message: string = 'Forbidden'): NextResponse<ApiErrorResponse> {
+  return createErrorResponse(message, 403);
+}
+
+/**
+ * Create bad request error response (400)
+ */
+export function createBadRequestError(message: string): NextResponse<ApiErrorResponse> {
+  return createErrorResponse(message, 400);
 }
 
