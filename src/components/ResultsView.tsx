@@ -36,6 +36,12 @@ interface ResultsViewProps {
 
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
 
+interface ChartDataEntry {
+  name: string;
+  votes: number;
+  percentage: number;
+}
+
 export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) {
   const { token, user } = useAuth();
   const [results, setResults] = useState<any>(null);
@@ -221,7 +227,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
 
         {/* Results by Position */}
         {Object.entries(results.results).map(([positionId, positionData]: [string, any]) => {
-          const chartData = positionData.candidates.map((candidate: any) => ({
+          const chartData: ChartDataEntry[] = positionData.candidates.map((candidate: any) => ({
             name: candidate.name,
             votes: candidate.votes,
             percentage: parseFloat(candidate.percentage),

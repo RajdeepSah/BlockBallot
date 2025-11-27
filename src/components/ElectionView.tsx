@@ -318,7 +318,7 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
           <Card className="mb-6">
             <CardContent className="pt-6 text-center">
               <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-              <h3 className="text-xl mb-2">You've Already Voted</h3>
+              <h3 className="text-xl mb-2">You&apos;ve Already Voted</h3>
               <p className="text-gray-600">
                 Thank you for participating! You can only vote once per election.
               </p>
@@ -336,7 +336,7 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
           <Card className="mb-6">
             <CardContent className="pt-6 text-center">
               <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl mb-2">Election Hasn't Started</h3>
+              <h3 className="text-xl mb-2">Election Hasn&apos;t Started</h3>
               <p className="text-gray-600">
                 Voting will open on {new Date(election.starts_at).toLocaleString()}
               </p>

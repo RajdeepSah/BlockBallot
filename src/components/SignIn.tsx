@@ -130,7 +130,7 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
             </Button>
 
             <div className="text-center text-sm">
-              <span className="text-gray-600">Don't have an account? </span>
+              <span className="text-gray-600">Don&apos;t have an account? </span>
               <button
                 type="button"
                 onClick={onToggleMode}

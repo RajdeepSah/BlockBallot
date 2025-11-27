@@ -157,7 +157,7 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
           <div className="mb-8">
             <h2 className="text-xl mb-4 flex items-center">
               <Calendar className="w-5 h-5 mr-2" />
-              Elections I'm Hosting
+              Elections I&apos;m Hosting
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {myElections.map((election) => {
@@ -165,9 +165,9 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
                 return (
                   <Card key={election.id} className="hover:shadow-lg transition-shadow">
                     <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <CardTitle className="text-lg">{election.title}</CardTitle>
-                        <Badge variant={status.variant}>{status.label}</Badge>
+                      <div className="flex items-start justify-between gap-2">
+                        <CardTitle className="text-lg min-w-0 flex-1 line-clamp-2">{election.title}</CardTitle>
+                        <Badge variant={status.variant} className="flex-shrink-0">{status.label}</Badge>
                       </div>
                       <CardDescription className="line-clamp-2">
                         {election.description || 'No description'}
@@ -224,9 +224,9 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
                 return (
                   <Card key={election.id} className="hover:shadow-lg transition-shadow">
                     <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <CardTitle className="text-lg">{election.title}</CardTitle>
-                        <Badge variant={status.variant}>{status.label}</Badge>
+                      <div className="flex items-start justify-between gap-2">
+                        <CardTitle className="text-lg min-w-0 flex-1 line-clamp-2">{election.title}</CardTitle>
+                        <Badge variant={status.variant} className="flex-shrink-0">{status.label}</Badge>
                       </div>
                       <CardDescription className="line-clamp-2">
                         {election.description || 'No description'}
