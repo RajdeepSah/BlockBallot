@@ -83,6 +83,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Determine election status based on current time and election dates
+    const now = new Date();
+    const startsAt = new Date(electionPayload.starts_at);
+    const endsAt = new Date(electionPayload.ends_at);
+    
+    let status: 'draft' | 'active' | 'ended' = 'draft';
+    if (now >= startsAt && now <= endsAt) {
+      status = 'active';
+    } else if (now > endsAt) {
+      status = 'ended';
+    }
+
     // Build complete election object
     const election: Election = {
       code,
@@ -91,7 +103,7 @@ export async function POST(request: NextRequest) {
       starts_at: electionPayload.starts_at,
       ends_at: electionPayload.ends_at,
       creator_id: requestUser.id,
-      status: 'draft', // TODO: Change to 'active' when election is started
+      status,
       positions: electionPayload.positions,
       time_zone: electionPayload.time_zone || 'UTC',
       contract_address: contractAddress,
