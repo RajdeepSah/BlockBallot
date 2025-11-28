@@ -1,0 +1,27 @@
+sequenceDiagram
+    participant Admin
+    participant AdminPanel
+    participant EligibilityAPI
+    participant KVStore
+    participant SupabaseDB
+    
+    Admin->>AdminPanel: Upload voter list
+    AdminPanel->>AdminPanel: Parse email list
+    AdminPanel->>EligibilityAPI: POST /api/elections/:id/eligibility
+    EligibilityAPI->>EligibilityAPI: Authenticate user
+    EligibilityAPI->>SupabaseDB: Get election
+    SupabaseDB-->>EligibilityAPI: Election data
+    
+    alt Not Election Creator
+        EligibilityAPI-->>AdminPanel: Error: Forbidden
+    else Is Creator
+        loop For Each Email
+            EligibilityAPI->>KVStore: Check user:email:email
+            KVStore-->>EligibilityAPI: User ID (if exists)
+            EligibilityAPI->>KVStore: Create eligibility record
+            Note over EligibilityAPI,KVStore: eligibility:electionId:email<br/>status: preapproved
+        end
+        EligibilityAPI-->>AdminPanel: Success: X voters added
+        AdminPanel->>Admin: Show success message
+    end
+

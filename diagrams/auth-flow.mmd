@@ -1,0 +1,40 @@
+sequenceDiagram
+    participant User
+    participant SignIn
+    participant AuthContext
+    participant LoginAPI
+    participant SupabaseAuth
+    participant KVStore
+    participant Verify2FA
+    participant VerifyOTP
+    participant MeAPI
+    
+    User->>SignIn: Enter email/password
+    SignIn->>AuthContext: login(email, password)
+    AuthContext->>LoginAPI: POST /api/auth/login
+    LoginAPI->>SupabaseAuth: signInWithPassword()
+    SupabaseAuth-->>LoginAPI: Session + User
+    LoginAPI->>KVStore: Get user data (user:userId)
+    KVStore-->>LoginAPI: User record
+    LoginAPI->>KVStore: Store OTP (otp:userId)
+    LoginAPI-->>AuthContext: requires2FA: true, accessToken, refreshToken, devOTP
+    AuthContext->>AuthContext: Store tempToken in localStorage
+    AuthContext-->>SignIn: 2FA required
+    SignIn->>User: Show 2FA form
+    
+    User->>Verify2FA: Enter OTP
+    Verify2FA->>VerifyOTP: POST /api/verify-otp
+    VerifyOTP->>KVStore: Get OTP record
+    VerifyOTP->>VerifyOTP: Verify OTP hash
+    KVStore-->>VerifyOTP: OTP valid
+    VerifyOTP->>KVStore: Delete OTP record
+    VerifyOTP-->>Verify2FA: Success
+    
+    Verify2FA->>AuthContext: Get tempToken from localStorage
+    Verify2FA->>MeAPI: GET /api/auth/me (with tempToken)
+    MeAPI->>KVStore: Get user data
+    KVStore-->>MeAPI: User record
+    MeAPI-->>Verify2FA: User data
+    Verify2FA->>AuthContext: Store token & user in localStorage
+    AuthContext-->>User: Authenticated
+

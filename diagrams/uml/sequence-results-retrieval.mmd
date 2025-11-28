@@ -1,0 +1,56 @@
+sequenceDiagram
+    participant User
+    participant ResultsView
+    participant ResultsAPI
+    participant SupabaseDB
+    participant KVStore
+    participant Blockchain
+    participant SmartContract
+    
+    User->>ResultsView: View Results
+    ResultsView->>ResultsAPI: GET /api/elections/:id/results
+    
+    ResultsAPI->>ResultsAPI: Authenticate (optional)
+    ResultsAPI->>SupabaseDB: Get election
+    SupabaseDB-->>ResultsAPI: Election data
+    
+    ResultsAPI->>ResultsAPI: Check if election ended
+    ResultsAPI->>ResultsAPI: Check if user is creator
+    
+    alt Not Ended & Not Creator
+        ResultsAPI-->>ResultsView: Error: Results not available
+    else Ended OR Is Creator
+        ResultsAPI->>Blockchain: Create read-only contract
+        ResultsAPI->>SmartContract: getPositionList()
+        SmartContract-->>ResultsAPI: Position names array
+        
+        loop For Each Position
+            ResultsAPI->>SmartContract: getCandidateList(positionName)
+            SmartContract-->>ResultsAPI: Candidate names array
+            
+            loop For Each Candidate
+                ResultsAPI->>SmartContract: getVoteCount(positionName, candidateName)
+                SmartContract-->>ResultsAPI: Vote count (uint256)
+                ResultsAPI->>ResultsAPI: Add delay (rate limit protection)
+            end
+        end
+        
+        ResultsAPI->>KVStore: Query ballot links by prefix
+        Note over ResultsAPI,KVStore: ballot:link:electionId:%
+        KVStore-->>ResultsAPI: All ballot links
+        
+        ResultsAPI->>ResultsAPI: Count total votes (filter final votes)
+        ResultsAPI->>KVStore: Get eligibility records
+        KVStore-->>ResultsAPI: Eligibility records
+        
+        ResultsAPI->>ResultsAPI: Count eligible voters
+        ResultsAPI->>ResultsAPI: Calculate percentages
+        ResultsAPI->>ResultsAPI: Calculate turnout percentage
+        ResultsAPI->>ResultsAPI: Format results structure
+        
+        ResultsAPI-->>ResultsView: Formatted results
+        ResultsView->>ResultsView: Render charts
+        ResultsView->>ResultsView: Display statistics
+        ResultsView-->>User: Show results UI
+    end
+

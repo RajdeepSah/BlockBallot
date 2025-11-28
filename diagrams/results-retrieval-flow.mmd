@@ -1,0 +1,42 @@
+sequenceDiagram
+    participant User
+    participant ResultsView
+    participant ResultsAPI
+    participant SupabaseDB
+    participant KVStore
+    participant Blockchain
+    participant SmartContract
+    
+    User->>ResultsView: View results
+    ResultsView->>ResultsAPI: GET /api/elections/:id/results
+    ResultsAPI->>ResultsAPI: Authenticate (optional)
+    ResultsAPI->>SupabaseDB: Get election
+    SupabaseDB-->>ResultsAPI: Election data
+    
+    alt Election Not Ended & Not Creator
+        ResultsAPI-->>ResultsView: Error: Results not available
+    else Election Ended OR Is Creator
+        ResultsAPI->>Blockchain: Create read-only contract
+        ResultsAPI->>SmartContract: getPositionList()
+        SmartContract-->>ResultsAPI: Position names
+        
+        loop For Each Position
+            ResultsAPI->>SmartContract: getCandidateList(position)
+            SmartContract-->>ResultsAPI: Candidate names
+            
+            loop For Each Candidate
+                ResultsAPI->>SmartContract: getVoteCount(position, candidate)
+                SmartContract-->>ResultsAPI: Vote count
+                Note over ResultsAPI: Add delay to avoid rate limits
+            end
+        end
+        
+        ResultsAPI->>KVStore: Count ballot links (total votes)
+        KVStore-->>ResultsAPI: Total vote count
+        ResultsAPI->>KVStore: Count eligible voters
+        KVStore-->>ResultsAPI: Eligible voter count
+        ResultsAPI->>ResultsAPI: Calculate percentages & turnout
+        ResultsAPI-->>ResultsView: Formatted results
+        ResultsView->>User: Display charts & statistics
+    end
+

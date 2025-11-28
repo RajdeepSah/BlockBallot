@@ -1,0 +1,43 @@
+graph TB
+    subgraph Auth["Authentication APIs"]
+        A1["POST /api/auth/register<br/>Create new user account"]
+        A2["POST /api/auth/login<br/>Login with email/password"]
+        A3["POST /api/auth/verify-otp<br/>Verify 2FA OTP code"]
+        A4["POST /api/auth/resend-otp<br/>Resend OTP code"]
+        A5["GET /api/auth/me<br/>Get current user"]
+        A6["POST /api/auth/refresh<br/>Refresh access token"]
+    end
+    
+    subgraph Elections["Election APIs"]
+        E1["GET /api/elections<br/>Search by code or get user's elections"]
+        E2["GET /api/elections/:id<br/>Get election details"]
+        E3["POST /api/deploy<br/>Deploy election contract"]
+        E4["GET /api/elections/:id/results<br/>Get election results"]
+    end
+    
+    subgraph Eligibility["Eligibility APIs"]
+        EL1["POST /api/elections/:id/eligibility<br/>Upload voter list (admin)"]
+        EL2["GET /api/elections/:id/eligibility-status<br/>Check eligibility status"]
+    end
+    
+    subgraph Access["Access Request APIs"]
+        AC1["POST /api/elections/:id/access-request<br/>Request access to vote"]
+        AC2["GET /api/elections/:id/access-requests<br/>Get all requests (admin)"]
+        AC3["PATCH /api/elections/:id/access-requests/:requestId<br/>Approve/deny request (admin)"]
+    end
+    
+    subgraph Voting["Voting APIs"]
+        V1["POST /api/vote<br/>Cast vote in election"]
+    end
+    
+    subgraph Invites["Invitation APIs"]
+        I1["POST /api/send-election-invite<br/>Send email invitations (admin)"]
+    end
+    
+    style A1 fill:#e1f5ff
+    style A2 fill:#e1f5ff
+    style A3 fill:#e1f5ff
+    style E3 fill:#ffe1f5
+    style V1 fill:#ffe1f5
+    style E4 fill:#fff4e1
+

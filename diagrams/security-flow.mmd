@@ -1,0 +1,52 @@
+flowchart TD
+    Start([User Request]) --> Auth{Has Token?}
+    Auth -->|No| RequireAuth[Require Authentication]
+    Auth -->|Yes| ValidateToken{Token Valid?}
+    
+    ValidateToken -->|Expired| Refresh{Refresh Token?}
+    ValidateToken -->|Invalid| RequireAuth
+    ValidateToken -->|Valid| CheckPerms{Check Permissions}
+    
+    Refresh -->|Success| CheckPerms
+    Refresh -->|Failed| RequireAuth
+    
+    CheckPerms -->|Election Action| CheckCreator{Is Creator?}
+    CheckPerms -->|Vote Action| CheckEligible{Is Eligible?}
+    CheckPerms -->|Public Action| Allow[Allow Request]
+    
+    CheckCreator -->|Yes| Allow
+    CheckCreator -->|No| Deny[403 Forbidden]
+    
+    CheckEligible -->|Yes| CheckVoted{Already Voted?}
+    CheckEligible -->|No| Deny
+    
+    CheckVoted -->|No| CheckActive{Election Active?}
+    CheckVoted -->|Yes| Deny
+    
+    CheckActive -->|Yes| Allow
+    CheckActive -->|No| Deny
+    
+    Allow --> Process[Process Request]
+    Process --> ValidateInput{Input Valid?}
+    ValidateInput -->|Yes| Sanitize[Sanitize Input]
+    ValidateInput -->|No| Reject[400 Bad Request]
+    
+    Sanitize --> RateLimit{Check Rate Limit?}
+    RateLimit -->|Exceeded| RateLimitError[429 Too Many Requests]
+    RateLimit -->|OK| Execute[Execute Action]
+    
+    Execute --> Audit[Log Action]
+    Audit --> Response[Return Response]
+    
+    RequireAuth --> Redirect[Redirect to Login]
+    Deny --> ErrorResponse[Return Error]
+    Reject --> ErrorResponse
+    RateLimitError --> ErrorResponse
+    
+    style RequireAuth fill:#ffcccc
+    style Deny fill:#ffcccc
+    style Reject fill:#ffcccc
+    style RateLimitError fill:#ffcccc
+    style Allow fill:#ccffcc
+    style Execute fill:#ccffcc
+

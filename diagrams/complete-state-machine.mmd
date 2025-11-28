@@ -1,0 +1,55 @@
+stateDiagram-v2
+    [*] --> Unauthenticated
+    
+    Unauthenticated --> SigningIn: User clicks sign in
+    Unauthenticated --> SigningUp: User clicks sign up
+    
+    SigningUp --> Registered: Registration success
+    Registered --> SigningIn: Auto redirect
+    
+    SigningIn --> TwoFactor: Login success (2FA required)
+    TwoFactor --> Authenticated: OTP verified
+    TwoFactor --> SigningIn: OTP invalid/expired
+    
+    Authenticated --> Dashboard: Load dashboard
+    Authenticated --> [*]: Logout
+    
+    Dashboard --> CreatingElection: Create election
+    Dashboard --> ViewingElection: Search/select election
+    Dashboard --> ViewingResults: View results
+    
+    CreatingElection --> ElectionCreated: Contract deployed
+    ElectionCreated --> ManagingElection: Navigate to admin
+    
+    ViewingElection --> CheckingEligibility: Load election
+    CheckingEligibility --> NotEligible: Not on list
+    CheckingEligibility --> Eligible: On approved list
+    CheckingEligibility --> AlreadyVoted: Has voted
+    
+    NotEligible --> RequestingAccess: Request access
+    RequestingAccess --> AccessPending: Request submitted
+    AccessPending --> Eligible: Admin approves
+    
+    Eligible --> Voting: Election active
+    Eligible --> WaitingForStart: Election not started
+    Eligible --> ViewingResults: Election ended
+    
+    Voting --> CastingVote: Submit selections
+    CastingVote --> VoteSubmitted: Transaction confirmed
+    VoteSubmitted --> ViewingResults: View results
+    
+    ManagingElection --> UploadingVoters: Upload eligibility
+    ManagingElection --> ReviewingRequests: Review access requests
+    ManagingElection --> SendingInvites: Send invitations
+    ManagingElection --> ViewingResults: View results
+    
+    UploadingVoters --> ManagingElection: Upload complete
+    ReviewingRequests --> ManagingElection: Request processed
+    SendingInvites --> ManagingElection: Invites sent
+    
+    ViewingResults --> Dashboard: Back to dashboard
+    ViewingResults --> ManagingElection: Manage (if creator)
+    
+    WaitingForStart --> Eligible: Election starts
+    AlreadyVoted --> ViewingResults: View results
+

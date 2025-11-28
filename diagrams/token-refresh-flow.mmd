@@ -1,0 +1,31 @@
+sequenceDiagram
+    participant Client
+    participant AuthUtils
+    participant RefreshAPI
+    participant SupabaseAuth
+    participant LocalStorage
+    
+    Client->>AuthUtils: getValidAccessToken()
+    AuthUtils->>LocalStorage: Get access token
+    LocalStorage-->>AuthUtils: Access token
+    
+    alt Token Valid
+        AuthUtils-->>Client: Return valid token
+    else Token Expired
+        AuthUtils->>LocalStorage: Get refresh token
+        LocalStorage-->>AuthUtils: Refresh token
+        AuthUtils->>RefreshAPI: POST /api/auth/refresh
+        RefreshAPI->>SupabaseAuth: refreshSession(refreshToken)
+        
+        alt Refresh Success
+            SupabaseAuth-->>RefreshAPI: New session
+            RefreshAPI-->>AuthUtils: New accessToken & refreshToken
+            AuthUtils->>LocalStorage: Store new tokens
+            AuthUtils-->>Client: Return new access token
+        else Refresh Failed
+            RefreshAPI-->>AuthUtils: Error
+            AuthUtils->>LocalStorage: Clear all tokens
+            AuthUtils-->>Client: null (trigger logout)
+        end
+    end
+

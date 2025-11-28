@@ -1,0 +1,111 @@
+classDiagram
+    class Election {
+        +string? id
+        +string code
+        +string title
+        +string description
+        +string starts_at
+        +string ends_at
+        +string creator_id
+        +string status
+        +Position[] positions
+        +string time_zone
+        +string? contract_address
+    }
+    
+    class Position {
+        +string id
+        +string name
+        +string description
+        +string ballot_type
+        +Candidate[] candidates
+    }
+    
+    class Candidate {
+        +string id
+        +string name
+        +string description
+    }
+    
+    class ElectionResults {
+        +string election_id
+        +string election_title
+        +number total_votes
+        +number eligible_voters
+        +string turnout_percentage
+        +Record~string, PositionResult~ results
+        +boolean has_ended
+    }
+    
+    class PositionResult {
+        +string position_name
+        +string ballot_type
+        +CandidateResult[] candidates
+    }
+    
+    class CandidateResult {
+        +string id
+        +string name
+        +string description
+        +string? photo_url
+        +number votes
+        +string percentage
+    }
+    
+    class EligibilityStatus {
+        +boolean eligible
+        +boolean hasVoted
+        +AccessRequest? accessRequest
+    }
+    
+    class AccessRequest {
+        +string id
+        +string status
+        +string user_name
+        +string user_email
+        +string created_at
+    }
+    
+    class User {
+        +string id
+        +string name
+        +string email
+        +string? phone
+    }
+    
+    class VoteSelections {
+        <<type>>
+        Record~string, string | string[]~
+    }
+    
+    class RegisterData {
+        +string name
+        +string email
+        +string password
+        +string? phone
+    }
+    
+    class LoginData {
+        +string email
+        +string password
+    }
+    
+    class LoginResponse {
+        +boolean requires2FA
+        +string? accessToken
+        +string? userId
+        +string? devOTP
+    }
+    
+    class VoteReceipt {
+        +string receipt
+        +string? txHash
+        +boolean? success
+    }
+    
+    Election "1" *-- "many" Position
+    Position "1" *-- "many" Candidate
+    ElectionResults "1" *-- "many" PositionResult
+    PositionResult "1" *-- "many" CandidateResult
+    EligibilityStatus "0..1" --> "1" AccessRequest
+

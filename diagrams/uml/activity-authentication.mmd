@@ -1,0 +1,49 @@
+flowchart TD
+    Start([User Opens App]) --> CheckStoredAuth{Token in LocalStorage?}
+    
+    CheckStoredAuth -->|No| ShowLogin[Show Login Form]
+    CheckStoredAuth -->|Yes| ValidateToken{Token Valid?}
+    
+    ValidateToken -->|Expired| RefreshToken[Attempt Token Refresh]
+    ValidateToken -->|Invalid| ClearAuth[Clear Auth Data]
+    ClearAuth --> ShowLogin
+    
+    RefreshToken --> RefreshSuccess{Refresh Success?}
+    RefreshSuccess -->|No| ClearAuth
+    RefreshSuccess -->|Yes| LoadUser[Load User Data]
+    ValidateToken -->|Valid| LoadUser
+    
+    ShowLogin --> UserEnters[User Enters Credentials]
+    UserEnters --> SubmitLogin[Submit Login]
+    SubmitLogin --> Authenticate[Authenticate with Supabase]
+    
+    Authenticate --> AuthSuccess{Authentication Success?}
+    AuthSuccess -->|No| ShowError[Show Error Message]
+    ShowError --> UserEnters
+    
+    AuthSuccess -->|Yes| GenerateOTP[Generate OTP]
+    GenerateOTP --> StoreOTP[Store OTP in KV Store]
+    StoreOTP --> Show2FA[Show 2FA Form]
+    
+    Show2FA --> UserEntersOTP[User Enters OTP]
+    UserEntersOTP --> VerifyOTP[Verify OTP]
+    
+    VerifyOTP --> OTPValid{OTP Valid?}
+    OTPValid -->|No| IncrementAttempts[Increment Attempt Count]
+    IncrementAttempts --> MaxAttempts{Max Attempts?}
+    MaxAttempts -->|Yes| ShowError2[Show Max Attempts Error]
+    MaxAttempts -->|No| Show2FA
+    ShowError2 --> Show2FA
+    
+    OTPValid -->|Yes| DeleteOTP[Delete OTP Record]
+    DeleteOTP --> GetUserData[Get User Data]
+    GetUserData --> StoreAuth[Store Token & User]
+    StoreAuth --> LoadUser
+    
+    LoadUser --> Dashboard[Show Dashboard]
+    
+    style Start fill:#e1f5ff
+    style Dashboard fill:#ccffcc
+    style ShowError fill:#ffcccc
+    style ShowError2 fill:#ffcccc
+

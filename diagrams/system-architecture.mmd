@@ -1,0 +1,51 @@
+graph TB
+    subgraph Client["Client Layer"]
+        Browser["Browser/React App"]
+        Components["React Components<br/>(Dashboard, ElectionView, AdminPanel, etc.)"]
+        AuthContext["AuthContext Provider<br/>(State Management)"]
+        LocalStorage["LocalStorage<br/>(Tokens, User Data)"]
+    end
+    
+    subgraph NextJS["Next.js Application"]
+        Pages["Next.js Pages<br/>(App Router)"]
+        APIRoutes["API Routes<br/>(/api/*)"]
+        AuthUtils["Auth Utilities<br/>(Token Refresh, Error Handling)"]
+    end
+    
+    subgraph Backend["Backend Services"]
+        SupabaseAuth["Supabase Auth<br/>(User Authentication)"]
+        SupabaseDB[("Supabase PostgreSQL<br/>(Elections Table)")]
+        SupabaseKV[("Supabase KV Store<br/>(kv_store_b7b6fbd4)<br/>Users, Eligibility, Votes, OTP")]
+        ResendAPI["Resend API<br/>(Email Service)"]
+    end
+    
+    subgraph Blockchain["Blockchain Layer"]
+        Ethereum["Ethereum Network<br/>(Sepolia Testnet)"]
+        SmartContract["BlockBallotSingle<br/>Smart Contract<br/>(Vote Storage)"]
+        Ethers["Ethers.js<br/>(Provider & Wallet)"]
+        Hardhat["Hardhat<br/>(Contract Compilation)"]
+    end
+    
+    Browser --> Components
+    Components --> AuthContext
+    Components --> LocalStorage
+    Components --> Pages
+    Pages --> APIRoutes
+    APIRoutes --> AuthUtils
+    APIRoutes --> SupabaseAuth
+    APIRoutes --> SupabaseDB
+    APIRoutes --> SupabaseKV
+    APIRoutes --> ResendAPI
+    APIRoutes --> Ethers
+    Ethers --> Ethereum
+    Ethereum --> SmartContract
+    Hardhat --> SmartContract
+    AuthUtils --> LocalStorage
+    AuthUtils --> APIRoutes
+    
+    style Browser fill:#e1f5ff
+    style SmartContract fill:#ffe1f5
+    style SupabaseDB fill:#fff4e1
+    style SupabaseKV fill:#fff4e1
+    style ResendAPI fill:#fff4e1
+

@@ -1,0 +1,27 @@
+graph TB
+    subgraph Components["React Components"]
+        AuthContext["AuthContext<br/>- user: User<br/>- token: string<br/>- login()<br/>- verify2FA()<br/>- register()<br/>- logout()"]
+        Dashboard["Dashboard<br/>- onCreateElection()<br/>- onViewElection()<br/>- onManageElection()<br/>- loadElections()"]
+        CreateElection["CreateElection<br/>- onBack()<br/>- onSuccess()<br/>- handleSubmit()<br/>- validateForm()"]
+        ElectionView["ElectionView<br/>- checkEligibility()<br/>- requestAccess()<br/>- castVote()"]
+        AdminPanel["AdminPanel<br/>- uploadEligibility()<br/>- getAccessRequests()<br/>- updateAccessRequest()"]
+        ResultsView["ResultsView<br/>- loadResults()<br/>- fetchFromBlockchain()"]
+    end
+    
+    subgraph Utils["Utilities"]
+        API["API Utils<br/>- register()<br/>- login()<br/>- verify2FA()<br/>- getElection()<br/>- searchElections()<br/>- castVote()<br/>- getResults()"]
+        BlockchainUtils["Blockchain Utils<br/>- createReadOnlyContract()<br/>- createWritableContract()<br/>- createProvider()<br/>- createWallet()"]
+    end
+    
+    AuthContext --> API
+    Dashboard --> API
+    CreateElection --> API
+    ElectionView --> API
+    AdminPanel --> API
+    ResultsView --> API
+    API --> BlockchainUtils
+    
+    style AuthContext fill:#e1f5ff
+    style API fill:#fff4e1
+    style BlockchainUtils fill:#ffe1f5
+

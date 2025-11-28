@@ -1,0 +1,53 @@
+erDiagram
+    USERS ||--o{ ELECTIONS : "creates"
+    USERS ||--o{ ELIGIBILITY : "has"
+    USERS ||--o{ ACCESS_REQUESTS : "makes"
+    USERS ||--o{ BALLOT_LINKS : "has"
+    ELECTIONS ||--o{ ELIGIBILITY : "has"
+    ELECTIONS ||--o{ ACCESS_REQUESTS : "receives"
+    ELECTIONS ||--o{ BALLOT_LINKS : "contains"
+    
+    USERS {
+        string id PK
+        string email
+        string name
+        string phone
+    }
+    
+    ELECTIONS {
+        string id PK
+        string code UK
+        string title
+        string description
+        datetime starts_at
+        datetime ends_at
+        string creator_id FK
+        string contract_address
+        json positions
+        string status
+    }
+    
+    ELIGIBILITY {
+        string key PK
+        string election_id
+        string email
+        string status
+        datetime created_at
+    }
+    
+    ACCESS_REQUESTS {
+        string key PK
+        string election_id
+        string user_id
+        string status
+        datetime created_at
+    }
+    
+    BALLOT_LINKS {
+        string key PK
+        string election_id
+        string user_id
+        string tx_hash
+        datetime created_at
+    }
+

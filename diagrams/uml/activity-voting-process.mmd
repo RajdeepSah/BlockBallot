@@ -1,0 +1,50 @@
+flowchart TD
+    Start([User Opens Election]) --> LoadElection[Load Election Data]
+    LoadElection --> CheckAuth{Authenticated?}
+    CheckAuth -->|No| RequireLogin[Redirect to Login]
+    CheckAuth -->|Yes| CheckEligibility[Check Eligibility Status]
+    
+    CheckEligibility --> EligibilityResult{Eligible?}
+    EligibilityResult -->|No| CheckRequest{Has Access Request?}
+    EligibilityResult -->|Yes| CheckVoted{Already Voted?}
+    
+    CheckRequest -->|No| ShowRequestButton[Show Request Access Button]
+    CheckRequest -->|Pending| ShowPending[Show Pending Message]
+    CheckRequest -->|Denied| ShowDenied[Show Denied Message]
+    ShowRequestButton --> UserClicksRequest[User Clicks Request]
+    UserClicksRequest --> SubmitRequest[Submit Access Request]
+    SubmitRequest --> ShowPending
+    
+    CheckVoted -->|Yes| ShowVoted[Show Already Voted Message]
+    CheckVoted -->|No| CheckElectionStatus{Election Status?}
+    
+    CheckElectionStatus -->|Not Started| ShowNotStarted[Show Not Started Message]
+    CheckElectionStatus -->|Ended| ShowEnded[Show Ended Message]
+    CheckElectionStatus -->|Active| ShowBallot[Display Ballot]
+    
+    ShowBallot --> UserSelects[User Selects Candidates]
+    UserSelects --> ValidateSelections{All Positions Selected?}
+    ValidateSelections -->|No| ShowError[Show Validation Error]
+    ValidateSelections -->|Yes| UserSubmits[User Clicks Cast Vote]
+    
+    UserSubmits --> CreateLock[Create Timestamped Lock]
+    CreateLock --> VerifyNoDuplicate{Duplicate Vote?}
+    VerifyNoDuplicate -->|Yes| RemoveLock[Remove Lock]
+    RemoveLock --> ShowError2[Show Already Voted Error]
+    VerifyNoDuplicate -->|No| SubmitToBlockchain[Submit to Blockchain]
+    
+    SubmitToBlockchain --> WaitConfirmation[Wait for Transaction]
+    WaitConfirmation --> TxSuccess{Transaction Success?}
+    TxSuccess -->|No| RemoveLock2[Remove Lock]
+    RemoveLock2 --> ShowError3[Show Transaction Error]
+    TxSuccess -->|Yes| StoreBallotLink[Store Ballot Link]
+    StoreBallotLink --> RemoveLock3[Remove Lock]
+    RemoveLock3 --> ShowSuccess[Show Vote Confirmation]
+    ShowSuccess --> ShowReceipt[Display Transaction Receipt]
+    
+    style Start fill:#e1f5ff
+    style ShowSuccess fill:#ccffcc
+    style ShowError fill:#ffcccc
+    style ShowError2 fill:#ffcccc
+    style ShowError3 fill:#ffcccc
+

@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant Admin
+    participant CreateElection
+    participant DeployAPI
+    participant SupabaseDB
+    participant Blockchain
+    
+    Admin->>CreateElection: Fill election form
+    CreateElection->>CreateElection: Validate form data
+    CreateElection->>DeployAPI: POST /api/deploy
+    DeployAPI->>DeployAPI: Authenticate user
+    DeployAPI->>DeployAPI: Validate positions/candidates
+    DeployAPI->>Blockchain: Deploy contract (ContractFactory)
+    Blockchain-->>DeployAPI: Contract address + txHash
+    DeployAPI->>SupabaseDB: Generate unique 7-digit code
+    DeployAPI->>SupabaseDB: Insert election record
+    SupabaseDB-->>DeployAPI: Election ID
+    DeployAPI-->>CreateElection: {electionId, contractAddress, txHash}
+    CreateElection->>Admin: Show success dialog
+    Admin->>CreateElection: Continue
+    CreateElection->>Admin: Navigate to election view
+

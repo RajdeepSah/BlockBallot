@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant User
+    participant SignUp
+    participant AuthContext
+    participant RegisterAPI
+    participant SupabaseAuth
+    participant KVStore
+    
+    User->>SignUp: Enter registration details
+    SignUp->>SignUp: Validate form (password match, length)
+    SignUp->>AuthContext: register(data)
+    AuthContext->>RegisterAPI: POST /api/auth/register
+    RegisterAPI->>RegisterAPI: Validate input (name, email, password)
+    RegisterAPI->>KVStore: Check if email exists
+    KVStore-->>RegisterAPI: Email check result
+    
+    alt Email Already Exists
+        RegisterAPI-->>AuthContext: Error: Email already registered
+        AuthContext-->>SignUp: Show error
+    else Email Available
+        RegisterAPI->>SupabaseAuth: admin.createUser()
+        SupabaseAuth-->>RegisterAPI: User created
+        RegisterAPI->>KVStore: Store user data (user:userId)
+        RegisterAPI->>KVStore: Store email mapping (user:email:email)
+        RegisterAPI-->>AuthContext: Success: User registered
+        AuthContext-->>SignUp: Show success message
+        SignUp->>User: Redirect to sign in
+    end
+
