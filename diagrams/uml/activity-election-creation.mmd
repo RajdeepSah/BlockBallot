@@ -1,0 +1,59 @@
+flowchart TD
+    Start([Admin Clicks Create Election]) --> ShowForm[Display Creation Form]
+    ShowForm --> UserFills[User Fills Form Data]
+    UserFills --> ValidateForm{Form Valid?}
+    
+    ValidateForm -->|No| ShowValidationError[Show Validation Errors]
+    ShowValidationError --> UserFills
+    
+    ValidateForm -->|Yes| SanitizeInputs[Sanitize All Inputs]
+    SanitizeInputs --> CheckDuplicates{Duplicates Found?}
+    
+    CheckDuplicates -->|Yes| ShowDuplicateError[Show Duplicate Error]
+    ShowDuplicateError --> UserFills
+    
+    CheckDuplicates -->|No| SubmitForm[Submit Form]
+    SubmitForm --> Authenticate{User Authenticated?}
+    
+    Authenticate -->|No| RequireAuth[Require Authentication]
+    Authenticate -->|Yes| ValidatePositions[Validate Positions Array]
+    
+    ValidatePositions --> PrepareContract[Prepare Contract Data]
+    PrepareContract --> DeployContract[Deploy Smart Contract]
+    
+    DeployContract --> WaitDeployment[Wait for Deployment]
+    WaitDeployment --> DeploymentSuccess{Deployment Success?}
+    
+    DeploymentSuccess -->|No| ShowDeploymentError[Show Deployment Error]
+    ShowDeploymentError --> End([End])
+    
+    DeploymentSuccess -->|Yes| GetContractAddress[Get Contract Address]
+    GetContractAddress --> GenerateCode[Generate Unique 7-Digit Code]
+    
+    GenerateCode --> CheckCodeExists{Code Exists?}
+    CheckCodeExists -->|Yes| GenerateCode
+    CheckCodeExists -->|No| DetermineStatus[Determine Election Status]
+    
+    DetermineStatus --> InsertElection[Insert Election to Database]
+    InsertElection --> InsertSuccess{Insert Success?}
+    
+    InsertSuccess -->|No| ShowDBError[Show Database Error]
+    ShowDBError --> End
+    
+    InsertSuccess -->|Yes| ShowSuccess[Show Success Dialog]
+    ShowSuccess --> DisplayTxHash[Display Transaction Hash]
+    DisplayTxHash --> DisplayContract[Display Contract Address]
+    DisplayContract --> UserContinues{User Clicks Continue?}
+    
+    UserContinues -->|Yes| NavigateToElection[Navigate to Election View]
+    UserContinues -->|No| ShowSuccess
+    
+    NavigateToElection --> End
+    
+    style Start fill:#e1f5ff
+    style ShowSuccess fill:#ccffcc
+    style ShowValidationError fill:#ffcccc
+    style ShowDuplicateError fill:#ffcccc
+    style ShowDeploymentError fill:#ffcccc
+    style ShowDBError fill:#ffcccc
+

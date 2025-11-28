@@ -1,0 +1,25 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src"],
+  "entryPointStrategy": "expand",
+  "out": "docs",
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "node_modules/**",
+    ".next/**",
+    "src/supabase/functions/**"
+  ],
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeInternal": false,
+  "readme": "README.md",
+  "name": "BlockBallot API Documentation",
+  "includeVersion": true,
+  "categorizeByGroup": true,
+  "theme": "default",
+  "plugin": [],
+  "tsconfig": "tsconfig.json"
+}

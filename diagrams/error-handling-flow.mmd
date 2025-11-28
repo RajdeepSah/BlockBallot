@@ -1,0 +1,44 @@
+flowchart TD
+    Start([API Request]) --> Auth{Authenticated?}
+    Auth -->|No| Unauthorized[401 Unauthorized]
+    Auth -->|Yes| Validate{Valid Request?}
+    
+    Validate -->|No| ValidationError[400 Bad Request]
+    Validate -->|Yes| Process[Process Request]
+    
+    Process --> Check{Check Conditions}
+    Check -->|Not Found| NotFound[404 Not Found]
+    Check -->|Forbidden| Forbidden[403 Forbidden]
+    Check -->|Rate Limited| RateLimit[429 Too Many Requests]
+    Check -->|Success| Success[200 Success]
+    
+    Process -->|Exception| CatchError{Catch Error}
+    CatchError -->|Network Error| NetworkError[502 Bad Gateway]
+    CatchError -->|Database Error| DBError[500 Internal Server Error]
+    CatchError -->|Blockchain Error| BlockchainError[500 + Retry Logic]
+    
+    Unauthorized --> ClearAuth[Clear Auth State]
+    ClearAuth --> Redirect[Redirect to Login]
+    
+    ValidationError --> ErrorResponse[Return Error JSON]
+    NotFound --> ErrorResponse
+    Forbidden --> ErrorResponse
+    RateLimit --> ErrorResponse
+    NetworkError --> ErrorResponse
+    DBError --> ErrorResponse
+    BlockchainError --> Retry{Retry with Backoff}
+    Retry -->|Success| Success
+    Retry -->|Max Retries| ErrorResponse
+    
+    Success --> SuccessResponse[Return Success JSON]
+    
+    style Unauthorized fill:#ffcccc
+    style ValidationError fill:#ffcccc
+    style NotFound fill:#ffcccc
+    style Forbidden fill:#ffcccc
+    style RateLimit fill:#ffcccc
+    style NetworkError fill:#ffcccc
+    style DBError fill:#ffcccc
+    style BlockchainError fill:#ffcccc
+    style Success fill:#ccffcc
+

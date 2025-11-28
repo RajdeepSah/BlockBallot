@@ -17,6 +17,13 @@ export const runtime = 'nodejs';
 
 const RESEND_API_URL = 'https://api.resend.com/emails';
 
+/**
+ * Sends an OTP email using the Resend API.
+ *
+ * @param email - Recipient email address
+ * @param code - OTP code to send
+ * @throws Error if API key is missing or email sending fails
+ */
 async function sendOtpEmail(email: string, code: string) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -48,6 +55,14 @@ async function sendOtpEmail(email: string, code: string) {
   }
 }
 
+/**
+ * POST /api/send-otp
+ * Generates and sends an OTP code to the provided email address.
+ * Enforces rate limiting to prevent abuse.
+ *
+ * @param request - Request object containing email in JSON body
+ * @returns JSON response with success status, or error response
+ */
 export async function POST(request: Request) {
   try {
     const payload = await request.json().catch(() => null);
@@ -64,10 +79,7 @@ export async function POST(request: Request) {
       throw new Error('Unable to read OTP data store.');
     });
 
-    if (
-      existingRecord &&
-      Date.now() - existingRecord.lastSentAt < OTP_RATE_LIMIT_WINDOW_MS
-    ) {
+    if (existingRecord && Date.now() - existingRecord.lastSentAt < OTP_RATE_LIMIT_WINDOW_MS) {
       return NextResponse.json(
         { error: 'OTP already sent. Please wait before requesting another code.' },
         { status: 429 }
@@ -97,8 +109,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    const message = error?.message ?? 'Failed to send verification code.';
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to send verification code.';
     const status = message.includes('Supabase') || message.includes('RESEND') ? 500 : 400;
     return NextResponse.json({ error: message }, { status });
   }

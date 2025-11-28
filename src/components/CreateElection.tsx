@@ -5,20 +5,30 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { Election } from '@/types/election';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ArrowLeft, Plus, Trash2, Vote } from 'lucide-react';
 import { getEtherscanUrl } from '@/utils/blockchain/utils';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
-import { Position, Candidate } from '@/types/election';
-import { sanitizeString, sanitizeText, validateNoDuplicateCandidatesInPositions, validateNoDuplicatePositions } from '@/utils/validation';
+import { Position } from '@/types/election';
+import {
+  sanitizeString,
+  sanitizeText,
+  validateNoDuplicateCandidatesInPositions,
+  validateNoDuplicatePositions,
+} from '@/utils/validation';
 const generateTempId = (() => {
   let counter = 0;
   return () => `temp-${Date.now()}-${counter++}`;
 })();
 
+/**
+ * Formats a date to local datetime-local input format.
+ *
+ * @param date - The date to format
+ * @returns Formatted date string in YYYY-MM-DDTHH:mm format
+ */
 function currentLocalTime(date: Date): string {
   return `${date.toLocaleDateString('en-CA')}T${date.toTimeString().slice(0, 5)}`;
 }
@@ -28,6 +38,15 @@ interface CreateElectionProps {
   onSuccess: (electionId: string) => void;
 }
 
+/**
+ * Create election component for setting up new elections with positions and candidates.
+ * Handles form validation, sanitization, and blockchain contract deployment.
+ *
+ * @param props - Component props
+ * @param props.onBack - Callback to navigate back
+ * @param props.onSuccess - Callback when election is successfully created
+ * @returns The create election form UI
+ */
 export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
   const { token } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -36,12 +55,12 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
   const [description, setDescription] = useState('');
   const [startsAt, setStartsAt] = useState(currentLocalTime(new Date()));
   const [endsAt, setEndsAt] = useState('');
-  const [timeZone, setTimeZone] = useState('UTC');
-  const [deployInfo, setDeployInfo] = useState<{ txHash: string; contractAddress: string } | null>(null);
+  const [timeZone] = useState('UTC');
+  const [deployInfo, setDeployInfo] = useState<{ txHash: string; contractAddress: string } | null>(
+    null
+  );
   const [electionID, setElectionID] = useState('');
 
-
-  // Positions
   const [positions, setPositions] = useState<Position[]>([
     {
       id: generateTempId(),
@@ -52,10 +71,10 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
         {
           id: generateTempId(),
           name: '',
-          description: ''
-        }
-      ]
-    }
+          description: '',
+        },
+      ],
+    },
   ]);
 
   const addPosition = () => {
@@ -70,169 +89,175 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
           {
             id: generateTempId(),
             name: '',
-            description: ''
-          }
-        ]
-      }
+            description: '',
+          },
+        ],
+      },
     ]);
   };
 
   const removePosition = (id: string) => {
-    setPositions(positions.filter(p => p.id !== id));
+    setPositions(positions.filter((p) => p.id !== id));
   };
 
-  const updatePosition = (id: string, field: string, value: any) => {
-    setPositions(positions.map(p => 
-      p.id === id ? { ...p, [field]: value } : p
-    ));
+  const updatePosition = (id: string, field: string, value: string | Position['ballot_type']) => {
+    setPositions(positions.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
   };
 
-  // Sanitize position field on blur
   const handlePositionBlur = (id: string, field: string) => {
-    setPositions(positions.map(p => {
-      if (p.id !== id) return p;
-      
-      // Sanitize string fields on blur
-      if (field === 'name' && typeof p[field as keyof Position] === 'string') {
-        return { ...p, [field]: sanitizeString(p[field as keyof Position] as string) };
-      }
-      if (field === 'description' && typeof p[field as keyof Position] === 'string') {
-        return { ...p, [field]: sanitizeText(p[field as keyof Position] as string) };
-      }
-      
-      return p;
-    }));
+    setPositions(
+      positions.map((p) => {
+        if (p.id !== id) return p;
+
+        if (field === 'name' && typeof p[field as keyof Position] === 'string') {
+          return { ...p, [field]: sanitizeString(p[field as keyof Position] as string) };
+        }
+        if (field === 'description' && typeof p[field as keyof Position] === 'string') {
+          return { ...p, [field]: sanitizeText(p[field as keyof Position] as string) };
+        }
+
+        return p;
+      })
+    );
   };
 
   const addCandidate = (positionId: string) => {
-    setPositions(positions.map(p => 
-      p.id === positionId 
-        ? { 
-            ...p, 
-            candidates: [...p.candidates, { 
-              id: generateTempId(), 
-              name: '', 
-              description: '' 
-            }] 
-          }
-        : p
-    ));
+    setPositions(
+      positions.map((p) =>
+        p.id === positionId
+          ? {
+              ...p,
+              candidates: [
+                ...p.candidates,
+                {
+                  id: generateTempId(),
+                  name: '',
+                  description: '',
+                },
+              ],
+            }
+          : p
+      )
+    );
   };
 
   const removeCandidate = (positionId: string, candidateId: string) => {
-    setPositions(positions.map(p => 
-      p.id === positionId 
-        ? { ...p, candidates: p.candidates.filter(c => c.id !== candidateId) }
-        : p
-    ));
+    setPositions(
+      positions.map((p) =>
+        p.id === positionId
+          ? { ...p, candidates: p.candidates.filter((c) => c.id !== candidateId) }
+          : p
+      )
+    );
   };
 
-  const updateCandidate = (positionId: string, candidateId: string, field: string, value: string) => {
-    setPositions(positions.map(p => 
-      p.id === positionId
-        ? { 
-            ...p, 
-            candidates: p.candidates.map(c => 
-              c.id === candidateId ? { ...c, [field]: value } : c
-            ) 
-          }
-        : p
-    ));
+  const updateCandidate = (
+    positionId: string,
+    candidateId: string,
+    field: string,
+    value: string
+  ) => {
+    setPositions(
+      positions.map((p) =>
+        p.id === positionId
+          ? {
+              ...p,
+              candidates: p.candidates.map((c) =>
+                c.id === candidateId ? { ...c, [field]: value } : c
+              ),
+            }
+          : p
+      )
+    );
   };
 
-  // Sanitize candidate field on blur
   const handleCandidateBlur = (positionId: string, candidateId: string, field: string) => {
-    setPositions(positions.map(p => {
-      if (p.id !== positionId) return p;
-      
-      return {
-        ...p,
-        candidates: p.candidates.map(c => {
-          if (c.id !== candidateId) return c;
-          
-          // Sanitize string fields on blur
-          if (field === 'name' && typeof c.name === 'string') {
-            return { ...c, name: sanitizeString(c.name) };
-          }
-          if (field === 'description' && typeof c.description === 'string') {
-            return { ...c, description: sanitizeText(c.description) };
-          }
-          
-          return c;
-        })
-      };
-    }));
+    setPositions(
+      positions.map((p) => {
+        if (p.id !== positionId) return p;
+
+        return {
+          ...p,
+          candidates: p.candidates.map((c) => {
+            if (c.id !== candidateId) return c;
+
+            if (field === 'name' && typeof c.name === 'string') {
+              return { ...c, name: sanitizeString(c.name) };
+            }
+            if (field === 'description' && typeof c.description === 'string') {
+              return { ...c, description: sanitizeText(c.description) };
+            }
+
+            return c;
+          }),
+        };
+      })
+    );
   };
 
-  // Helper function to check for duplicate candidates in a position
   const getDuplicateCandidates = (position: Position): string[] => {
     const candidateNames = position.candidates
-      .map(c => sanitizeString(c.name).toLowerCase())
-      .filter(name => name.length > 0);
-    
+      .map((c) => sanitizeString(c.name).toLowerCase())
+      .filter((name) => name.length > 0);
+
     const duplicates: string[] = [];
     const seen = new Set<string>();
-    
-    candidateNames.forEach((name, index) => {
+
+    candidateNames.forEach((name) => {
       if (seen.has(name) && !duplicates.includes(name)) {
         duplicates.push(name);
       }
       seen.add(name);
     });
-    
+
     return duplicates;
   };
 
-  // Check if a specific candidate name is a duplicate
   const isCandidateDuplicate = (position: Position, candidateId: string): boolean => {
-    const candidate = position.candidates.find(c => c.id === candidateId);
+    const candidate = position.candidates.find((c) => c.id === candidateId);
     if (!candidate) return false;
-    
+
     const candidateName = sanitizeString(candidate.name).toLowerCase();
     if (!candidateName) return false;
-    
+
     const duplicates = getDuplicateCandidates(position);
     return duplicates.includes(candidateName);
   };
 
-  // Helper function to check for duplicate position names
   const getDuplicatePositions = (): string[] => {
     const positionNames = positions
-      .map(p => sanitizeString(p.name).toLowerCase())
-      .filter(name => name.length > 0);
-    
+      .map((p) => sanitizeString(p.name).toLowerCase())
+      .filter((name) => name.length > 0);
+
     const duplicates: string[] = [];
     const seen = new Set<string>();
-    
-    positionNames.forEach((name, index) => {
+
+    positionNames.forEach((name) => {
       if (seen.has(name) && !duplicates.includes(name)) {
         duplicates.push(name);
       }
       seen.add(name);
     });
-    
+
     return duplicates;
   };
 
-  // Check if a specific position name is a duplicate
   const isPositionDuplicate = (positionId: string): boolean => {
-    const position = positions.find(p => p.id === positionId);
+    const position = positions.find((p) => p.id === positionId);
     if (!position) return false;
-    
+
     const positionName = sanitizeString(position.name).toLowerCase();
     if (!positionName) return false;
-    
+
     const duplicates = getDuplicatePositions();
     return duplicates.includes(positionName);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Clear any previous state
     setError('');
-    setDeployInfo(null); 
+    setDeployInfo(null);
 
-    // Validate required form info
     if (!title || !startsAt || !endsAt) {
       setError('Please fill in all required fields');
       return;
@@ -266,41 +291,46 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
       }
     }
 
-    // Validate no duplicate position names
     try {
-      const positionsForValidation = positions.map(p => ({
+      const positionsForValidation = positions.map((p) => ({
         name: sanitizeString(p.name),
         description: sanitizeText(p.description || ''),
         ballot_type: p.ballot_type,
-        candidates: p.candidates.map(c => ({
+        candidates: p.candidates.map((c) => ({
           name: sanitizeString(c.name),
-          description: sanitizeText(c.description || '')
-        }))
+          description: sanitizeText(c.description || ''),
+        })),
       }));
       validateNoDuplicatePositions(positionsForValidation);
-    } catch (validationError: any) {
-      setError(validationError.message || 'Duplicate position names found');
+    } catch (validationError) {
+      const message =
+        validationError instanceof Error
+          ? validationError.message
+          : 'Duplicate position names found';
+      setError(message);
       return;
     }
 
-    // Validate no duplicate candidates within any position
     try {
-      const positionsForValidation = positions.map(p => ({
+      const positionsForValidation = positions.map((p) => ({
         name: sanitizeString(p.name),
         description: sanitizeText(p.description || ''),
         ballot_type: p.ballot_type,
-        candidates: p.candidates.map(c => ({
+        candidates: p.candidates.map((c) => ({
           name: sanitizeString(c.name),
-          description: sanitizeText(c.description || '')
-        }))
+          description: sanitizeText(c.description || ''),
+        })),
       }));
       validateNoDuplicateCandidatesInPositions(positionsForValidation);
-    } catch (validationError: any) {
-      setError(validationError.message || 'Duplicate candidates found in one or more positions');
+    } catch (validationError) {
+      const message =
+        validationError instanceof Error
+          ? validationError.message
+          : 'Duplicate candidates found in one or more positions';
+      setError(message);
       return;
     }
-    
-    // Ensure user is authenticated before deployment
+
     if (!token) {
       setError('You must be signed in to deploy an election');
       return;
@@ -309,73 +339,63 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
     setLoading(true);
 
     try {
-      // Prepare the full payload for the API Route
-      // This payload contains all the data needed for BOTH contract deployment
-      // AND eventually saving to the Supabase database.
-      // Sanitize all inputs before sending to backend
       const electionPayload = {
-         title: sanitizeString(title),
-         description: sanitizeText(description),
-         starts_at: new Date(startsAt).toISOString(),
-         ends_at: new Date(endsAt).toISOString(),
-         time_zone: timeZone,
-         positions: positions.map(p => ({ // creates an array of Positions containing the list of candidate for that position
-            name: sanitizeString(p.name),
-            description: sanitizeText(p.description || ''),
-            ballot_type: p.ballot_type,
-            candidates: p.candidates.map(c => ({
-              name: sanitizeString(c.name),
-              description: sanitizeText(c.description || '')
-            }))
-         })),
-         contractAddress: undefined // If deployed successfully, this will be replaced with the actual address  
+        title: sanitizeString(title),
+        description: sanitizeText(description),
+        starts_at: new Date(startsAt).toISOString(),
+        ends_at: new Date(endsAt).toISOString(),
+        time_zone: timeZone,
+        positions: positions.map((p) => ({
+          name: sanitizeString(p.name),
+          description: sanitizeText(p.description || ''),
+          ballot_type: p.ballot_type,
+          candidates: p.candidates.map((c) => ({
+            name: sanitizeString(c.name),
+            description: sanitizeText(c.description || ''),
+          })),
+        })),
+        contractAddress: undefined,
       };
-      console.log(electionPayload)
+
       const deployResponse = await authenticatedFetch('/api/deploy', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(electionPayload)
+        body: JSON.stringify(electionPayload),
       });
-      
+
       const data = await deployResponse.json();
 
-      if (deployResponse.ok) { // YAY
-         const { txHash, contractAddress, electionId } = data;
-         console.log("Deploy response: ", data);
+      if (deployResponse.ok) {
+        const { txHash, contractAddress, electionId } = data;
 
-         // Set the election ID so we can navigate to it
-         setElectionID(electionId);
+        setElectionID(electionId);
 
-         // Set the information for the success message display
-         setDeployInfo({
-            txHash: txHash,
-            contractAddress: contractAddress
-         });
-
+        setDeployInfo({
+          txHash: txHash,
+          contractAddress: contractAddress,
+        });
       } else {
-         // If the server returns an error (e.g., failed deployment, missing key)
-         throw new Error(data.message || `Deployment request failed: ${data.message}`);
+        throw new Error(data.message || `Deployment request failed: ${data.message}`);
       }
-    } catch (err: any) {
-      setError('Failed to deploy election contract: '+err.message );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError('Failed to deploy election contract: ' + message);
     } finally {
       setLoading(false);
     }
   };
   const handleContinue = () => {
-   if (electionID) {
+    if (electionID) {
       onSuccess(electionID);
-   }
-   setDeployInfo(null);
-   setElectionID('')
-   };
-   
+    }
+    setDeployInfo(null);
+    setElectionID('');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Success Modal */}
       <Dialog open={deployInfo !== null && electionID !== ''} onOpenChange={() => {}}>
         <DialogContent>
           <DialogHeader>
@@ -387,33 +407,45 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
               <>
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700">Transaction Hash</p>
-                  <a href={getEtherscanUrl(deployInfo.txHash, 'tx')} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline break-all">
+                  <a
+                    href={getEtherscanUrl(deployInfo.txHash, 'tx')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="break-all text-sm text-indigo-600 hover:underline"
+                  >
                     {deployInfo.txHash}
                   </a>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700">Contract Address</p>
-                  <a href={getEtherscanUrl(deployInfo.contractAddress, 'address')} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline break-all">
+                  <a
+                    href={getEtherscanUrl(deployInfo.contractAddress, 'address')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="break-all text-sm text-indigo-600 hover:underline"
+                  >
                     {deployInfo.contractAddress}
                   </a>
                 </div>
               </>
             )}
           </div>
-          <Button onClick={handleContinue} className="w-full">Continue</Button>
+          <Button onClick={handleContinue} className="w-full">
+            Continue
+          </Button>
         </DialogContent>
       </Dialog>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <Button onClick={onBack} variant="ghost" className="mb-6">
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Dashboard
         </Button>
 
         <Card>
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-indigo-600 rounded-lg">
-                <Vote className="w-6 h-6 text-white" />
+              <div className="rounded-lg bg-indigo-600 p-2">
+                <Vote className="h-6 w-6 text-white" />
               </div>
               <div>
                 <CardTitle className="text-2xl">Create New Election</CardTitle>
@@ -429,10 +461,9 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                 </Alert>
               )}
 
-              {/* Election Details */}
               <div className="space-y-4">
                 <h3 className="text-lg">Election Details</h3>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="title">Title *</Label>
                   <Input
@@ -457,7 +488,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="startsAt">Start Date & Time *</Label>
                     <Input
@@ -482,12 +513,11 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                 </div>
               </div>
 
-              {/* Positions & Candidates */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg">Positions & Candidates</h3>
                   <Button type="button" onClick={addPosition} variant="outline" size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="mr-2 h-4 w-4" />
                     Add Position
                   </Button>
                 </div>
@@ -504,13 +534,13 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                             variant="ghost"
                             size="sm"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div className="space-y-2">
                           <Label>Position Name *</Label>
                           <div className="space-y-1">
@@ -520,7 +550,11 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                               onChange={(e) => updatePosition(position.id, 'name', e.target.value)}
                               onBlur={() => handlePositionBlur(position.id, 'name')}
                               required
-                              className={isPositionDuplicate(position.id) ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                              className={
+                                isPositionDuplicate(position.id)
+                                  ? 'border-red-500 focus-visible:ring-red-500'
+                                  : ''
+                              }
                             />
                             {isPositionDuplicate(position.id) && (
                               <p className="text-xs text-red-600">
@@ -534,7 +568,9 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                           <Label>Ballot Type</Label>
                           <Select
                             value={position.ballot_type}
-                            onValueChange={(value) => updatePosition(position.id, 'ballot_type', value)}
+                            onValueChange={(value) =>
+                              updatePosition(position.id, 'ballot_type', value)
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue />
@@ -553,13 +589,14 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                         <Textarea
                           placeholder="Brief description..."
                           value={position.description}
-                          onChange={(e) => updatePosition(position.id, 'description', e.target.value)}
+                          onChange={(e) =>
+                            updatePosition(position.id, 'description', e.target.value)
+                          }
                           onBlur={() => handlePositionBlur(position.id, 'description')}
                           rows={2}
                         />
                       </div>
 
-                      {/* Candidates */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <Label>Candidates</Label>
@@ -569,7 +606,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                             variant="outline"
                             size="sm"
                           >
-                            <Plus className="w-4 h-4 mr-2" />
+                            <Plus className="mr-2 h-4 w-4" />
                             Add Candidate
                           </Button>
                         </div>
@@ -577,16 +614,30 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                         {position.candidates.map((candidate, candIndex) => {
                           const isDuplicate = isCandidateDuplicate(position, candidate.id);
                           return (
-                            <div key={candidate.id} className="flex items-start space-x-2 p-3 bg-gray-50 rounded-lg">
+                            <div
+                              key={candidate.id}
+                              className="flex items-start space-x-2 rounded-lg bg-gray-50 p-3"
+                            >
                               <div className="flex-1 space-y-2">
                                 <div className="space-y-1">
                                   <Input
                                     placeholder={`Candidate ${candIndex + 1} name *`}
                                     value={candidate.name}
-                                    onChange={(e) => updateCandidate(position.id, candidate.id, 'name', e.target.value)}
-                                    onBlur={() => handleCandidateBlur(position.id, candidate.id, 'name')}
+                                    onChange={(e) =>
+                                      updateCandidate(
+                                        position.id,
+                                        candidate.id,
+                                        'name',
+                                        e.target.value
+                                      )
+                                    }
+                                    onBlur={() =>
+                                      handleCandidateBlur(position.id, candidate.id, 'name')
+                                    }
                                     required
-                                    className={isDuplicate ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                                    className={
+                                      isDuplicate ? 'border-red-500 focus-visible:ring-red-500' : ''
+                                    }
                                   />
                                   {isDuplicate && (
                                     <p className="text-xs text-red-600">
@@ -597,8 +648,17 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                                 <Input
                                   placeholder="Brief bio (optional)"
                                   value={candidate.description}
-                                  onChange={(e) => updateCandidate(position.id, candidate.id, 'description', e.target.value)}
-                                  onBlur={() => handleCandidateBlur(position.id, candidate.id, 'description')}
+                                  onChange={(e) =>
+                                    updateCandidate(
+                                      position.id,
+                                      candidate.id,
+                                      'description',
+                                      e.target.value
+                                    )
+                                  }
+                                  onBlur={() =>
+                                    handleCandidateBlur(position.id, candidate.id, 'description')
+                                  }
                                 />
                               </div>
                               <Button
@@ -607,14 +667,14 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                                 variant="ghost"
                                 size="sm"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           );
                         })}
 
                         {position.candidates.length === 0 && (
-                          <p className="text-sm text-gray-500 text-center py-4">
+                          <p className="py-4 text-center text-sm text-gray-500">
                             No candidates added yet
                           </p>
                         )}

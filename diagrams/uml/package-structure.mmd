@@ -1,0 +1,53 @@
+graph TB
+    subgraph Root["BlockBallot Project"]
+        subgraph Client["src/"]
+            subgraph App["app/"]
+                Pages["pages/<br/>Next.js Pages"]
+                APIRoutes["api/<br/>API Routes"]
+                Providers["providers.tsx"]
+            end
+            
+            subgraph Components["components/"]
+                UI["ui/<br/>Shadcn Components"]
+                Layouts["layouts/<br/>Layout Components"]
+                MainComponents["Main Components<br/>(Dashboard, ElectionView, etc.)"]
+            end
+            
+            subgraph Utils["utils/"]
+                API["api/<br/>API Utilities"]
+                Auth["auth/<br/>Auth Utilities"]
+                Blockchain["blockchain/<br/>Blockchain Utils"]
+                Supabase["supabase/<br/>Supabase Utils"]
+            end
+            
+            subgraph Types["types/"]
+                TypeDefs["Type Definitions"]
+            end
+            
+            subgraph Config["config/"]
+                BlockchainConfig["blockchain.ts"]
+            end
+        end
+        
+        subgraph Contracts["contracts/"]
+            Solidity["BlockBallotSingle.sol"]
+        end
+        
+        subgraph Scripts["scripts/"]
+            BuildScripts["Build & Deploy Scripts"]
+        end
+    end
+    
+    App --> Components
+    Components --> Utils
+    Utils --> Types
+    Utils --> Config
+    APIRoutes --> Utils
+    APIRoutes --> Contracts
+    Utils --> Contracts
+    
+    style App fill:#e1f5ff
+    style Components fill:#ffe1f5
+    style Utils fill:#fff4e1
+    style Contracts fill:#ffe1f5
+

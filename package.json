@@ -1,6 +1,6 @@
 {
-  "name": "Secure Web Voting MVP",
-  "version": "0.1.0",
+  "name": "BlockBallot",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
   "dependencies": {
@@ -44,7 +44,7 @@
     "hardhat": "^3.0.15",
     "hono": "*",
     "input-otp": "^1.4.2",
-    "lucide-react": "^0.487.0",
+    "lucide-react": "^0.555.0",
     "next": "^15.1.0",
     "next-themes": "^0.4.6",
     "prettier": "^3.6.2",
@@ -60,6 +60,7 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^11.12.0",
     "@nomicfoundation/hardhat-ethers": "^4.0.3",
     "@nomicfoundation/hardhat-verify": "^3.0.7",
     "@trivago/prettier-plugin-sort-imports": "^6.0.0",
@@ -79,6 +80,16 @@
     "dev": "next dev",
     "build": "npm run compile-contract && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "render-diagrams": "node scripts/render-diagrams.js",
+    "render-diagrams:png": "node scripts/render-diagrams.js png",
+    "render-diagrams:svg": "node scripts/render-diagrams.js svg",
+    "render-diagrams:dark": "node scripts/render-diagrams.js png dark",
+    "render-diagrams:forest": "node scripts/render-diagrams.js png forest",
+    "render-diagrams:neutral": "node scripts/render-diagrams.js png neutral",
+    "docs": "typedoc --entryPointStrategy expand src --out ./docs --name \"BlockBallot API Documentation\" --readme README.md --tsconfig tsconfig.json",
+    "docs:watch": "typedoc --watch --entryPointStrategy expand src --out ./docs --name \"BlockBallot API Documentation\" --readme README.md --tsconfig tsconfig.json"
   }
 }

@@ -1,0 +1,36 @@
+sequenceDiagram
+    participant Admin
+    participant AdminPanel
+    participant AccessRequestAPI
+    participant KVStore
+    participant SupabaseDB
+    participant Voter
+    
+    Admin->>AdminPanel: View access requests
+    AdminPanel->>AccessRequestAPI: GET /api/elections/:id/access-requests
+    AccessRequestAPI->>AccessRequestAPI: Authenticate & verify creator
+    AccessRequestAPI->>KVStore: Get all access requests
+    KVStore-->>AccessRequestAPI: Access requests
+    AccessRequestAPI->>KVStore: Enrich with user data
+    AccessRequestAPI-->>AdminPanel: List of requests
+    
+    Admin->>AdminPanel: Approve/Deny request
+    AdminPanel->>AccessRequestAPI: PATCH /api/elections/:id/access-requests/:requestId
+    AccessRequestAPI->>AccessRequestAPI: Authenticate & verify creator
+    AccessRequestAPI->>SupabaseDB: Get election
+    AccessRequestAPI->>KVStore: Get access request
+    AccessRequestAPI->>KVStore: Update request status
+    
+    alt Action is Approve
+        AccessRequestAPI->>KVStore: Get user data
+        AccessRequestAPI->>KVStore: Create eligibility record
+        Note over AccessRequestAPI,KVStore: eligibility:electionId:email<br/>status: approved
+        AccessRequestAPI-->>AdminPanel: Success: Request approved
+        AdminPanel->>Admin: Show success
+        Note over Voter: Voter can now vote
+    else Action is Deny
+        AccessRequestAPI-->>AdminPanel: Success: Request denied
+        AdminPanel->>Admin: Show success
+        Note over Voter: Voter remains ineligible
+    end
+

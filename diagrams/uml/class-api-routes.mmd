@@ -1,0 +1,60 @@
+classDiagram
+    class AuthRoutes {
+        <<namespace>>
+        +POST /api/auth/register(request: NextRequest) Promise~Response~
+        +POST /api/auth/login(request: NextRequest) Promise~Response~
+        +POST /api/auth/verify-otp(request: Request) Promise~Response~
+        +POST /api/auth/resend-otp(request: NextRequest) Promise~Response~
+        +GET /api/auth/me(request: NextRequest) Promise~Response~
+        +POST /api/auth/refresh(request: NextRequest) Promise~Response~
+    }
+    
+    class ElectionRoutes {
+        <<namespace>>
+        +GET /api/elections(request: NextRequest) Promise~Response~
+        +GET /api/elections/:id(request: NextRequest, params) Promise~Response~
+        +POST /api/deploy(request: NextRequest) Promise~Response~
+        +GET /api/elections/:id/results(request: NextRequest, params) Promise~Response~
+    }
+    
+    class EligibilityRoutes {
+        <<namespace>>
+        +POST /api/elections/:id/eligibility(request: NextRequest, params) Promise~Response~
+        +GET /api/elections/:id/eligibility-status(request: NextRequest, params) Promise~Response~
+    }
+    
+    class AccessRequestRoutes {
+        <<namespace>>
+        +POST /api/elections/:id/access-request(request: NextRequest, params) Promise~Response~
+        +GET /api/elections/:id/access-requests(request: NextRequest, params) Promise~Response~
+        +PATCH /api/elections/:id/access-requests/:requestId(request: NextRequest, params) Promise~Response~
+    }
+    
+    class VoteRoutes {
+        <<namespace>>
+        +POST /api/vote(request: NextRequest) Promise~Response~
+    }
+    
+    class InviteRoutes {
+        <<namespace>>
+        +POST /api/send-election-invite(request: Request) Promise~Response~
+    }
+    
+    class BaseRouteHandler {
+        <<abstract>>
+        #authenticateUser(authHeader: string) Promise~User~
+        #handleApiError(error: unknown, context: string) NextResponse
+        #createValidationError(message: string) NextResponse
+        #createNotFoundError(resource: string) NextResponse
+        #createUnauthorizedError() NextResponse
+        #createForbiddenError(message?: string) NextResponse
+        #createBadRequestError(message: string) NextResponse
+    }
+    
+    AuthRoutes --|> BaseRouteHandler
+    ElectionRoutes --|> BaseRouteHandler
+    EligibilityRoutes --|> BaseRouteHandler
+    AccessRequestRoutes --|> BaseRouteHandler
+    VoteRoutes --|> BaseRouteHandler
+    InviteRoutes --|> BaseRouteHandler
+

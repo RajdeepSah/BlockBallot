@@ -20,10 +20,14 @@ const INVITE_HISTORY_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const supabaseUrl = process.env.SUPABASE_URL ?? `https://${projectId}.supabase.co`;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 
-const supabaseServerClient = serviceRoleKey
-  ? createClient(supabaseUrl, serviceRoleKey)
-  : null;
+const supabaseServerClient = serviceRoleKey ? createClient(supabaseUrl, serviceRoleKey) : null;
 
+/**
+ * Ensures Supabase service role client is available.
+ *
+ * @returns Supabase client with service role
+ * @throws HttpError if service role credentials are missing
+ */
 function requireSupabase() {
   if (!supabaseServerClient) {
     throw httpError(
@@ -48,15 +52,6 @@ interface InviteHistoryRecord {
   emails: Record<string, number>;
 }
 
-type ElectionRecord = {
-  id: string;
-  title: string;
-  code: string;
-  creator_id: string;
-  starts_at: string;
-  ends_at: string;
-};
-
 type EligibilityRecord = {
   id: string;
   contact: string;
@@ -70,19 +65,26 @@ type VerifiedVoter = {
 
 type NormalizedVoter = VerifiedVoter & { normalizedEmail: string };
 
-function httpError(status: number, message: string) {
-  const error = new Error(message);
-  (error as any).status = status;
+interface HttpError extends Error {
+  status: number;
+}
+
+function httpError(status: number, message: string): HttpError {
+  const error = new Error(message) as HttpError;
+  error.status = status;
   return error;
 }
 
+/**
+ * Retrieves a value from the KV store by key.
+ *
+ * @param key - The key to look up
+ * @returns The value if found, null otherwise
+ * @throws HttpError if KV read fails
+ */
 async function getKvValue<T>(key: string): Promise<T | null> {
   const client = requireSupabase();
-  const { data, error } = await client
-    .from(KV_TABLE)
-    .select('value')
-    .eq('key', key)
-    .maybeSingle();
+  const { data, error } = await client.from(KV_TABLE).select('value').eq('key', key).maybeSingle();
 
   if (error) {
     throw httpError(500, `KV read failed: ${error.message}`);
@@ -91,6 +93,13 @@ async function getKvValue<T>(key: string): Promise<T | null> {
   return (data?.value as T) ?? null;
 }
 
+/**
+ * Sets a value in the KV store.
+ *
+ * @param key - The key to store the value under
+ * @param value - The value to store
+ * @throws HttpError if KV write fails
+ */
 async function setKvValue<T>(key: string, value: T): Promise<void> {
   const client = requireSupabase();
   const { error } = await client.from(KV_TABLE).upsert({ key, value });
@@ -99,6 +108,13 @@ async function setKvValue<T>(key: string, value: T): Promise<void> {
   }
 }
 
+/**
+ * Extracts and validates the authenticated user ID from the request.
+ *
+ * @param request - The incoming request object
+ * @returns The authenticated user ID
+ * @throws HttpError if authorization header is missing or invalid
+ */
 async function getAuthedUserId(request: Request): Promise<string> {
   const authorization =
     request.headers.get('authorization') ?? request.headers.get('Authorization');
@@ -123,6 +139,13 @@ async function getAuthedUserId(request: Request): Promise<string> {
   return data.user.id;
 }
 
+/**
+ * Enforces rate limiting for invitation sending.
+ * Prevents sending invitations more than once per rate limit window.
+ *
+ * @param electionId - The election ID to check rate limit for
+ * @throws HttpError with 429 status if rate limit is exceeded
+ */
 async function enforceRateLimit(electionId: string) {
   const key = `${RATE_LIMIT_KEY_PREFIX}${electionId}`;
   const record = await getKvValue<RateLimitRecord>(key);
@@ -131,36 +154,29 @@ async function enforceRateLimit(electionId: string) {
     const elapsed = now - record.lastSentAt;
     if (elapsed < INVITE_RATE_LIMIT_WINDOW_MS) {
       const seconds = Math.ceil((INVITE_RATE_LIMIT_WINDOW_MS - elapsed) / 1000);
-      throw httpError(
-        429,
-        `Please wait ${seconds}s before sending another invitation batch.`
-      );
+      throw httpError(429, `Please wait ${seconds}s before sending another invitation batch.`);
     }
   }
 }
 
+/**
+ * Updates the rate limit timestamp for an election.
+ *
+ * @param electionId - The election ID to update rate limit for
+ */
 async function updateRateLimit(electionId: string) {
   const key = `${RATE_LIMIT_KEY_PREFIX}${electionId}`;
   await setKvValue<RateLimitRecord>(key, { lastSentAt: Date.now() });
 }
 
-async function getElection(electionId: string): Promise<ElectionRecord> {
-   const supabase = await createServerClient();
-  const { data: election, error: electionError } = await supabase
-      .from('elections')
-      .select('*')
-      .eq('id', electionId)
-      .single();
-  if (!election) {
-    throw httpError(404, 'Election not found.');
-  }
-  return election;
-}
-
+/**
+ * Retrieves all pre-approved voters for an election from the KV store.
+ *
+ * @param electionId - The election ID to get voters for
+ * @returns Array of verified voters
+ * @throws HttpError if voter loading fails
+ */
 async function getPreapprovedVoters(electionId: string): Promise<VerifiedVoter[]> {
-  // The previous implementation queried a non-existent `election_voters` table, which
-  // triggered "table ... not found" errors. Pre-approved voters are actually stored
-  // inside the KV table under `eligibility:${electionId}:*`, so we load them directly.
   const client = requireSupabase();
   const { data, error } = await client
     .from(KV_TABLE)
@@ -187,6 +203,12 @@ async function getPreapprovedVoters(electionId: string): Promise<VerifiedVoter[]
     }));
 }
 
+/**
+ * Retrieves the invitation history for an election, pruning expired entries.
+ *
+ * @param electionId - The election ID to get history for
+ * @returns Invitation history record with pruned entries
+ */
 async function getInviteHistory(electionId: string): Promise<InviteHistoryRecord> {
   const key = `${HISTORY_KEY_PREFIX}${electionId}`;
   const history = (await getKvValue<InviteHistoryRecord>(key)) ?? { emails: {} };
@@ -202,6 +224,14 @@ async function getInviteHistory(electionId: string): Promise<InviteHistoryRecord
   return { emails: prunedEntries };
 }
 
+/**
+ * Filters voters to determine which should receive invitations.
+ * Removes duplicates and voters who have already received invitations.
+ *
+ * @param voters - Array of verified voters
+ * @param history - Invitation history record
+ * @returns Object with voters to send and count of skipped voters
+ */
 function filterVoters(
   voters: VerifiedVoter[],
   history: InviteHistoryRecord
@@ -230,6 +260,13 @@ function filterVoters(
   return { toSend: normalized, skipped };
 }
 
+/**
+ * Saves invitation history for voters who received invitations.
+ *
+ * @param electionId - The election ID
+ * @param history - Current invitation history
+ * @param sentVoters - Voters who received invitations
+ */
 async function saveInviteHistory(
   electionId: string,
   history: InviteHistoryRecord,
@@ -244,13 +281,19 @@ async function saveInviteHistory(
   await setKvValue(key, history);
 }
 
+/**
+ * Resolves the direct link URL for an election.
+ * Tries multiple sources: provided link, environment variables, request headers, or defaults.
+ *
+ * @param request - The incoming request object
+ * @param electionId - The election ID
+ * @param provided - Optional provided direct link
+ * @returns Resolved direct link URL
+ */
 function resolveDirectLink(request: Request, electionId: string, provided?: string) {
   const sanitized = typeof provided === 'string' && provided.trim() ? provided.trim() : null;
   const vercelBase = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null;
-  const envBase =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.APP_BASE_URL ??
-    vercelBase;
+  const envBase = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_BASE_URL ?? vercelBase;
 
   if (envBase) {
     return `${envBase.replace(/\/$/, '')}/vote/${electionId}`;
@@ -274,10 +317,14 @@ function resolveDirectLink(request: Request, electionId: string, provided?: stri
   return `${process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://blockballot.vercel.app'}/vote/${electionId}`;
 }
 
-async function sendInvitationEmail(
-  to: string,
-  payload: ElectionInviteEmailOptions
-): Promise<void> {
+/**
+ * Sends an election invitation email via Resend API.
+ *
+ * @param to - Recipient email address
+ * @param payload - Election invite email options
+ * @throws HttpError if email sending fails or API key is missing
+ */
+async function sendInvitationEmail(to: string, payload: ElectionInviteEmailOptions): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     throw httpError(500, 'RESEND_API_KEY is not configured.');
@@ -313,6 +360,23 @@ async function sendInvitationEmail(
   }
 }
 
+/**
+ * POST /api/send-election-invite
+ *
+ * Sends election invitation emails to all pre-approved voters for an election.
+ * Implements rate limiting and tracks invitation history to prevent duplicate sends.
+ *
+ * Request body:
+ * - electionId: The election ID (required)
+ * - directLink: Optional direct link to override default resolution
+ *
+ * Headers:
+ * - Authorization: Bearer token (required)
+ *
+ * @param request - The incoming request object
+ * @returns JSON response with success status and sent count
+ * @throws Returns error response if sending fails or validation fails
+ */
 export async function POST(request: Request) {
   try {
     const userId = await getAuthedUserId(request);
@@ -321,12 +385,16 @@ export async function POST(request: Request) {
     if (!payload || !payload.electionId) {
       throw httpError(400, 'electionId is required.');
     }
-   const supabase = await createServerClient();
-   const { data: election, error: electionError } = await supabase
+    const supabase = await createServerClient();
+    const { data: election } = await supabase
       .from('elections')
-      .select('*')   
+      .select('*')
       .eq('id', payload.electionId)
       .single();
+
+    if (!election) {
+      throw httpError(404, 'Election not found.');
+    }
 
     if (election.creator_id !== userId) {
       throw httpError(403, 'Only the election creator can send invitations.');
@@ -388,12 +456,10 @@ export async function POST(request: Request) {
       success: true,
       sentCount,
     });
-  } catch (error: any) {
-    const status = error?.status ?? 500;
-    const message =
-      typeof error?.message === 'string'
-        ? error.message
-        : 'Failed to send election invitations.';
+  } catch (error) {
+    const httpErr = error as HttpError;
+    const status = httpErr?.status ?? 500;
+    const message = error instanceof Error ? error.message : 'Failed to send election invitations.';
     return NextResponse.json({ error: message }, { status });
   }
 }

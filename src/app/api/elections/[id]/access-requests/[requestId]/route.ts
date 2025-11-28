@@ -1,13 +1,24 @@
-import { NextRequest } from "next/server";
-import { authenticateUser } from "@/utils/api/auth";
-import { createClient } from "@/utils/supabase/server";
-import * as kv from "@/utils/supabase/kvStore";
-import { handleApiError, createNotFoundError } from "@/utils/api/errors";
+import { NextRequest } from 'next/server';
+import { authenticateUser } from '@/utils/api/auth';
+import { createClient } from '@/utils/supabase/server';
+import * as kv from '@/utils/supabase/kvStore';
+import {
+  handleApiError,
+  createNotFoundError,
+  createBadRequestError,
+  createForbiddenError,
+  createUnauthorizedError,
+} from '@/utils/api/errors';
+import { UserRecord, AccessRequestRecord } from '@/types/kv-records';
 
 /**
  * PATCH /api/elections/[id]/access-requests/[requestId]
- * Approve or deny an access request (admin only)
- * Ported from Supabase Edge Function
+ * Approves or denies an access request (admin only).
+ * If approved, automatically creates an eligibility record for the user.
+ *
+ * @param request - Next.js request object with Authorization header and action in body
+ * @param params - Route parameters containing election id and requestId
+ * @returns JSON response with success status, or error response
  */
 export async function PATCH(
   request: NextRequest,
@@ -16,62 +27,59 @@ export async function PATCH(
   try {
     const { id: electionId, requestId } = await params;
     const authHeader = request.headers.get('Authorization');
-    
-    // Authenticate user
+
     const user = await authenticateUser(authHeader);
-    
-    // Parse request body
+
     const { action } = await request.json();
     if (!action || !['approve', 'deny'].includes(action)) {
-      return Response.json({ error: 'Invalid action' }, { status: 400 });
+      return createBadRequestError('Invalid action');
     }
 
-    // Get election from Supabase database
     const supabase = await createClient();
     const { data: election, error: electionError } = await supabase
       .from('elections')
       .select('*')
       .eq('id', electionId)
       .single();
-    
+
     if (electionError || !election) {
       return createNotFoundError('Election');
     }
 
     // Verify user is the election creator
     if (election.creator_id !== user.id) {
-      return Response.json({ error: 'Only election creator can manage access requests' }, { status: 403 });
+      return createForbiddenError('Only election creator can manage access requests');
     }
 
-    // Get access request
-    const accessRequest = await kv.get(`access_request:${requestId}`);
+    const accessRequest = await kv.get<AccessRequestRecord>(`access_request:${requestId}`);
     if (!accessRequest || accessRequest.election_id !== electionId) {
-      return Response.json({ error: 'Access request not found' }, { status: 404 });
+      return createNotFoundError('Access request');
     }
 
-    // Update request status
-    accessRequest.status = action === 'approve' ? 'approved' : 'denied';
-    accessRequest.decided_by = user.id;
-    accessRequest.decided_at = new Date().toISOString();
+    const updatedRequest: AccessRequestRecord = {
+      ...accessRequest,
+      status: action === 'approve' ? 'approved' : 'denied',
+      decided_by: user.id,
+      decided_at: new Date().toISOString(),
+    };
 
-    await kv.set(`access_request:${requestId}`, accessRequest);
-    await kv.set(`access_request:${electionId}:${accessRequest.user_id}`, accessRequest);
+    await kv.set(`access_request:${requestId}`, updatedRequest);
+    await kv.set(`access_request:${electionId}:${updatedRequest.user_id}`, updatedRequest);
 
-    // If approved, add to eligibility
     if (action === 'approve') {
-      const userData = await kv.get(`user:${accessRequest.user_id}`);
+      const userData = await kv.get<UserRecord>(`user:${updatedRequest.user_id}`);
       if (!userData) {
-        return Response.json({ error: 'User data not found' }, { status: 404 });
+        return createNotFoundError('User data');
       }
-      
+
       const eligibilityId = crypto.randomUUID();
       const eligibility = {
         id: eligibilityId,
         election_id: electionId,
         contact: userData.email,
-        user_id: accessRequest.user_id,
+        user_id: updatedRequest.user_id,
         status: 'approved',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
 
       await kv.set(`eligibility:${electionId}:${userData.email}`, eligibility);
@@ -79,14 +87,13 @@ export async function PATCH(
 
     return Response.json({
       success: true,
-      message: `Access request ${action}d`
+      message: `Access request ${action}d`,
     });
-  } catch (error: any) {
-    if (error.message === 'Unauthorized') {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return createUnauthorizedError();
     }
     console.error('Update access request error:', error);
     return handleApiError(error, 'update-access-request');
   }
 }
-

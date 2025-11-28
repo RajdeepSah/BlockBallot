@@ -1,8 +1,14 @@
-"use client";
+'use client';
 
 import { useRouter, useParams } from 'next/navigation';
 import { AdminPanel } from '@/components/AdminPanel';
 
+/**
+ * Admin page component for managing an election.
+ * Extracts electionId from URL params and renders AdminPanel.
+ *
+ * @returns AdminPanel component with page-level navigation
+ */
 export default function AdminPage() {
   const router = useRouter();
   const params = useParams();
@@ -16,4 +22,3 @@ export default function AdminPage() {
     />
   );
 }
-

@@ -1,13 +1,24 @@
 import { NextRequest } from 'next/server';
 
 import { authenticateUser } from '@/utils/api/auth';
-import { handleApiError, createNotFoundError } from '@/utils/api/errors';
+import {
+  handleApiError,
+  createNotFoundError,
+  createForbiddenError,
+  createBadRequestError,
+} from '@/utils/api/errors';
 import { createReadOnlyContract } from '@/utils/blockchain/contract';
 import * as kv from '@/utils/supabase/kvStore';
 import { getServiceRoleClient } from '@/utils/supabase/clients';
 
 /**
- * Retry a function with exponential backoff
+ * Retries a function with exponential backoff to handle rate limiting.
+ *
+ * @param fn - The function to retry
+ * @param maxRetries - Maximum number of retry attempts (default: 3)
+ * @param baseDelay - Base delay in milliseconds (default: 1000)
+ * @returns The result of the function
+ * @throws The last error if all retries fail
  */
 async function retryWithBackoff<T>(
   fn: () => Promise<T>,
@@ -15,51 +26,77 @@ async function retryWithBackoff<T>(
   baseDelay: number = 1000
 ): Promise<T> {
   let lastError: Error | null = null;
-  
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await fn();
-    } catch (error: any) {
-      lastError = error;
-      
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
       // Check if it's a rate limit error
-      const isRateLimit = error?.message?.includes('Too Many Requests') || 
-                         error?.code === 'BAD_DATA' ||
-                         error?.shortMessage?.includes('missing response');
-      
+      const err = error as Record<string, unknown>;
+      const isRateLimit =
+        (typeof err?.message === 'string' && err.message.includes('Too Many Requests')) ||
+        err?.code === 'BAD_DATA' ||
+        (typeof err?.shortMessage === 'string' && err.shortMessage.includes('missing response'));
+
       if (!isRateLimit || attempt === maxRetries) {
         throw error;
       }
-      
+
       // Exponential backoff: 1s, 2s, 4s
-      const delay = baseDelay * Math.pow(2, attempt);
-      console.log(`Rate limit hit, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      const delayMs = baseDelay * Math.pow(2, attempt);
+      console.log(
+        `Rate limit hit, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries + 1})`
+      );
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
-  
+
   throw lastError || new Error('Failed after retries');
 }
 
 /**
- * Add a small delay to avoid rate limiting
+ * Adds a delay to avoid rate limiting.
+ *
+ * @param ms - Delay duration in milliseconds
+ * @returns Promise that resolves after the delay
  */
 function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+import { EligibilityRecord } from '@/types/kv-records';
 
 interface PositionRecord {
   id?: string;
   name: string;
   description?: string;
   ballot_type?: string;
-  candidates?: Array<{ id?: string; name: string; description?: string; photo_url?: string | null }>;
+  candidates?: Array<{
+    id?: string;
+    name: string;
+    description?: string;
+    photo_url?: string | null;
+  }>;
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+/**
+ * GET /api/elections/[id]/results
+ *
+ * Retrieves election results from the blockchain contract.
+ * Results are only available to the election creator before the election ends,
+ * and publicly available after the election ends.
+ *
+ * Headers:
+ * - Authorization: Bearer token (optional, required for creator access before end)
+ *
+ * @param request - Next.js request object
+ * @param params - Route parameters containing election ID
+ * @returns JSON response with election results including vote counts and percentages
+ * @throws Returns error response if election not found, contract missing, or access denied
+ */
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: electionId } = await params;
     const supabase = getServiceRoleClient();
@@ -89,57 +126,67 @@ export async function GET(
     const hasEnded = now > endsAt;
 
     if (!hasEnded && requesterId !== election.creator_id) {
-      return Response.json({ error: 'Results not available yet' }, { status: 403 });
+      return createForbiddenError('Results not available yet');
     }
 
     if (!election.contract_address) {
-      return Response.json({ error: 'Election contract address missing' }, { status: 400 });
+      return createBadRequestError('Election contract address missing');
     }
 
     const contract = createReadOnlyContract(election.contract_address);
-    
-    // Retry position list call with backoff
+
     const positionNames: string[] = await retryWithBackoff(
       () => contract.getPositionList() as Promise<string[]>
     );
-    
+
     const electionPositions: PositionRecord[] = Array.isArray(election.positions)
       ? election.positions
       : [];
 
-    // Query ballot links directly to get keys and filter out temporary lock keys
-    // Final vote keys: ballot:link:${electionId}:${user.id}
-    // Lock keys: ballot:link:${electionId}:${user.id}:${timestamp}-${uniqueSuffix}
     const { data: voteKeys, error: voteKeysError } = await supabase
       .from('kv_store_b7b6fbd4')
       .select('key')
       .like('key', `ballot:link:${electionId}:%`);
-    
+
     if (voteKeysError) {
       throw new Error(`Failed to query vote keys: ${voteKeysError.message}`);
     }
-    
-    // Filter out lock keys (which have additional colons after the user ID)
-    // Count only final vote keys that match pattern: ballot:link:${electionId}:${user.id}
-    const totalVotes = voteKeys?.filter((entry) => {
-      if (!entry?.key) return false;
-      const key = entry.key;
-      const prefix = `ballot:link:${electionId}:`;
-      if (!key.startsWith(prefix)) return false;
-      // Remove prefix to get the suffix (should be just user.id for final votes)
-      const suffix = key.substring(prefix.length);
-      // Final votes have no additional colons, locks have colons followed by timestamp
-      return !suffix.includes(':');
-    }).length || 0;
 
-    const eligibilityRecords = await kv.getByPrefix(`eligibility:${electionId}:`);
+    const totalVotes =
+      voteKeys?.filter((entry) => {
+        if (!entry?.key) return false;
+        const key = entry.key;
+        const prefix = `ballot:link:${electionId}:`;
+        if (!key.startsWith(prefix)) return false;
+        const suffix = key.substring(prefix.length);
+        return !suffix.includes(':');
+      }).length || 0;
+
+    const eligibilityRecords = await kv.getByPrefix<EligibilityRecord>(
+      `eligibility:${electionId}:`
+    );
     const eligibleVoters = eligibilityRecords.filter(
       (record) =>
         record?.election_id === electionId &&
         (record?.status === 'approved' || record?.status === 'preapproved')
     ).length;
 
-    const formattedResults: Record<string, any> = {};
+    interface FormattedCandidate {
+      id: string;
+      name: string;
+      description: string;
+      photo_url: string | null;
+      votes: number;
+      percentage: string;
+    }
+
+    interface FormattedPosition {
+      position_name: string;
+      ballot_type: string;
+      candidates: FormattedCandidate[];
+    }
+
+    const formattedResults: Record<string, FormattedPosition> = {};
 
     for (let positionIndex = 0; positionIndex < positionNames.length; positionIndex++) {
       const positionName = positionNames[positionIndex];
@@ -148,33 +195,33 @@ export async function GET(
         electionPositions[positionIndex] ||
         null;
       const positionId = positionMeta?.id || `position-${positionIndex}`;
-      
-      // Retry candidate list call with backoff
+
       const candidatesFromContract: string[] = await retryWithBackoff(
         () => contract.getCandidateList(positionName) as Promise<string[]>
       );
-      
-      // Add delay between positions to avoid rate limiting
+
       if (positionIndex > 0) {
-        await delay(200); // 200ms delay between positions
+        await delay(200);
       }
 
       const candidatesPayload = [];
-      for (let candidateIndex = 0; candidateIndex < candidatesFromContract.length; candidateIndex++) {
+      for (
+        let candidateIndex = 0;
+        candidateIndex < candidatesFromContract.length;
+        candidateIndex++
+      ) {
         const candidateName = candidatesFromContract[candidateIndex];
         const candidateMeta =
           positionMeta?.candidates?.find((c) => c.name === candidateName) || null;
         const candidateId = candidateMeta?.id || `${positionId}-candidate-${candidateIndex}`;
-        
-        // Retry vote count call with backoff
-        const voteCount = await retryWithBackoff(
-          () => contract.getVoteCount(positionName, candidateName)
+
+        const voteCount = await retryWithBackoff(() =>
+          contract.getVoteCount(positionName, candidateName)
         );
         const voteNumber = Number(voteCount.toString());
-        
-        // Add small delay between candidates to avoid rate limiting
+
         if (candidateIndex > 0) {
-          await delay(100); // 100ms delay between candidates
+          await delay(100);
         }
 
         candidatesPayload.push({
@@ -200,8 +247,8 @@ export async function GET(
       eligibleVoters > 0 ? ((totalVotes / eligibleVoters) * 100).toFixed(2) : '0.00';
 
     if (totalVotes > 0) {
-      Object.values(formattedResults).forEach((position: any) => {
-        position.candidates = position.candidates.map((candidate: any) => ({
+      Object.values(formattedResults).forEach((position: FormattedPosition) => {
+        position.candidates = position.candidates.map((candidate: FormattedCandidate) => ({
           ...candidate,
           percentage: ((candidate.votes / totalVotes) * 100).toFixed(2),
         }));
@@ -221,4 +268,3 @@ export async function GET(
     return handleApiError(error, 'election-results');
   }
 }
-

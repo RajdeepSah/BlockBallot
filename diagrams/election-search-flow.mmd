@@ -1,0 +1,24 @@
+sequenceDiagram
+    participant User
+    participant Dashboard
+    participant ElectionsAPI
+    participant SupabaseDB
+    participant KVStore
+    
+    alt Search by Code
+        User->>Dashboard: Enter election code
+        Dashboard->>ElectionsAPI: GET /api/elections?code=ABC1234
+        ElectionsAPI->>SupabaseDB: Query by code
+        SupabaseDB-->>ElectionsAPI: Election (if found)
+        ElectionsAPI-->>Dashboard: Election or empty array
+        Dashboard->>User: Navigate to election or show error
+    else Get User's Elections
+        User->>Dashboard: View dashboard
+        Dashboard->>ElectionsAPI: GET /api/elections (with auth token)
+        ElectionsAPI->>ElectionsAPI: Authenticate user
+        ElectionsAPI->>SupabaseDB: Query by creator_id
+        SupabaseDB-->>ElectionsAPI: Elections created by user
+        ElectionsAPI-->>Dashboard: Elections array
+        Dashboard->>User: Display elections list
+    end
+

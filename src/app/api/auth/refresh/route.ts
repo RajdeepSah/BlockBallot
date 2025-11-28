@@ -1,8 +1,15 @@
 import { NextRequest } from 'next/server';
 
-import { createValidationError, handleApiError } from '@/utils/api/errors';
+import { createValidationError, handleApiError, createUnauthorizedError } from '@/utils/api/errors';
 import { getAnonServerClient } from '@/utils/supabase/clients';
 
+/**
+ * POST /api/auth/refresh
+ * Refreshes an access token using a refresh token.
+ *
+ * @param request - Next.js request object containing refreshToken in body
+ * @returns JSON response with new access token, refresh token, and expiration, or error response
+ */
 export async function POST(request: NextRequest) {
   try {
     const { refreshToken } = await request.json();
@@ -17,7 +24,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (error || !data.session) {
-      return Response.json({ error: 'Failed to refresh session' }, { status: 401 });
+      return createUnauthorizedError();
     }
 
     return Response.json({
@@ -30,5 +37,3 @@ export async function POST(request: NextRequest) {
     return handleApiError(error, 'auth/refresh');
   }
 }
-
-

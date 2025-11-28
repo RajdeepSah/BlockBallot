@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 import { SignIn } from '@/components/SignIn';
@@ -8,7 +8,29 @@ import { SignUp } from '@/components/SignUp';
 import { Verify2FA } from '@/components/Verify2FA';
 import { Dashboard } from '@/components/Dashboard';
 
-export default function HomePage() {
+/**
+ * Loading spinner component displayed while authentication state is being determined.
+ *
+ * @returns Loading spinner UI
+ */
+function LoadingSpinner() {
+  return (
+    <div className="bg-background flex min-h-screen items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-indigo-600"></div>
+        <p className="text-muted-foreground mt-4">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Main content component for the home page.
+ * Handles routing between sign in, sign up, 2FA, and dashboard screens.
+ *
+ * @returns Appropriate screen component based on authentication state
+ */
+function HomePageContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -31,14 +53,7 @@ export default function HomePage() {
   }, [user, loading, searchParams, router]);
 
   if (loading || !screen) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!user) {
@@ -55,10 +70,7 @@ export default function HomePage() {
       );
     } else if (screen === 'signup') {
       return (
-        <SignUp
-          onToggleMode={() => setScreen('signin')}
-          onSuccess={() => setScreen('signin')}
-        />
+        <SignUp onToggleMode={() => setScreen('signin')} onSuccess={() => setScreen('signin')} />
       );
     } else if (screen === '2fa' && twoFAState) {
       return (
@@ -84,3 +96,16 @@ export default function HomePage() {
   return null;
 }
 
+/**
+ * Home page component wrapped in Suspense for Next.js navigation.
+ * Entry point for the application, handles authentication flow.
+ *
+ * @returns Suspense-wrapped home page content
+ */
+export default function HomePage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <HomePageContent />
+    </Suspense>
+  );
+}

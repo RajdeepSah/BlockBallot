@@ -6,6 +6,7 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Vote, Lock, Mail } from 'lucide-react';
+import { AuthLayout } from './layouts/AuthLayout';
 
 interface SignInProps {
   onToggleMode: () => void;
@@ -13,6 +14,16 @@ interface SignInProps {
   on2FARequired: (payload: { userId: string; email: string }) => void;
 }
 
+/**
+ * SignIn component for user authentication.
+ * Handles login flow and triggers 2FA when required.
+ *
+ * @param props - Component props
+ * @param props.onToggleMode - Callback to switch to sign up
+ * @param props.onSuccess - Callback when login succeeds without 2FA
+ * @param props.on2FARequired - Callback when 2FA is required
+ * @returns Sign in form UI
+ */
 export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -42,7 +53,7 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
 
     try {
       const result = await login(normalizedEmail, password);
-      
+
       if (result.requires2FA) {
         if (!result.userId) {
           throw new Error('Unable to start verification flow. Missing user ID.');
@@ -54,26 +65,25 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
       }
 
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <AuthLayout>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-indigo-600 rounded-full">
-              <Vote className="w-8 h-8 text-white" />
+          <div className="mb-4 flex justify-center">
+            <div className="rounded-full bg-indigo-600 p-3">
+              <Vote className="h-8 w-8 text-white" />
             </div>
           </div>
           <CardTitle className="text-2xl">BlockBallot</CardTitle>
-          <CardDescription>
-            Your voice. Your vote.
-          </CardDescription>
+          <CardDescription>Your voice. Your vote.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -118,7 +128,7 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
             <div className="text-right">
               <button
                 type="button"
-                onClick={() => window.location.href = '/forgot-password'}
+                onClick={() => (window.location.href = '/forgot-password')}
                 className="text-sm text-indigo-600 hover:underline"
               >
                 Forgot password?
@@ -130,7 +140,7 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
             </Button>
 
             <div className="text-center text-sm">
-              <span className="text-gray-600">Don't have an account? </span>
+              <span className="text-gray-600">Don&apos;t have an account? </span>
               <button
                 type="button"
                 onClick={onToggleMode}
@@ -142,6 +152,6 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
           </form>
         </CardContent>
       </Card>
-    </div>
+    </AuthLayout>
   );
 }

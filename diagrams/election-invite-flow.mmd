@@ -1,0 +1,43 @@
+sequenceDiagram
+    participant Admin
+    participant AdminPanel
+    participant InviteAPI
+    participant KVStore
+    participant SupabaseDB
+    participant ResendAPI
+    participant Voters
+    
+    Admin->>AdminPanel: Send invitations
+    AdminPanel->>InviteAPI: POST /api/send-election-invite
+    InviteAPI->>InviteAPI: Authenticate user
+    InviteAPI->>SupabaseDB: Get election
+    SupabaseDB-->>InviteAPI: Election data
+    
+    alt Not Creator
+        InviteAPI-->>AdminPanel: Error: Forbidden
+    else Is Creator
+        InviteAPI->>KVStore: Check rate limit
+        KVStore-->>InviteAPI: Rate limit status
+        
+        alt Rate Limited
+            InviteAPI-->>AdminPanel: Error: Rate limit exceeded
+        else Not Rate Limited
+            InviteAPI->>KVStore: Get pre-approved voters
+            KVStore-->>InviteAPI: Voter list
+            InviteAPI->>KVStore: Get invitation history
+            KVStore-->>InviteAPI: History record
+            InviteAPI->>InviteAPI: Filter voters (remove duplicates & already sent)
+            
+            loop For Each Voter
+                InviteAPI->>ResendAPI: Send email
+                ResendAPI-->>InviteAPI: Email sent
+                InviteAPI->>KVStore: Update invitation history
+            end
+            
+            InviteAPI->>KVStore: Update rate limit
+            InviteAPI-->>AdminPanel: Success: X invitations sent
+            AdminPanel->>Admin: Show success
+            Note over Voters: Voters receive email with<br/>election code & direct link
+        end
+    end
+

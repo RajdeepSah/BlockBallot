@@ -1,14 +1,27 @@
 import { NextRequest } from 'next/server';
 
-import { createValidationError, handleApiError } from '@/utils/api/errors';
+import { createValidationError, handleApiError, createNotFoundError } from '@/utils/api/errors';
 import * as kv from '@/utils/supabase/kvStore';
+import { UserRecord } from '@/types/kv-records';
 
 const OTP_EXPIRY_MS = 5 * 60 * 1000;
 
+/**
+ * Generates a random 6-digit OTP code.
+ *
+ * @returns 6-digit OTP string
+ */
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+/**
+ * POST /api/auth/resend-otp
+ * Resends an OTP code to a user for 2FA verification.
+ *
+ * @param request - Next.js request object containing userId in body
+ * @returns JSON response with success status and dev OTP (for development)
+ */
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await request.json();
@@ -17,9 +30,9 @@ export async function POST(request: NextRequest) {
       return createValidationError('Missing user ID');
     }
 
-    const userData = await kv.get(`user:${userId}`);
+    const userData = await kv.get<UserRecord>(`user:${userId}`);
     if (!userData) {
-      return Response.json({ error: 'User not found' }, { status: 404 });
+      return createNotFoundError('User');
     }
 
     const otp = generateOTP();
@@ -42,5 +55,3 @@ export async function POST(request: NextRequest) {
     return handleApiError(error, 'auth/resend-otp');
   }
 }
-
-

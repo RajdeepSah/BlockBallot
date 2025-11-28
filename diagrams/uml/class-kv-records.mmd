@@ -1,0 +1,58 @@
+classDiagram
+    class UserRecord {
+        +string? id
+        +string email
+        +string? name
+        +string? phone
+        +string? twofa_method
+        +string created_at
+    }
+    
+    class EligibilityRecord {
+        +string? id
+        +string election_id
+        +string contact
+        +string? user_id
+        +string status
+        +string created_at
+    }
+    
+    class AccessRequestRecord {
+        +string id
+        +string election_id
+        +string user_id
+        +string contact
+        +string status
+        +string created_at
+        +string? decided_by
+        +string? decided_at
+    }
+    
+    class BallotLinkRecord {
+        +string? ballot_id
+        +string status
+        +string created_at
+        +string? tx_hash
+    }
+    
+    class OtpRecord {
+        +string otp
+        +number created_at
+        +number expires_at
+        +boolean verified
+        +string userId
+    }
+    
+    class InviteHistoryRecord {
+        +Record~string, number~ emails
+    }
+    
+    class RateLimitRecord {
+        +number lastSentAt
+    }
+    
+    UserRecord "1" --> "0..*" EligibilityRecord : has
+    UserRecord "1" --> "0..*" AccessRequestRecord : makes
+    UserRecord "1" --> "0..1" BallotLinkRecord : has
+    UserRecord "1" --> "0..1" OtpRecord : has
+

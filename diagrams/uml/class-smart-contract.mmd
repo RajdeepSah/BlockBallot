@@ -1,0 +1,48 @@
+classDiagram
+    class BlockBallotSingle {
+        -address i_owner
+        -mapping~string, mapping~string, uint256~~ votes
+        -mapping~string, mapping~string, bool~~ isCandidate
+        -string[] positionList
+        -mapping~string, string[]~ candidateList
+        +constructor(positionNames: string[], candidatesForPosition: string[][])
+        +castVotes(positions: string[], candidates: string[]) void
+        +getVoteCount(positionName: string, candidateName: string) uint256
+        +getPositionList() string[]
+        +getCandidateList(positionName: string) string[]
+        +VoteCast(relayer: address, positions: string[], candidates: string[]) event
+    }
+    
+    class ContractFactory {
+        +deploy(abi: ABIFragment[], bytecode: string, args: any[]) Contract
+    }
+    
+    class Contract {
+        +address address
+        +castVotes(positions: string[], candidates: string[]) TransactionResponse
+        +getVoteCount(position: string, candidate: string) Promise~uint256~
+        +getPositionList() Promise~string[]~
+        +getCandidateList(position: string) Promise~string[]~
+        +waitForDeployment() Promise~Contract~
+        +getAddress() Promise~string~
+    }
+    
+    class Wallet {
+        +address address
+        +signTransaction(tx: TransactionRequest) Promise~string~
+        +sendTransaction(tx: TransactionRequest) Promise~TransactionResponse~
+    }
+    
+    class JsonRpcProvider {
+        +getNetwork() Promise~Network~
+        +getBlockNumber() Promise~number~
+        +call(tx: TransactionRequest) Promise~string~
+        +sendTransaction(signedTx: string) Promise~TransactionResponse~
+    }
+    
+    ContractFactory --> Contract : creates
+    Contract --> BlockBallotSingle : interacts with
+    Wallet --> JsonRpcProvider : uses
+    Contract --> Wallet : uses for transactions
+    Contract --> JsonRpcProvider : uses for queries
+

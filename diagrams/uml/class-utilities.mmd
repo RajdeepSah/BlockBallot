@@ -1,0 +1,90 @@
+classDiagram
+    class API {
+        +register(data: RegisterData) Promise~void~
+        +login(data: LoginData) Promise~LoginResponse~
+        +verify2FA(data: Verify2FAData) Promise~void~
+        +resendOTP(data: ResendOTPData) Promise~void~
+        +getMe(token: string) Promise~User~
+        +getElection(id: string) Promise~Election~
+        +searchElections(code?: string, token?: string) Promise~ElectionsResponse~
+        +uploadEligibility(electionId: string, voters: string[], token: string) Promise~void~
+        +checkEligibility(electionId: string, token: string) Promise~EligibilityStatus~
+        +requestAccess(electionId: string, token: string) Promise~AccessRequestResponse~
+        +getAccessRequests(electionId: string, token: string) Promise~AccessRequestsResponse~
+        +updateAccessRequest(electionId: string, requestId: string, action: string, token: string) Promise~void~
+        +castVote(electionId: string, selections: VoteSelections, election: Election, token: string) Promise~VoteReceipt~
+        +getResults(electionId: string) Promise~ElectionResults~
+    }
+    
+    class KVStore {
+        +set~T~(key: string, value: T) Promise~void~
+        +get~T~(key: string) Promise~T | undefined~
+        +del(key: string) Promise~void~
+        +mset~T~(keys: string[], values: T[]) Promise~void~
+        +mget~T~(keys: string[]) Promise~T[]~
+        +mdel(keys: string[]) Promise~void~
+        +getByPrefix~T~(prefix: string) Promise~T[]~
+        -getServiceClient() SupabaseClient
+    }
+    
+    class BlockchainProvider {
+        +createProvider() JsonRpcProvider
+        +createWallet() Wallet
+        +createWalletWithProvider(provider: JsonRpcProvider) Wallet
+    }
+    
+    class ContractLoader {
+        -cachedArtifact: ContractArtifact | null
+        +loadContractArtifact() ContractArtifact
+        +getContractABI() ABIFragment[]
+        +getContractBytecode() string
+    }
+    
+    class ContractUtils {
+        +createReadOnlyContract(address: ContractAddress) Contract
+        +createWritableContract(address: ContractAddress) Contract
+    }
+    
+    class TokenRefresh {
+        +isTokenExpired(token: string, offsetSeconds?: number) boolean
+        +getValidAccessToken() Promise~string | null~
+        -refreshAccessToken() Promise~string | null~
+        -parseJwt(token: string) JwtPayload | null
+    }
+    
+    class ErrorHandler {
+        +handleApiError(error: unknown, context?: string) NextResponse
+        +createValidationError(message: string) NextResponse
+        +createNotFoundError(resource: string) NextResponse
+        +createUnauthorizedError() NextResponse
+        +createForbiddenError(message?: string) NextResponse
+        +createBadRequestError(message: string) NextResponse
+        +handleUnauthorizedError(redirect?: boolean) void
+        +authenticatedFetch(input: RequestInfo, init?: RequestInit) Promise~Response~
+        -clearStoredAuth() void
+    }
+    
+    class AuthUtils {
+        +authenticateUser(authHeader: string | null) Promise~User~
+    }
+    
+    class ValidationUtils {
+        +validateContractAddress(address: string) void
+        +validateVoteInput(vote: VoteInput) void
+        +validateVotesArray(votes: VoteInput[]) void
+        +validatePositionInput(position: PositionInput) void
+        +validatePositionsArray(positions: PositionInput[]) void
+        +sanitizeString(input: string) string
+        +sanitizeText(input: string) string
+        +validateNoDuplicateCandidates(position: PositionInput) void
+        +validateNoDuplicateCandidatesInPositions(positions: PositionInput[]) void
+        +validateNoDuplicatePositions(positions: PositionInput[]) void
+    }
+    
+    API --> ErrorHandler : uses
+    API --> AuthUtils : uses
+    API --> TokenRefresh : uses
+    ContractUtils --> BlockchainProvider : uses
+    ContractUtils --> ContractLoader : uses
+    ErrorHandler --> TokenRefresh : uses
+

@@ -6,13 +6,23 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Vote, User, Mail, Lock, Phone } from 'lucide-react';
+import { AuthLayout } from './layouts/AuthLayout';
 
 interface SignUpProps {
   onToggleMode: () => void;
   onSuccess: () => void;
 }
 
-export function SignUp({ onToggleMode, onSuccess }: SignUpProps) {
+/**
+ * SignUp component for new user registration.
+ * Handles account creation and redirects to sign in on success.
+ *
+ * @param props - Component props
+ * @param props.onToggleMode - Callback to switch to sign in
+ * @param props.onSuccess - Callback when registration succeeds (currently unused)
+ * @returns Sign up form UI
+ */
+export function SignUp({ onToggleMode, onSuccess: _onSuccess }: SignUpProps) {
   const { register } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -42,12 +52,13 @@ export function SignUp({ onToggleMode, onSuccess }: SignUpProps) {
     try {
       await register({ name, email, phone, password });
       setSuccess(true);
-      
+
       setTimeout(() => {
         onToggleMode();
       }, 2000);
-    } catch (err: any) {
-      setError(err.message || 'Registration failed');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Registration failed';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -55,14 +66,24 @@ export function SignUp({ onToggleMode, onSuccess }: SignUpProps) {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <AuthLayout>
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
-            <div className="text-center space-y-4">
+            <div className="space-y-4 text-center">
               <div className="flex justify-center">
-                <div className="p-3 bg-green-100 rounded-full">
-                  <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <div className="rounded-full bg-green-100 p-3">
+                  <svg
+                    className="h-8 w-8 text-green-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 </div>
               </div>
@@ -71,23 +92,21 @@ export function SignUp({ onToggleMode, onSuccess }: SignUpProps) {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <AuthLayout>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-indigo-600 rounded-full">
-              <Vote className="w-8 h-8 text-white" />
+          <div className="mb-4 flex justify-center">
+            <div className="rounded-full bg-indigo-600 p-3">
+              <Vote className="h-8 w-8 text-white" />
             </div>
           </div>
           <CardTitle className="text-2xl">Create Account</CardTitle>
-          <CardDescription>
-            Join BlockBallot to participate in secure elections
-          </CardDescription>
+          <CardDescription>Join BlockBallot to participate in secure elections</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -194,6 +213,6 @@ export function SignUp({ onToggleMode, onSuccess }: SignUpProps) {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </AuthLayout>
   );
 }

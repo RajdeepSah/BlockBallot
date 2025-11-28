@@ -1,0 +1,90 @@
+erDiagram
+    SUPABASE_AUTH_USERS ||--o{ KV_USER_RECORDS : "maps to"
+    KV_USER_RECORDS ||--o{ KV_ELIGIBILITY : "has"
+    KV_USER_RECORDS ||--o{ KV_ACCESS_REQUESTS : "makes"
+    KV_USER_RECORDS ||--o{ KV_BALLOT_LINKS : "has"
+    KV_USER_RECORDS ||--o{ KV_OTP_RECORDS : "has"
+    
+    SUPABASE_ELECTIONS ||--o{ KV_ELIGIBILITY : "has"
+    SUPABASE_ELECTIONS ||--o{ KV_ACCESS_REQUESTS : "receives"
+    SUPABASE_ELECTIONS ||--o{ KV_BALLOT_LINKS : "contains"
+    SUPABASE_ELECTIONS ||--|| BLOCKCHAIN_CONTRACTS : "deployed as"
+    
+    BLOCKCHAIN_CONTRACTS ||--o{ BLOCKCHAIN_VOTES : "stores"
+    
+    SUPABASE_AUTH_USERS {
+        string id PK
+        string email UK
+        string encrypted_password
+        json user_metadata
+        datetime created_at
+    }
+    
+    SUPABASE_ELECTIONS {
+        string id PK
+        string code UK
+        string title
+        string description
+        datetime starts_at
+        datetime ends_at
+        string creator_id FK
+        string contract_address
+        json positions
+        string status
+        datetime created_at
+    }
+    
+    KV_USER_RECORDS {
+        string key PK "user:userId"
+        json value "id, name, email, phone, twofa_method, created_at"
+    }
+    
+    KV_EMAIL_MAPPING {
+        string key PK "user:email:email"
+        string value "userId"
+    }
+    
+    KV_ELIGIBILITY {
+        string key PK "eligibility:electionId:email"
+        json value "id, election_id, contact, user_id, status, created_at"
+    }
+    
+    KV_ACCESS_REQUESTS {
+        string key PK "access_request:electionId:userId"
+        json value "id, election_id, user_id, contact, status, created_at, decided_by, decided_at"
+    }
+    
+    KV_BALLOT_LINKS {
+        string key PK "ballot:link:electionId:userId"
+        json value "tx_hash, created_at"
+    }
+    
+    KV_OTP_RECORDS {
+        string key PK "otp:userId"
+        json value "otp, userId, created_at, expires_at, verified"
+    }
+    
+    KV_INVITE_HISTORY {
+        string key PK "invite_history:electionId"
+        json value "emails: {email: timestamp}"
+    }
+    
+    KV_RATE_LIMITS {
+        string key PK "invite_rate:electionId"
+        json value "lastSentAt"
+    }
+    
+    BLOCKCHAIN_CONTRACTS {
+        string address PK
+        string positionList
+        mapping candidateList
+        mapping votes
+        mapping isCandidate
+    }
+    
+    BLOCKCHAIN_VOTES {
+        string positionName
+        string candidateName
+        uint256 voteCount
+    }
+

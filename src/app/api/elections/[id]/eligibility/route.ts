@@ -1,46 +1,57 @@
-import { NextRequest } from "next/server";
-import { authenticateUser } from "@/utils/api/auth";
-import { createClient } from "@/utils/supabase/server";
-import * as kv from "@/utils/supabase/kvStore";
-import { handleApiError, createNotFoundError } from "@/utils/api/errors";
+import { NextRequest } from 'next/server';
+import { authenticateUser } from '@/utils/api/auth';
+import { createClient } from '@/utils/supabase/server';
+import * as kv from '@/utils/supabase/kvStore';
+import {
+  handleApiError,
+  createNotFoundError,
+  createForbiddenError,
+  createBadRequestError,
+  createUnauthorizedError,
+} from '@/utils/api/errors';
 
 /**
  * POST /api/elections/[id]/eligibility
- * Upload voter eligibility list (admin only)
- * Ported from Supabase Edge Function
+ *
+ * Uploads a voter eligibility list for an election.
+ * Only the election creator can upload eligibility lists.
+ *
+ * Request body:
+ * - voters: Array of email addresses to add to eligibility list (required)
+ *
+ * Headers:
+ * - Authorization: Bearer token (required)
+ *
+ * @param request - Next.js request object containing voter list
+ * @param params - Route parameters containing election ID
+ * @returns JSON response with success status and count of added voters
+ * @throws Returns error response if election not found, user is not creator, or validation fails
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: electionId } = await params;
     const authHeader = request.headers.get('Authorization');
-    
-    // Authenticate user
+
     const user = await authenticateUser(authHeader);
-    
-    // Get election from Supabase database
+
     const supabase = await createClient();
     const { data: election, error: electionError } = await supabase
       .from('elections')
       .select('*')
       .eq('id', electionId)
       .single();
-    
+
     if (electionError || !election) {
       return createNotFoundError('Election');
     }
 
-    // Verify user is the election creator
     if (election.creator_id !== user.id) {
-      return Response.json({ error: 'Only election creator can upload eligibility list' }, { status: 403 });
+      return createForbiddenError('Only election creator can upload eligibility list');
     }
 
-    // Parse request body
     const { voters } = await request.json();
     if (!voters || !Array.isArray(voters)) {
-      return Response.json({ error: 'Invalid voter list' }, { status: 400 });
+      return createBadRequestError('Invalid voter list');
     }
 
     let addedCount = 0;
@@ -49,9 +60,8 @@ export async function POST(
 
       const email = voterEmail.trim().toLowerCase();
       const eligibilityId = crypto.randomUUID();
-      
-      // Check if user exists with this email
-      const existingUserId = await kv.get(`user:email:${email}`);
+
+      const existingUserId = await kv.get<string>(`user:email:${email}`);
 
       const eligibility = {
         id: eligibilityId,
@@ -59,7 +69,7 @@ export async function POST(
         contact: email,
         user_id: existingUserId || null,
         status: 'preapproved',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
 
       await kv.set(`eligibility:${electionId}:${email}`, eligibility);
@@ -68,14 +78,13 @@ export async function POST(
 
     return Response.json({
       success: true,
-      message: `Added ${addedCount} voters to eligibility list`
+      message: `Added ${addedCount} voters to eligibility list`,
     });
-  } catch (error: any) {
-    if (error.message === 'Unauthorized') {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return createUnauthorizedError();
     }
     console.error('Upload eligibility error:', error);
     return handleApiError(error, 'upload-eligibility');
   }
 }
-

@@ -1,0 +1,55 @@
+graph TB
+    subgraph VoterGroup["Voter"]
+        Voter["Voter"]
+        UC1["Search Election by Code"]
+        UC2["Check Eligibility Status"]
+        UC3["Request Access to Election"]
+        UC4["Cast Vote in Election"]
+        UC5["View Election Results"]
+        
+        Voter --> UC1
+        Voter --> UC2
+        Voter --> UC3
+        Voter --> UC4
+        Voter --> UC5
+    end
+    
+    subgraph OrganizerGroup["Election Organizer"]
+        Organizer["Election Organizer"]
+        UC6["Create New Election"]
+        UC7["Upload Eligible Voters"]
+        UC8["Review Access Requests"]
+        UC9["Approve/Deny Access Request"]
+        UC10["View Election Results"]
+        UC11["Manage Election Settings"]
+        
+        Organizer --> UC6
+        Organizer --> UC7
+        Organizer --> UC8
+        Organizer --> UC9
+        Organizer --> UC10
+        Organizer --> UC11
+    end
+    
+    subgraph SystemGroup["System"]
+        System["System"]
+        UC12["User Authentication"]
+        UC13["Two-Factor Authentication"]
+        UC14["Deploy Smart Contract"]
+        UC15["Store Vote on Blockchain"]
+        
+        System --> UC12
+        System --> UC13
+        System --> UC14
+        System --> UC15
+    end
+    
+    style Voter fill: #2f5fff
+    style Voter outline: #000000
+    style VoterGroup outline: #000000
+    style Organizer fill:#fcde59
+    style Organizer outline: #000000
+    style OrganizerGroup outline: #000000
+    style System fill: #888888
+    style System outline:#000000
+    style SystemGroup outline: #000000

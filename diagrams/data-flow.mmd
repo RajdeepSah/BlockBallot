@@ -1,0 +1,48 @@
+flowchart TD
+    Start([User Action]) --> Auth{Authenticated?}
+    Auth -->|No| Login[Login Flow]
+    Auth -->|Yes| Action{Action Type}
+    
+    Login --> LoginAPI["Login API"]
+    LoginAPI --> SupabaseAuth["Supabase Auth"]
+    SupabaseAuth --> KVStore1[("KV Store: OTP")]
+    KVStore1 --> Verify2FA["Verify 2FA"]
+    Verify2FA --> AuthContext["Store Token"]
+    
+    Action -->|Create Election| Create["Create Election"]
+    Action -->|View Election| View["View Election"]
+    Action -->|Vote| Vote["Cast Vote"]
+    Action -->|View Results| Results["View Results"]
+    
+    Create --> DeployAPI["Deploy API"]
+    DeployAPI --> Blockchain["Deploy Contract"]
+    Blockchain --> Contract[("Smart Contract")]
+    DeployAPI --> SupabaseDB[("DB: Elections")]
+    
+    View --> ElectionAPI["Election API"]
+    ElectionAPI --> SupabaseDB
+    ElectionAPI --> EligibilityAPI["Eligibility API"]
+    EligibilityAPI --> KVStore2[("KV: Eligibility")]
+    
+    Vote --> VoteAPI["Vote API"]
+    VoteAPI --> KVStore3[("KV: Check Eligibility")]
+    VoteAPI --> KVStore4[("KV: Check Duplicate")]
+    VoteAPI --> KVStore5[("KV: Create Lock")]
+    VoteAPI --> Blockchain2["Blockchain Transaction"]
+    Blockchain2 --> Contract
+    VoteAPI --> KVStore6[("KV: Store Ballot Link")]
+    
+    Results --> ResultsAPI["Results API"]
+    ResultsAPI --> Blockchain3["Read Contract"]
+    Blockchain3 --> Contract
+    ResultsAPI --> Display["Display Results"]
+    
+    style Contract fill:#ffe1f5
+    style SupabaseDB fill:#fff4e1
+    style KVStore1 fill:#fff4e1
+    style KVStore2 fill:#fff4e1
+    style KVStore3 fill:#fff4e1
+    style KVStore4 fill:#fff4e1
+    style KVStore5 fill:#fff4e1
+    style KVStore6 fill:#fff4e1
+

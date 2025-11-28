@@ -10,21 +10,20 @@ const requiredEnvVars = {
 
 // Validate required environment variables
 for (const [key, value] of Object.entries(requiredEnvVars)) {
-   console.log(`Checking environment variable: ${key}: ${value}`);
   if (!value) {
     throw new Error(
-      `Missing required environment variable: ${key}. ` +
-      `Please set it in your .env.local file.`
+      `Missing required environment variable: ${key}. ` + `Please set it in your .env.local file.`
     );
   }
 }
 
+/**
+ * Blockchain configuration object containing RPC URL, private key, and network details.
+ * Validates required environment variables on module load.
+ */
 export const blockchainConfig = {
   rpcUrl: requiredEnvVars.SEPOLIA_RPC_URL!,
   privateKey: requiredEnvVars.ORGANIZER_PRIVATE_KEY!,
   network: 'sepolia' as const,
-  chainId: 11155111,
+  chainId: 421614,
 } as const;
-
-
-

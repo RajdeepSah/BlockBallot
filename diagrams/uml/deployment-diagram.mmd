@@ -1,0 +1,48 @@
+graph TB
+    subgraph Client["Client Environment"]
+        Browser["Web Browser<br/>(Chrome, Firefox, Safari)"]
+        LocalStorage["Browser LocalStorage<br/>(Tokens, User Data)"]
+    end
+    
+    subgraph Vercel["Vercel Deployment"]
+        NextJS["Next.js Application<br/>(Server & Client)"]
+        EdgeFunctions["Edge Functions<br/>(API Routes)"]
+    end
+    
+    subgraph Supabase["Supabase Cloud"]
+        AuthService["Supabase Auth<br/>(JWT Tokens)"]
+        PostgreSQL["PostgreSQL Database<br/>(Elections Table)"]
+        KVStore["KV Store Table<br/>(kv_store_b7b6fbd4)"]
+        EdgeFunction["Supabase Edge Function<br/>(Legacy Hono Server)"]
+    end
+    
+    subgraph Blockchain["Ethereum Network"]
+        SepoliaTestnet["Sepolia Testnet"]
+        SmartContract["BlockBallotSingle<br/>Contract Instance"]
+        RPCNode["JSON-RPC Node<br/>(Alchemy/Infura)"]
+    end
+    
+    subgraph External["External Services"]
+        ResendAPI["Resend API<br/>(Email Service)"]
+    end
+    
+    Browser --> NextJS
+    Browser --> LocalStorage
+    NextJS --> EdgeFunctions
+    EdgeFunctions --> AuthService
+    EdgeFunctions --> PostgreSQL
+    EdgeFunctions --> KVStore
+    EdgeFunctions --> ResendAPI
+    EdgeFunctions --> RPCNode
+    RPCNode --> SepoliaTestnet
+    SepoliaTestnet --> SmartContract
+    EdgeFunction --> KVStore
+    EdgeFunction --> AuthService
+    
+    style Browser fill:#e1f5ff
+    style NextJS fill:#e1f5ff
+    style SmartContract fill:#ffe1f5
+    style PostgreSQL fill:#fff4e1
+    style KVStore fill:#fff4e1
+    style ResendAPI fill:#fff4e1
+

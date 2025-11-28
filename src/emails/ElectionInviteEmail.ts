@@ -1,3 +1,6 @@
+/**
+ * Options for building an election invitation email.
+ */
 export interface ElectionInviteEmailOptions {
   electionName: string;
   electionCode: string;
@@ -11,6 +14,12 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
   timeStyle: 'short',
 });
 
+/**
+ * Formats a date string for display in invitation emails.
+ *
+ * @param value - ISO date string to format
+ * @returns Formatted date string or original value if invalid
+ */
 export function formatInviteDate(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -20,6 +29,12 @@ export function formatInviteDate(value: string): string {
   return dateFormatter.format(date);
 }
 
+/**
+ * Builds an HTML email template for election invitations.
+ *
+ * @param options - Election invite email options
+ * @returns HTML string for the email
+ */
 export function buildElectionInviteEmail(options: ElectionInviteEmailOptions) {
   const startLabel = formatInviteDate(options.startTime);
   const endLabel = formatInviteDate(options.endTime);
@@ -63,6 +78,12 @@ export function buildElectionInviteEmail(options: ElectionInviteEmailOptions) {
 </html>`;
 }
 
+/**
+ * Builds a plain text version of the election invitation email.
+ *
+ * @param options - Election invite email options
+ * @returns Plain text string for the email
+ */
 export function getElectionInvitePlainText(options: ElectionInviteEmailOptions) {
   const startLabel = formatInviteDate(options.startTime);
   const endLabel = formatInviteDate(options.endTime);
@@ -82,6 +103,12 @@ Thank you for participating!
 — BlockBallot Team`;
 }
 
+/**
+ * Gets a preview of the election invitation email (plain text format).
+ *
+ * @param options - Election invite email options
+ * @returns Plain text preview string
+ */
 export function getElectionInvitePreview(options: ElectionInviteEmailOptions) {
   return getElectionInvitePlainText(options);
 }

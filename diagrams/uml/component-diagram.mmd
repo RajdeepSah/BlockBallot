@@ -1,0 +1,56 @@
+graph TB
+    subgraph Frontend["Frontend Components"]
+        AuthModule["Authentication Module"]
+        DashboardModule["Dashboard Module"]
+        ElectionModule["Election Module"]
+        AdminModule["Admin Module"]
+        ResultsModule["Results Module"]
+    end
+    
+    subgraph API["API Layer"]
+        AuthAPI["Auth API Routes"]
+        ElectionAPI["Election API Routes"]
+        VoteAPI["Vote API Routes"]
+        AdminAPI["Admin API Routes"]
+    end
+    
+    subgraph Services["Service Layer"]
+        AuthService["Auth Service<br/>(Supabase Auth)"]
+        DatabaseService["Database Service<br/>(Supabase DB)"]
+        KVService["KV Store Service"]
+        BlockchainService["Blockchain Service<br/>(Ethers.js)"]
+        EmailService["Email Service<br/>(Resend)"]
+    end
+    
+    subgraph Storage["Storage Layer"]
+        PostgreSQL["PostgreSQL<br/>(Elections)"]
+        KVStore["KV Store<br/>(Users, Votes, Eligibility)"]
+        Blockchain["Blockchain<br/>(Vote Records)"]
+    end
+    
+    AuthModule --> AuthAPI
+    DashboardModule --> ElectionAPI
+    ElectionModule --> ElectionAPI
+    ElectionModule --> VoteAPI
+    AdminModule --> AdminAPI
+    ResultsModule --> ElectionAPI
+    
+    AuthAPI --> AuthService
+    ElectionAPI --> DatabaseService
+    ElectionAPI --> KVService
+    VoteAPI --> KVService
+    VoteAPI --> BlockchainService
+    AdminAPI --> KVService
+    AdminAPI --> EmailService
+    
+    AuthService --> PostgreSQL
+    DatabaseService --> PostgreSQL
+    KVService --> KVStore
+    BlockchainService --> Blockchain
+    EmailService --> ExternalEmail["External Email API"]
+    
+    style AuthModule fill:#e1f5ff
+    style Blockchain fill:#ffe1f5
+    style PostgreSQL fill:#fff4e1
+    style KVStore fill:#fff4e1
+

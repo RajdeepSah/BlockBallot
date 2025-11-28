@@ -1,18 +1,24 @@
-import { NextRequest } from "next/server";
-import { createReadOnlyContract } from "@/utils/blockchain/contract";
-import { validateContractAddress } from "@/utils/validation";
-import { handleApiError, createValidationError } from "@/utils/api/errors";
-import type { VotesResponse, PositionResult, CandidateTally } from "@/types/blockchain";
-import { createClient } from "@/utils/supabase/server";
+import { NextRequest } from 'next/server';
+import { createReadOnlyContract } from '@/utils/blockchain/contract';
+import { validateContractAddress } from '@/utils/validation';
+import { handleApiError, createValidationError } from '@/utils/api/errors';
+import type { VotesResponse, PositionResult, CandidateTally } from '@/types/blockchain';
+import { createClient } from '@/utils/supabase/server';
 
+/**
+ * GET /api/get-votes
+ * Retrieves all vote tallies from a blockchain contract.
+ * Can accept either contractAddress or electionId query parameter.
+ *
+ * @param request - Next.js request object with query parameters
+ * @returns JSON response with positions, candidates, and vote counts, or error response
+ */
 export async function GET(request: NextRequest) {
   try {
-    // Get parameters from query string
     const { searchParams } = new URL(request.url);
-    let contractAddress = searchParams.get("contractAddress");
-    const electionId = searchParams.get("electionId");
+    let contractAddress = searchParams.get('contractAddress');
+    const electionId = searchParams.get('electionId');
 
-    // If no contract address provided, try to look it up by electionId
     if (!contractAddress && electionId) {
       const supabase = await createClient();
       const { data: election, error: electionError } = await supabase
@@ -36,61 +42,53 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validate contract address format
     try {
       validateContractAddress(contractAddress);
     } catch (validationError) {
-      const message = validationError instanceof Error ? validationError.message : String(validationError);
+      const message =
+        validationError instanceof Error ? validationError.message : String(validationError);
       return createValidationError(message);
     }
 
-    // Create read-only contract instance
     const contract = createReadOnlyContract(contractAddress);
-
-    // Fetch the list of positions
     const positions: string[] = await contract.getPositionList();
 
     if (!positions || positions.length === 0) {
       const response: VotesResponse = {
         positions: [],
-        contractAddress
+        contractAddress,
       };
       return Response.json(response);
     }
 
-    // Build results structure with positions and their candidates
     const results: PositionResult[] = [];
 
-    // Loop through each position
     for (const positionName of positions) {
-      // Get candidates for this position
       const candidates: string[] = await contract.getCandidateList(positionName);
-      
+
       const candidateTallies: CandidateTally[] = [];
 
-      // Loop through each candidate to get their tally
       for (const candidateName of candidates) {
         const tally: bigint = await contract.getVoteCount(positionName, candidateName);
         candidateTallies.push({
           name: candidateName,
-          votes: tally.toString() // Convert BigInt to string
+          votes: tally.toString(), // Convert BigInt to string
         });
       }
 
       results.push({
         name: positionName,
-        candidates: candidateTallies
+        candidates: candidateTallies,
       });
     }
 
     const response: VotesResponse = {
       positions: results,
-      contractAddress
+      contractAddress,
     };
 
     return Response.json(response);
-    
   } catch (error) {
-    return handleApiError(error, "get-votes");
+    return handleApiError(error, 'get-votes');
   }
 }

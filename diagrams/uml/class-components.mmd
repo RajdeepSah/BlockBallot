@@ -1,0 +1,147 @@
+classDiagram
+    class AuthContext {
+        -User user
+        -string token
+        -boolean loading
+        +login(email: string, password: string) Promise~LoginResponse~
+        +verify2FA(email: string, otp: string) Promise~void~
+        +register(data: RegisterData) Promise~void~
+        +logout() void
+        +resendOTP(email: string) Promise~void~
+        -loadAuthState() void
+        -storeAuthData(token: string, user: User) void
+        -clearAuthData() void
+    }
+    
+    class Dashboard {
+        -Election[] elections
+        -string searchCode
+        -boolean loading
+        -boolean searching
+        -string error
+        +onCreateElection() void
+        +onViewElection(electionId: string) void
+        +onManageElection(electionId: string) void
+        -loadElections() Promise~void~
+        -handleSearch(e: FormEvent) Promise~void~
+        -getElectionStatus(election: Election) StatusBadge
+    }
+    
+    class CreateElection {
+        -string title
+        -string description
+        -string startsAt
+        -string endsAt
+        -Position[] positions
+        -boolean loading
+        -string error
+        +onBack() void
+        +onSuccess(electionId: string) void
+        -handleSubmit(e: FormEvent) Promise~void~
+        -validateForm() boolean
+        -addPosition() void
+        -removePosition(id: string) void
+        -addCandidate(positionId: string) void
+        -removeCandidate(positionId: string, candidateId: string) void
+        -sanitizeInputs() void
+    }
+    
+    class ElectionView {
+        -Election election
+        -EligibilityStatus eligibility
+        -VoteSelections selections
+        -boolean loading
+        -boolean voting
+        -string error
+        -string receipt
+        +electionId: string
+        +onBack() void
+        +onViewResults(electionId: string) void
+        -loadElection() Promise~void~
+        -checkEligibility() Promise~void~
+        -handleRequestAccess() Promise~void~
+        -handleVote() Promise~void~
+        -handleSingleChoice(positionId: string, candidateId: string) void
+        -handleMultipleChoice(positionId: string, candidateId: string, checked: boolean) void
+        -handleRankedChoice(positionId: string, candidateId: string, rank: number) void
+    }
+    
+    class AdminPanel {
+        -Election election
+        -AccessRequest[] accessRequests
+        -string voterList
+        -boolean uploading
+        -EligibleVoter[] preapprovedVoters
+        +electionId: string
+        +onBack() void
+        +onViewResults(electionId: string) void
+        -loadElection() Promise~void~
+        -loadAccessRequests() Promise~void~
+        -loadPreapprovedVoters() Promise~void~
+        -handleUploadVoters() Promise~void~
+        -handleAccessRequest(requestId: string, action: string) Promise~void~
+        -handleSendInvites() Promise~void~
+        -copyToClipboard(text: string) Promise~void~
+    }
+    
+    class ResultsView {
+        -ElectionResults results
+        -Election election
+        -boolean loading
+        -string error
+        -EligibleVoter[] eligibleVoters
+        +electionId: string
+        +onBack() void
+        +onManage(electionId: string) void
+        -loadResults() Promise~void~
+        -loadElection() Promise~void~
+        -loadEligibleVoters() Promise~void~
+        -exportResults() void
+        -formatChartData(positionData: PositionResult) ChartDataEntry[]
+    }
+    
+    class SignIn {
+        -string email
+        -string password
+        -boolean loading
+        -string error
+        +onToggleMode() void
+        +onSuccess() void
+        +on2FARequired(payload: object) void
+        -handleSubmit(e: FormEvent) Promise~void~
+    }
+    
+    class SignUp {
+        -string name
+        -string email
+        -string phone
+        -string password
+        -string confirmPassword
+        -boolean loading
+        -boolean success
+        -string error
+        +onToggleMode() void
+        +onSuccess() void
+        -handleSubmit(e: FormEvent) Promise~void~
+        -validateForm() boolean
+    }
+    
+    class Verify2FA {
+        -string otp
+        -boolean loading
+        -string error
+        +email: string
+        +onSuccess() void
+        +onBack() void
+        -handleSubmit(e: FormEvent) Promise~void~
+    }
+    
+    AuthContext --> Dashboard : provides auth
+    AuthContext --> CreateElection : provides auth
+    AuthContext --> ElectionView : provides auth
+    AuthContext --> AdminPanel : provides auth
+    AuthContext --> ResultsView : provides auth
+    Dashboard --> ElectionView : navigates to
+    Dashboard --> AdminPanel : navigates to
+    ElectionView --> ResultsView : navigates to
+

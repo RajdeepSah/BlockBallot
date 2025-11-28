@@ -1,0 +1,72 @@
+sequenceDiagram
+    participant User
+    participant ElectionView
+    participant API
+    participant VoteRoute
+    participant AuthUtils
+    participant SupabaseDB
+    participant KVStore
+    participant Blockchain
+    participant SmartContract
+    
+    User->>ElectionView: Click "Cast Vote"
+    ElectionView->>ElectionView: Validate all selections
+    
+    alt Validation Fails
+        ElectionView-->>User: Show validation error
+    else Validation Passes
+        ElectionView->>API: castVote(electionId, selections, election, token)
+        API->>VoteRoute: POST /api/vote
+        
+        VoteRoute->>AuthUtils: authenticateUser(authHeader)
+        AuthUtils-->>VoteRoute: User authenticated
+        
+        VoteRoute->>SupabaseDB: Get election by ID
+        SupabaseDB-->>VoteRoute: Election data
+        
+        VoteRoute->>VoteRoute: Check election dates (start/end)
+        
+        alt Election Not Active
+            VoteRoute-->>ElectionView: Error: Election not active
+        else Election Active
+            VoteRoute->>KVStore: Get user data
+            KVStore-->>VoteRoute: User record
+            
+            VoteRoute->>KVStore: Check eligibility
+            KVStore-->>VoteRoute: Eligibility record
+            
+            alt Not Eligible
+                VoteRoute-->>ElectionView: Error: Not eligible
+            else Eligible
+                VoteRoute->>KVStore: Check ballot link (hasVoted)
+                KVStore-->>VoteRoute: No existing vote
+                
+                VoteRoute->>KVStore: Create timestamped lock
+                Note over VoteRoute,KVStore: ballot:link:electionId:userId:timestamp-uuid
+                
+                VoteRoute->>KVStore: Double-check no final vote
+                KVStore-->>VoteRoute: Confirmed no duplicate
+                
+                VoteRoute->>Blockchain: Prepare transaction
+                VoteRoute->>SmartContract: castVotes(positions[], candidates[])
+                
+                alt Transaction Fails
+                    SmartContract-->>VoteRoute: Transaction error
+                    VoteRoute->>KVStore: Remove lock
+                    VoteRoute-->>ElectionView: Error: Transaction failed
+                else Transaction Success
+                    SmartContract-->>Blockchain: Transaction receipt
+                    Blockchain-->>VoteRoute: Transaction hash
+                    
+                    VoteRoute->>KVStore: Store final ballot link
+                    Note over VoteRoute,KVStore: ballot:link:electionId:userId<br/>tx_hash: hash
+                    
+                    VoteRoute->>KVStore: Remove lock
+                    VoteRoute-->>API: Success with txHash
+                    API-->>ElectionView: Vote receipt
+                    ElectionView-->>User: Show confirmation
+                end
+            end
+        end
+    end
+

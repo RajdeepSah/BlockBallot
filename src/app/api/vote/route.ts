@@ -1,38 +1,139 @@
-import { NextRequest } from "next/server";
-import { createWritableContract } from "@/utils/blockchain/contract";
-import { validateContractAddress, validateVotesArray } from "@/utils/validation";
-import { handleApiError, createValidationError, createNotFoundError } from "@/utils/api/errors";
-import { authenticateUser } from "@/utils/api/auth";
-import { createClient } from "@/utils/supabase/server";
-import * as kv from "@/utils/supabase/kvStore";
-import type { VoteInput, VoteResponse } from "@/types/blockchain";
+/**
+ * @module app/api/vote/route
+ * @category API Routes
+ */
 
+import { NextRequest } from 'next/server';
+import crypto from 'node:crypto';
+import { createWritableContract } from '@/utils/blockchain/contract';
+import { validateContractAddress, validateVotesArray } from '@/utils/validation';
+import {
+  handleApiError,
+  createValidationError,
+  createNotFoundError,
+  createBadRequestError,
+  createForbiddenError,
+} from '@/utils/api/errors';
+import { authenticateUser } from '@/utils/api/auth';
+import { createClient } from '@/utils/supabase/server';
+import * as kv from '@/utils/supabase/kvStore';
+import type { VoteInput, VoteResponse } from '@/types/blockchain';
+import { UserRecord, EligibilityRecord, BallotLinkRecord } from '@/types/kv-records';
+
+/**
+ * POST /api/vote
+ *
+ * Casts a vote in an election by submitting votes to the blockchain contract.
+ *
+ * This endpoint handles the complete voting flow:
+ * 1. Validates user authentication and eligibility
+ * 2. Validates vote data and contract address
+ * 3. Checks election timing (must be within start/end dates)
+ * 4. Prevents duplicate votes using timestamped locks
+ * 5. Submits votes to the blockchain smart contract
+ * 6. Stores ballot link for verification
+ *
+ * **Race Condition Prevention:**
+ * Uses timestamped locks to prevent concurrent vote submissions. A temporary
+ * lock is created before voting, and removed after successful submission or on error.
+ *
+ * ## Request
+ *
+ * **Headers:**
+ * - `Authorization: Bearer <token>` - Required, user authentication token
+ *
+ * **Body (Preferred Format):**
+ * ```json
+ * {
+ *   "electionId": "election-uuid",
+ *   "contractAddress": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+ *   "votes": [
+ *     { "position": "President", "candidate": "John Doe" },
+ *     { "position": "Vice President", "candidate": "Jane Smith" }
+ *   ]
+ * }
+ * ```
+ *
+ * **Body (Legacy Format - for backward compatibility):**
+ * ```json
+ * {
+ *   "electionId": "election-uuid",
+ *   "contractAddress": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+ *   "positions": ["President", "Vice President"],
+ *   "candidates": ["John Doe", "Jane Smith"]
+ * }
+ * ```
+ *
+ * ## Response
+ *
+ * **Success (200):**
+ * ```json
+ * {
+ *   "success": true,
+ *   "txHash": "0xabc123...",
+ *   "votesProcessed": 2,
+ *   "timestamp": "2024-01-01T12:00:00.000Z"
+ * }
+ * ```
+ *
+ * **Error Responses:**
+ * - `400` - Validation error, election timing invalid, or user already voted
+ * - `401` - Unauthorized (missing or invalid token)
+ * - `403` - User not eligible to vote
+ * - `404` - Election or user data not found
+ * - `500` - Server error or blockchain transaction failure
+ *
+ * @param request - Next.js request object containing vote data
+ * @returns JSON response with transaction hash and vote details
+ * @throws Returns error response (400/401/403/404/500) if voting fails
+ *
+ * @example
+ * ```typescript
+ * // Client-side usage
+ * const response = await fetch('/api/vote', {
+ *   method: 'POST',
+ *   headers: {
+ *     'Content-Type': 'application/json',
+ *     'Authorization': `Bearer ${token}`
+ *   },
+ *   body: JSON.stringify({
+ *     electionId: 'election-123',
+ *     contractAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+ *     votes: [
+ *       { position: 'President', candidate: 'John Doe' }
+ *     ]
+ *   })
+ * });
+ *
+ * const result = await response.json();
+ * console.log('Vote cast! Transaction:', result.txHash);
+ * ```
+ *
+ * @see {@link createWritableContract} for contract instance creation
+ * @see {@link validateVotesArray} for vote validation
+ * @category API Routes
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { electionId, contractAddress, positions, candidates, votes } = body;
-    
-    // Authenticate user
+
     const authHeader = request.headers.get('Authorization');
     const user = await authenticateUser(authHeader);
-    console.log(`body: ${JSON.stringify(body)}`);
-    console.log(`positions: ${positions}, candidates: ${candidates}, votes: ${votes}`);
-    // Validate contract address
+
     try {
       validateContractAddress(contractAddress);
     } catch (validationError) {
-      const message = validationError instanceof Error ? validationError.message : String(validationError);
+      const message =
+        validationError instanceof Error ? validationError.message : String(validationError);
       return createValidationError(message);
     }
 
-    // Support both single vote (position + candidate) and array of votes
     let votesToProcess: VoteInput[] = [];
-    
+
     if (votes && Array.isArray(votes)) {
-      // Array of votes format
       votesToProcess = votes;
     } else if (Array.isArray(positions) && Array.isArray(candidates)) {
-
       votesToProcess = positions.flatMap((positionName: string, idx: number) => {
         const candidateSelection = candidates[idx];
 
@@ -50,7 +151,6 @@ export async function POST(request: NextRequest) {
         return [];
       });
     } else if (positions && candidates) {
-      // Single vote format (backward compatible)
       votesToProcess = [{ position: positions, candidate: candidates }];
     } else {
       return createValidationError(
@@ -58,19 +158,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate votes array
     try {
       validateVotesArray(votesToProcess);
     } catch (validationError) {
-      const message = validationError instanceof Error ? validationError.message : String(validationError);
+      const message =
+        validationError instanceof Error ? validationError.message : String(validationError);
       return createValidationError(message);
     }
 
-    // Extract parallel arrays from votesToProcess for blockchain contract call
-    const positionsArray = votesToProcess.map(vote => vote.position);
-    const candidatesArray = votesToProcess.map(vote => vote.candidate);
+    const positionsArray = votesToProcess.map((vote) => vote.position);
+    const candidatesArray = votesToProcess.map((vote) => vote.candidate);
 
-    // Get election from database to check dates and validate election exists
     const supabase = await createClient();
     const { data: election, error: electionError } = await supabase
       .from('elections')
@@ -82,65 +180,59 @@ export async function POST(request: NextRequest) {
       return createNotFoundError('Election');
     }
 
-    // Check if election is active
     const now = new Date();
     const startsAt = new Date(election.starts_at);
     const endsAt = new Date(election.ends_at);
 
     if (now < startsAt) {
-      return Response.json({ error: 'Election has not started yet' }, { status: 400 });
+      return createBadRequestError('Election has not started yet');
     }
 
     if (now > endsAt) {
-      return Response.json({ error: 'Election has ended' }, { status: 400 });
+      return createBadRequestError('Election has ended');
     }
 
-    // Get user data from KV store
-    const userData = await kv.get(`user:${user.id}`);
+    const userData = await kv.get<UserRecord>(`user:${user.id}`);
     if (!userData) {
-      return Response.json({ error: 'User data not found' }, { status: 404 });
+      return createNotFoundError('User data');
     }
 
-    // Check eligibility
-    const eligibility = await kv.get(`eligibility:${electionId}:${userData.email}`);
-    if (!eligibility || (eligibility.status !== 'approved' && eligibility.status !== 'preapproved')) {
-      return Response.json({ error: 'You are not eligible to vote in this election' }, { status: 403 });
+    const eligibility = await kv.get<EligibilityRecord>(
+      `eligibility:${electionId}:${userData.email}`
+    );
+    if (
+      !eligibility ||
+      (eligibility.status !== 'approved' && eligibility.status !== 'preapproved')
+    ) {
+      return createForbiddenError('You are not eligible to vote in this election');
     }
 
-    // Check if already voted using prefix search to detect any locks or completed votes
-    // This prevents race conditions by checking for ANY key matching the pattern
     const voteKeyPrefix = `ballot:link:${electionId}:${user.id}`;
-    const finalVoteKey = voteKeyPrefix; // Final key without timestamp
-    const existingLocks = await kv.getByPrefix(`${voteKeyPrefix}:`); // Check for timestamped locks
-    const finalVote = await kv.get(finalVoteKey); // Check for completed vote
-    
+    const finalVoteKey = voteKeyPrefix;
+    const existingLocks = await kv.getByPrefix<BallotLinkRecord>(`${voteKeyPrefix}:`);
+    const finalVote = await kv.get<BallotLinkRecord>(finalVoteKey);
+
     if (existingLocks.length > 0 || finalVote) {
-      return Response.json({ error: 'You have already voted in this election' }, { status: 400 });
+      return createBadRequestError('You have already voted in this election');
     }
 
-    // Create unique timestamped lock to prevent race condition
-    // Each request gets a unique key, so they can't overwrite each other
     const timestamp = Date.now();
     const uniqueSuffix = crypto.randomUUID().substring(0, 8);
     const lockKey = `${voteKeyPrefix}:${timestamp}-${uniqueSuffix}`;
-    
+
     const pendingLock = {
       status: 'pending',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
 
-    // Create the unique lock - this cannot be overwritten by concurrent requests
     await kv.set(lockKey, pendingLock);
 
-    // Double-check: verify no other request completed voting while we were creating the lock
     const verifyFinalVote = await kv.get(finalVoteKey);
     if (verifyFinalVote) {
-      // Another request completed voting between our prefix check and lock creation
-      await kv.del(lockKey); // Clean up our lock
-      return Response.json({ error: 'You have already voted in this election' }, { status: 400 });
+      await kv.del(lockKey);
+      return createBadRequestError('You have already voted in this election');
     }
 
-    // Lock acquired - proceed with blockchain transaction
     let txHash: string;
     try {
       const contract = createWritableContract(contractAddress);
@@ -148,31 +240,27 @@ export async function POST(request: NextRequest) {
       await tx.wait(1);
       txHash = tx.hash;
     } catch (error) {
-      // If blockchain transaction fails, remove the lock so user can retry
       await kv.del(lockKey);
       throw error;
     }
 
-    // Create final vote record (without timestamp) and clean up temporary lock
     const ballotLink = {
       tx_hash: txHash,
-      created_at: pendingLock.created_at
+      created_at: pendingLock.created_at,
     };
 
     await kv.set(finalVoteKey, ballotLink);
-    await kv.del(lockKey); // Remove temporary lock key
+    await kv.del(lockKey);
 
-    // Return success response with transaction hash
     const response: VoteResponse = {
       success: true,
       txHash: txHash,
       votesProcessed: votesToProcess.length,
-      timestamp: ballotLink.created_at
+      timestamp: ballotLink.created_at,
     };
 
     return Response.json(response);
-
   } catch (error) {
-    return handleApiError(error, "vote");
+    return handleApiError(error, 'vote');
   }
 }

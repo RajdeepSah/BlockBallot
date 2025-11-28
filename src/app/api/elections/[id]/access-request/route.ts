@@ -1,50 +1,52 @@
-import { NextRequest } from "next/server";
-import { authenticateUser } from "@/utils/api/auth";
-import { createClient } from "@/utils/supabase/server";
-import * as kv from "@/utils/supabase/kvStore";
-import { handleApiError, createNotFoundError } from "@/utils/api/errors";
+import { NextRequest } from 'next/server';
+import { authenticateUser } from '@/utils/api/auth';
+import { createClient } from '@/utils/supabase/server';
+import * as kv from '@/utils/supabase/kvStore';
+import {
+  handleApiError,
+  createNotFoundError,
+  createBadRequestError,
+  createUnauthorizedError,
+} from '@/utils/api/errors';
+import { UserRecord, AccessRequestRecord } from '@/types/kv-records';
 
 /**
  * POST /api/elections/[id]/access-request
- * Submit an access request to vote in an election
- * Ported from Supabase Edge Function
+ * Submits an access request to vote in an election.
+ * Creates a pending access request that can be approved/denied by the election creator.
+ *
+ * @param request - Next.js request object with Authorization header
+ * @param params - Route parameters containing election id
+ * @returns JSON response with success status and requestId, or error response
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: electionId } = await params;
     const authHeader = request.headers.get('Authorization');
-    
-    // Authenticate user
+
     const user = await authenticateUser(authHeader);
-    
-    // Get election from Supabase database
+
     const supabase = await createClient();
     const { data: election, error: electionError } = await supabase
       .from('elections')
       .select('*')
       .eq('id', electionId)
       .single();
-    
+
     if (electionError || !election) {
       return createNotFoundError('Election');
     }
 
-    // Get user data
-    const userData = await kv.get(`user:${user.id}`);
+    const userData = await kv.get<UserRecord>(`user:${user.id}`);
     if (!userData) {
-      return Response.json({ error: 'User data not found' }, { status: 404 });
+      return createNotFoundError('User data');
     }
-    
-    // Check for existing request
-    const existingRequest = await kv.get(`access_request:${electionId}:${user.id}`);
+
+    const existingRequest = await kv.get<AccessRequestRecord>(
+      `access_request:${electionId}:${user.id}`
+    );
     if (existingRequest) {
-      return Response.json({ 
-        error: 'Access request already exists', 
-        status: existingRequest.status 
-      }, { status: 400 });
+      return createBadRequestError('Access request already exists');
     }
 
     const requestId = crypto.randomUUID();
@@ -54,7 +56,7 @@ export async function POST(
       user_id: user.id,
       contact: userData.email,
       status: 'pending',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
 
     await kv.set(`access_request:${electionId}:${user.id}`, accessRequest);
@@ -63,14 +65,13 @@ export async function POST(
     return Response.json({
       success: true,
       message: 'Access request submitted',
-      requestId
+      requestId,
     });
-  } catch (error: any) {
-    if (error.message === 'Unauthorized') {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return createUnauthorizedError();
     }
     console.error('Access request error:', error);
     return handleApiError(error, 'submit-access-request');
   }
 }
-
