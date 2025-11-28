@@ -1,6 +1,6 @@
 /**
  * Supabase configuration values extracted from environment variables.
- * 
+ *
  * This module provides the project ID and public anonymous key
  * for constructing Supabase API URLs and making authenticated requests.
  */
@@ -10,15 +10,13 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE
 /**
  * Extracts the project ID from the Supabase URL.
  * Supabase URLs follow the format: https://<project-id>.supabase.co
- * 
+ *
  * @returns The project ID extracted from the Supabase URL
  * @throws Error if NEXT_PUBLIC_SUPABASE_URL is not set or URL format is invalid
  */
 function extractProjectId(): string {
   if (!supabaseUrl) {
-    throw new Error(
-      'Missing environment variable: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL'
-    );
+    throw new Error('Missing environment variable: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL');
   }
 
   try {
@@ -26,11 +24,11 @@ function extractProjectId(): string {
     // Extract project ID from hostname (e.g., "abc123.supabase.co" -> "abc123")
     const hostname = url.hostname;
     const match = hostname.match(/^([^.]+)\.supabase\.co$/);
-    
+
     if (!match || !match[1]) {
       throw new Error(`Invalid Supabase URL format: ${supabaseUrl}`);
     }
-    
+
     return match[1];
   } catch (error) {
     if (error instanceof Error && error.message.includes('Invalid Supabase URL')) {
@@ -58,4 +56,3 @@ if (!publicAnonKey) {
     'Missing environment variable: NEXT_PUBLIC_SUPABASE_ANON_KEY or SUPABASE_ANON_KEY'
   );
 }
-

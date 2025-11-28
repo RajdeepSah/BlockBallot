@@ -1,4 +1,10 @@
+/**
+ * @module app/api/vote/route
+ * @category API Routes
+ */
+
 import { NextRequest } from 'next/server';
+import crypto from 'node:crypto';
 import { createWritableContract } from '@/utils/blockchain/contract';
 import { validateContractAddress, validateVotesArray } from '@/utils/validation';
 import {
@@ -18,20 +24,94 @@ import { UserRecord, EligibilityRecord, BallotLinkRecord } from '@/types/kv-reco
  * POST /api/vote
  *
  * Casts a vote in an election by submitting votes to the blockchain contract.
- * Implements race condition prevention using timestamped locks.
  *
- * Request body:
- * - electionId: The election ID (required)
- * - contractAddress: The blockchain contract address (required)
- * - votes: Array of vote objects with position and candidate (preferred format)
- * - positions/candidates: Alternative format for backward compatibility
+ * This endpoint handles the complete voting flow:
+ * 1. Validates user authentication and eligibility
+ * 2. Validates vote data and contract address
+ * 3. Checks election timing (must be within start/end dates)
+ * 4. Prevents duplicate votes using timestamped locks
+ * 5. Submits votes to the blockchain smart contract
+ * 6. Stores ballot link for verification
  *
- * Headers:
- * - Authorization: Bearer token (required)
+ * **Race Condition Prevention:**
+ * Uses timestamped locks to prevent concurrent vote submissions. A temporary
+ * lock is created before voting, and removed after successful submission or on error.
+ *
+ * ## Request
+ *
+ * **Headers:**
+ * - `Authorization: Bearer <token>` - Required, user authentication token
+ *
+ * **Body (Preferred Format):**
+ * ```json
+ * {
+ *   "electionId": "election-uuid",
+ *   "contractAddress": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+ *   "votes": [
+ *     { "position": "President", "candidate": "John Doe" },
+ *     { "position": "Vice President", "candidate": "Jane Smith" }
+ *   ]
+ * }
+ * ```
+ *
+ * **Body (Legacy Format - for backward compatibility):**
+ * ```json
+ * {
+ *   "electionId": "election-uuid",
+ *   "contractAddress": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+ *   "positions": ["President", "Vice President"],
+ *   "candidates": ["John Doe", "Jane Smith"]
+ * }
+ * ```
+ *
+ * ## Response
+ *
+ * **Success (200):**
+ * ```json
+ * {
+ *   "success": true,
+ *   "txHash": "0xabc123...",
+ *   "votesProcessed": 2,
+ *   "timestamp": "2024-01-01T12:00:00.000Z"
+ * }
+ * ```
+ *
+ * **Error Responses:**
+ * - `400` - Validation error, election timing invalid, or user already voted
+ * - `401` - Unauthorized (missing or invalid token)
+ * - `403` - User not eligible to vote
+ * - `404` - Election or user data not found
+ * - `500` - Server error or blockchain transaction failure
  *
  * @param request - Next.js request object containing vote data
  * @returns JSON response with transaction hash and vote details
- * @throws Returns error response if voting fails, validation fails, or user is ineligible
+ * @throws Returns error response (400/401/403/404/500) if voting fails
+ *
+ * @example
+ * ```typescript
+ * // Client-side usage
+ * const response = await fetch('/api/vote', {
+ *   method: 'POST',
+ *   headers: {
+ *     'Content-Type': 'application/json',
+ *     'Authorization': `Bearer ${token}`
+ *   },
+ *   body: JSON.stringify({
+ *     electionId: 'election-123',
+ *     contractAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+ *     votes: [
+ *       { position: 'President', candidate: 'John Doe' }
+ *     ]
+ *   })
+ * });
+ *
+ * const result = await response.json();
+ * console.log('Vote cast! Transaction:', result.txHash);
+ * ```
+ *
+ * @see {@link createWritableContract} for contract instance creation
+ * @see {@link validateVotesArray} for vote validation
+ * @category API Routes
  */
 export async function POST(request: NextRequest) {
   try {

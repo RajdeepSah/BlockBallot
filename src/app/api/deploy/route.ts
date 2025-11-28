@@ -1,3 +1,8 @@
+/**
+ * @module app/api/deploy/route
+ * @category API Routes
+ */
+
 import { NextRequest } from 'next/server';
 import { ContractFactory } from 'ethers';
 import { createWallet } from '@/utils/blockchain/provider';
@@ -12,8 +17,13 @@ import { Election } from '@/types/election';
 /**
  * Generates a random alphanumeric election code.
  *
- * @param length - Length of the code to generate (default: 7)
- * @returns Uppercase alphanumeric code
+ * Creates a unique 7-digit code for sharing elections. Uses uppercase
+ * alphanumeric characters (A-Z, 0-9).
+ *
+ * @param length - Length of the code to generate (default: `7`)
+ * @returns Uppercase alphanumeric code string
+ *
+ * @internal
  */
 function generateCode(length = 7): string {
   return Math.random()
@@ -25,22 +35,86 @@ function generateCode(length = 7): string {
 /**
  * POST /api/deploy
  *
- * Deploys a new election contract to the blockchain and creates the election record.
+ * Deploys a new election smart contract to the blockchain and creates the election record.
  *
- * Request body:
- * - title: Election title
- * - description: Election description
- * - starts_at: ISO date string for election start
- * - ends_at: ISO date string for election end
- * - time_zone: Timezone string (default: UTC)
- * - positions: Array of position objects with candidates
+ * This endpoint:
+ * 1. Validates user authentication
+ * 2. Validates election data and positions
+ * 3. Generates a unique 7-digit election code
+ * 4. Deploys the smart contract with positions and candidates
+ * 5. Creates the election record in the database
+ * 6. Returns deployment details including contract address
  *
- * Headers:
- * - Authorization: Bearer token (required)
+ * ## Request
+ *
+ * **Headers:**
+ * - `Authorization: Bearer <token>` - Required, user authentication token
+ *
+ * **Body:**
+ * ```json
+ * {
+ *   "title": "2024 Presidential Election",
+ *   "description": "Annual presidential election",
+ *   "starts_at": "2024-01-01T00:00:00Z",
+ *   "ends_at": "2024-01-31T23:59:59Z",
+ *   "time_zone": "UTC",
+ *   "positions": [
+ *     {
+ *       "name": "President",
+ *       "candidates": [
+ *         { "name": "John Doe" },
+ *         { "name": "Jane Smith" }
+ *       ]
+ *     }
+ *   ]
+ * }
+ * ```
+ *
+ * ## Response
+ *
+ * **Success (200):**
+ * ```json
+ * {
+ *   "success": true,
+ *   "electionId": "election-uuid",
+ *   "contractAddress": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+ *   "txHash": "0xabc123...",
+ *   "message": "Election deployed successfully"
+ * }
+ * ```
+ *
+ * **Error Responses:**
+ * - `400` - Validation error (invalid positions, missing fields)
+ * - `401` - Unauthorized (missing or invalid token)
+ * - `500` - Server error or blockchain deployment failure
  *
  * @param request - Next.js request object containing election payload
  * @returns JSON response with deployment details (txHash, contractAddress, electionId)
- * @throws Returns error response if deployment fails or validation fails
+ * @throws Returns error response (400/401/500) if deployment fails
+ *
+ * @example
+ * ```typescript
+ * const response = await fetch('/api/deploy', {
+ *   method: 'POST',
+ *   headers: {
+ *     'Content-Type': 'application/json',
+ *     'Authorization': `Bearer ${token}`
+ *   },
+ *   body: JSON.stringify({
+ *     title: 'Election Title',
+ *     description: 'Election Description',
+ *     starts_at: '2024-01-01T00:00:00Z',
+ *     ends_at: '2024-01-31T23:59:59Z',
+ *     positions: [...]
+ *   })
+ * });
+ *
+ * const result = await response.json();
+ * console.log('Contract deployed:', result.contractAddress);
+ * ```
+ *
+ * @see {@link validatePositionsArray} for position validation
+ * @category API Routes
  */
 export async function POST(request: NextRequest) {
   try {
