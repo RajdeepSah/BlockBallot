@@ -25,5 +25,5 @@ export const blockchainConfig = {
   rpcUrl: requiredEnvVars.SEPOLIA_RPC_URL!,
   privateKey: requiredEnvVars.ORGANIZER_PRIVATE_KEY!,
   network: 'sepolia' as const,
-  chainId: 11155111,
+  chainId: 421614,
 } as const;
