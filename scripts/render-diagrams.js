@@ -2,14 +2,16 @@
 
 /**
  * Script to render all Mermaid diagrams to images
- * Usage: node scripts/render-diagrams.js [format] [theme] [output-dir]
+ * Usage: node scripts/render-diagrams.js [format] [theme] [output-dir] [scale]
  *
  * Available themes: default, dark, neutral, forest, base
+ * Scale: Resolution multiplier for PNG output (default: 2, higher = better quality but larger files)
  *
  * Examples:
  *   node scripts/render-diagrams.js png
  *   node scripts/render-diagrams.js svg dark
  *   node scripts/render-diagrams.js png neutral diagrams/output
+ *   node scripts/render-diagrams.js png dark diagrams 3
  */
 
 import { execSync } from 'child_process';
@@ -24,6 +26,7 @@ const __dirname = path.dirname(__filename);
 const format = process.argv[2] || 'png';
 const theme = process.argv[3] || 'dark';
 const outputDir = process.argv[4] || 'diagrams';
+const scale = parseFloat(process.argv[5]) || (format.toLowerCase() === 'png' ? 2 : 1);
 
 // Validate format
 const validFormats = ['png', 'svg', 'pdf'];
@@ -79,7 +82,7 @@ if (mmdFiles.length === 0) {
 }
 
 console.log(`Found ${mmdFiles.length} diagram(s) to render...`);
-console.log(`Format: ${format}, Theme: ${theme}\n`);
+console.log(`Format: ${format}, Theme: ${theme}${format.toLowerCase() === 'png' ? `, Scale: ${scale}x` : ''}\n`);
 
 // Render each diagram
 let successCount = 0;
@@ -101,8 +104,17 @@ mmdFiles.forEach((inputFile) => {
   try {
     console.log(`Rendering ${fileName}...`);
 
-    // Use mmdc to render the diagram with specified theme
-    execSync(`npx mmdc -i "${inputFile}" -o "${outputFile}" -t ${theme}`, {
+    // Build mmdc command with theme, scale (for PNG), and transparent background (for PNG)
+    let mmdcCommand = `npx mmdc -i "${inputFile}" -o "${outputFile}" -t ${theme}`;
+    if (format.toLowerCase() === 'png') {
+      mmdcCommand += ` --backgroundColor transparent`;
+      if (scale > 1) {
+        mmdcCommand += ` -s ${scale}`;
+      }
+    }
+
+    // Use mmdc to render the diagram with specified theme and scale
+    execSync(mmdcCommand, {
       stdio: 'inherit',
       cwd: projectRoot,
     });
