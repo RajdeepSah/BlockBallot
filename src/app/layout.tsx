@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Providers from './providers';
+import { ThemeToggle } from '@/components/Theme Toggle';
 import '@/index.css';
 
 export const metadata: Metadata = {
@@ -23,7 +24,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>{children}
+                    <div className="fixed bottom-4 right-4 z-50">
+            <ThemeToggle />
+          </div>
+ 
+        </Providers>
       </body>
     </html>
   );
