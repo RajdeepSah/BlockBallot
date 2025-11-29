@@ -38,3 +38,6 @@ next-env.d.ts
 /abis/
 /artifacts/
 /cache/
+
+/docs/
+/diagrams/

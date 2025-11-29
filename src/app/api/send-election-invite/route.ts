@@ -291,32 +291,9 @@ async function saveInviteHistory(
  * @returns Resolved direct link URL
  */
 function resolveDirectLink(request: Request, electionId: string, provided?: string) {
-  const sanitized = typeof provided === 'string' && provided.trim() ? provided.trim() : null;
-  const vercelBase = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null;
-  const envBase = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_BASE_URL ?? vercelBase;
-
-  if (envBase) {
-    return `${envBase.replace(/\/$/, '')}/vote/${electionId}`;
-  }
-
-  if (sanitized && sanitized.startsWith('http')) {
-    return sanitized;
-  }
-
-  const origin = request.headers.get('origin');
-  if (origin) {
-    return `${origin.replace(/\/$/, '')}/vote/${electionId}`;
-  }
-
-  const host = request.headers.get('x-forwarded-host');
-  if (host) {
-    const protocol = request.headers.get('x-forwarded-proto') || 'https';
-    return `${protocol}://${host.replace(/\/$/, '')}/vote/${electionId}`;
-  }
-
-  return `${process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://blockballot.vercel.app'}/vote/${electionId}`;
+  const sanitized = typeof provided === 'string' && provided.trim() ? provided.trim() : null; 
+  return `https://blockballot.officialework.com/vote/${electionId}`;
 }
-
 /**
  * Sends an election invitation email via Resend API.
  *
