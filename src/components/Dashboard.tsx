@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth } from '@/components/AuthContext';
 import { api } from '../utils/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -96,9 +96,9 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
   const participatingElections = elections.filter((e) => e.creator_id !== user?.id);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <WelcomeGuide />
-      <div className="border-b bg-white">
+      <div className="border-b bg-white dark:bg-gray-800 dark:border-gray-700">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -106,8 +106,8 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
                 <Vote className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl">BlockBallot</h1>
-                <p className="text-sm text-gray-600">Welcome, {user?.name}</p>
+                <h1 className="text-xl dark:text-white">BlockBallot</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Welcome, {user?.name}</p>
               </div>
             </div>
             <Button onClick={logout} variant="outline" size="sm">
@@ -195,13 +195,13 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="mb-4 space-y-2 text-sm text-gray-600">
+                      <div className="mb-4 space-y-2 text-sm text-gray-600 dark:text-gray-400">
                         <div className="flex items-center">
                           <Calendar className="mr-2 h-4 w-4" />
                           {new Date(election.starts_at).toLocaleDateString()}
                         </div>
                         <div className="flex items-center">
-                          <span className="rounded bg-gray-100 px-2 py-1 text-xs">
+                          <span className="rounded bg-gray-100 dark:bg-gray-700 px-2 py-1 text-xs">
                             Code: <strong>{election.code}</strong>
                           </span>
                         </div>
@@ -257,7 +257,7 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="mb-4 space-y-2 text-sm text-gray-600">
+                      <div className="mb-4 space-y-2 text-sm text-gray-600 dark:text-gray-400">
                         <div className="flex items-center">
                           <Calendar className="mr-2 h-4 w-4" />
                           {new Date(election.starts_at).toLocaleDateString()}
@@ -281,9 +281,9 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
         {!loading && elections.length === 0 && (
           <Card className="py-12 text-center">
             <CardContent>
-              <Vote className="mx-auto mb-4 h-16 w-16 text-gray-400" />
-              <h3 className="mb-2 text-xl">No Elections Yet</h3>
-              <p className="mb-6 text-gray-600">
+              <Vote className="mx-auto mb-4 h-16 w-16 text-gray-400 dark:text-gray-500" />
+              <h3 className="mb-2 text-xl dark:text-white">No Elections Yet</h3>
+              <p className="mb-6 text-gray-600 dark:text-gray-400">
                 Create your first election or join one using a code
               </p>
               <Button onClick={onCreateElection}>

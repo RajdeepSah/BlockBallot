@@ -88,7 +88,7 @@ export function SignUp({ onToggleMode, onSuccess: _onSuccess }: SignUpProps) {
                 </div>
               </div>
               <h3 className="text-xl">Registration Successful!</h3>
-              <p className="text-gray-600">Redirecting to sign in...</p>
+              <p className="text-gray-600 dark:text-gray-400">Redirecting to sign in...</p>
             </div>
           </CardContent>
         </Card>
@@ -201,11 +201,11 @@ export function SignUp({ onToggleMode, onSuccess: _onSuccess }: SignUpProps) {
             </Button>
 
             <div className="text-center text-sm">
-              <span className="text-gray-600">Already have an account? </span>
+              <span className="text-gray-600 dark:text-gray-400">Already have an account? </span>
               <button
                 type="button"
                 onClick={onToggleMode}
-                className="text-indigo-600 hover:underline"
+                className="text-indigo-600 dark:text-indigo-400 hover:underline"
               >
                 Sign In
               </button>

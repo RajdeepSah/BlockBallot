@@ -140,11 +140,11 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
             </Button>
 
             <div className="text-center text-sm">
-              <span className="text-gray-600">Don&apos;t have an account? </span>
+              <span className="text-gray-600 dark:text-gray-400">Don&apos;t have an account? </span>
               <button
                 type="button"
                 onClick={onToggleMode}
-                className="text-indigo-600 hover:underline"
+                className="text-indigo-600 dark:text-indigo-400 hover:underline"
               >
                 Sign Up
               </button>
