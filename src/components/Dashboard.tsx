@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth } from '@/components/AuthContext';
 import { api } from '../utils/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
