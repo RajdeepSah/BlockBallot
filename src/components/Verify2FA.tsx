@@ -29,6 +29,14 @@ export function Verify2FA({ email, onSuccess, onBack }: Verify2FAProps) {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [isSlidingOut, setIsSlidingOut] = useState(false);
+
+  const handleTransition = (callback: () => void) => {
+    setIsSlidingOut(true);
+    setTimeout(() => {
+      callback();
+    }, 400);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,13 +45,20 @@ export function Verify2FA({ email, onSuccess, onBack }: Verify2FAProps) {
     try {
       await verify2FA(email, otp);
       toast.success('2FA verification successful!');
-      onSuccess();
+      handleTransition(() => {
+        onSuccess();
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : '2FA verification failed';
       toast.error(message);
-    } finally {
       setLoading(false);
     }
+  };
+
+  const handleBack = () => {
+    handleTransition(() => {
+      onBack();
+    });
   };
 
   const handleResend = async () => {
@@ -62,7 +77,7 @@ export function Verify2FA({ email, onSuccess, onBack }: Verify2FAProps) {
 
   return (
     <AuthLayout>
-      <Card className="w-full max-w-md">
+      <Card className={`w-full max-w-md page-card ${isSlidingOut ? 'slide-out' : ''}`}>
         <CardHeader className="space-y-1 text-center">
           <div className="mb-4 flex justify-center">
             <div className="rounded-full bg-indigo-600 p-3">
@@ -97,7 +112,7 @@ export function Verify2FA({ email, onSuccess, onBack }: Verify2FAProps) {
             </Button>
 
             <div className="flex items-center justify-between text-sm">
-              <button type="button" onClick={onBack} className="text-gray-600 hover:underline">
+              <button type="button" onClick={handleBack} className="text-gray-600 hover:underline">
                 ← Back to login
               </button>
               <button

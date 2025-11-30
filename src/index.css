@@ -2621,3 +2621,85 @@ html {
       rotate(var(--tw-exit-rotate, 0));
   }
 }
+
+/* Logo icon animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-gentle {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.logo-icon {
+  animation: scale-in 0.6s ease-out, fade-in 0.6s ease-out;
+  transition: transform 0.3s ease-in-out;
+}
+
+.logo-icon:hover {
+  transform: scale(1.1);
+}
+
+/* Card slide animations */
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-out-right {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* Page transition animations - reusable for all pages */
+.page-card,
+.page-container {
+  animation: slide-in-left 0.5s ease-out;
+}
+
+.page-card.slide-out,
+.page-container.slide-out {
+  animation: slide-out-right 0.4s ease-in forwards;
+}
+
+/* Legacy support */
+.signin-card {
+  animation: slide-in-left 0.5s ease-out;
+}
+
+.signin-card.slide-out {
+  animation: slide-out-right 0.4s ease-in forwards;
+}

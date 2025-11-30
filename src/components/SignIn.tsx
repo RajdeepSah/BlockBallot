@@ -5,8 +5,9 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
-import { Vote, Lock, Mail } from 'lucide-react';
+import { Lock, Mail } from 'lucide-react';
 import { AuthLayout } from './layouts/AuthLayout';
+import { Logo } from './Logo';
 
 interface SignInProps {
   onToggleMode: () => void;
@@ -30,6 +31,7 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isSlidingOut, setIsSlidingOut] = useState(false);
 
   const requestEmailOtp = async (targetEmail: string) => {
     const response = await fetch('/api/send-otp', {
@@ -43,6 +45,13 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
     if (!response.ok) {
       throw new Error(data.error || 'Failed to send verification code');
     }
+  };
+
+  const handleTransition = (callback: () => void) => {
+    setIsSlidingOut(true);
+    setTimeout(() => {
+      callback();
+    }, 400); // Match animation duration
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,30 +69,38 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
         }
 
         await requestEmailOtp(normalizedEmail);
-        on2FARequired({ userId: result.userId, email: normalizedEmail });
+        const userId = result.userId;
+        handleTransition(() => {
+          on2FARequired({ userId, email: normalizedEmail });
+        });
         return;
       }
 
-      onSuccess();
+      handleTransition(() => {
+        onSuccess();
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
       setError(message);
-    } finally {
       setLoading(false);
     }
   };
 
+  const handleToggleMode = () => {
+    handleTransition(() => {
+      onToggleMode();
+    });
+  };
+
   return (
     <AuthLayout>
-      <Card className="w-full max-w-md">
+      <Card className={`w-full max-w-md page-card ${isSlidingOut ? 'slide-out' : ''}`}>
         <CardHeader className="space-y-1 text-center">
           <div className="mb-4 flex justify-center">
-            <div className="rounded-full bg-indigo-600 p-3">
-              <Vote className="h-8 w-8 text-white" />
-            </div>
+            <Logo size="xl" className="h-48 w-48" />
           </div>
           <CardTitle className="text-2xl">BlockBallot</CardTitle>
-          <CardDescription>Your voice. Your vote.</CardDescription>
+          <CardDescription>Vote trusted, vote secure</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -143,7 +160,7 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
               <span className="text-gray-600 dark:text-gray-400">Don&apos;t have an account? </span>
               <button
                 type="button"
-                onClick={onToggleMode}
+                onClick={handleToggleMode}
                 className="text-indigo-600 dark:text-indigo-400 hover:underline"
               >
                 Sign Up

@@ -137,7 +137,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
 
   if (error || !results) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 page-container">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <Alert variant="destructive">

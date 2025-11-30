@@ -236,7 +236,7 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
 
   if (!election) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 page-container">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <h3 className="mb-2 text-xl">Election Not Found</h3>

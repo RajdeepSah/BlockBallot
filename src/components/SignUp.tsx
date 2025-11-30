@@ -5,8 +5,9 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
-import { Vote, User, Mail, Lock, Phone } from 'lucide-react';
+import { User, Mail, Lock, Phone } from 'lucide-react';
 import { AuthLayout } from './layouts/AuthLayout';
+import { Logo } from './Logo';
 
 interface SignUpProps {
   onToggleMode: () => void;
@@ -32,6 +33,14 @@ export function SignUp({ onToggleMode, onSuccess: _onSuccess }: SignUpProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [isSlidingOut, setIsSlidingOut] = useState(false);
+
+  const handleTransition = (callback: () => void) => {
+    setIsSlidingOut(true);
+    setTimeout(() => {
+      callback();
+    }, 400);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +63,9 @@ export function SignUp({ onToggleMode, onSuccess: _onSuccess }: SignUpProps) {
       setSuccess(true);
 
       setTimeout(() => {
-        onToggleMode();
+        handleTransition(() => {
+          onToggleMode();
+        });
       }, 2000);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Registration failed';
@@ -64,10 +75,16 @@ export function SignUp({ onToggleMode, onSuccess: _onSuccess }: SignUpProps) {
     }
   };
 
+  const handleToggleMode = () => {
+    handleTransition(() => {
+      onToggleMode();
+    });
+  };
+
   if (success) {
     return (
       <AuthLayout>
-        <Card className="w-full max-w-md">
+        <Card className={`w-full max-w-md page-card ${isSlidingOut ? 'slide-out' : ''}`}>
           <CardContent className="pt-6">
             <div className="space-y-4 text-center">
               <div className="flex justify-center">
@@ -98,11 +115,11 @@ export function SignUp({ onToggleMode, onSuccess: _onSuccess }: SignUpProps) {
 
   return (
     <AuthLayout>
-      <Card className="w-full max-w-md">
+      <Card className={`w-full max-w-md page-card ${isSlidingOut ? 'slide-out' : ''}`}>
         <CardHeader className="space-y-1 text-center">
           <div className="mb-4 flex justify-center">
-            <div className="rounded-full bg-indigo-600 p-3">
-              <Vote className="h-8 w-8 text-white" />
+            <div className="rounded-full bg-gray-100 dark:bg-gray-700 p-4">
+              <Logo size="md" className="h-16 w-16" />
             </div>
           </div>
           <CardTitle className="text-2xl">Create Account</CardTitle>
@@ -204,7 +221,7 @@ export function SignUp({ onToggleMode, onSuccess: _onSuccess }: SignUpProps) {
               <span className="text-gray-600 dark:text-gray-400">Already have an account? </span>
               <button
                 type="button"
-                onClick={onToggleMode}
+                onClick={handleToggleMode}
                 className="text-indigo-600 dark:text-indigo-400 hover:underline"
               >
                 Sign In

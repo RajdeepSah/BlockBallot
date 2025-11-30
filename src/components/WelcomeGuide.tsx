@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
-import { Vote, UserPlus, Search, TrendingUp, CheckCircle, X } from 'lucide-react';
+import { UserPlus, Search, TrendingUp, CheckCircle, X } from 'lucide-react';
+import { Logo } from './Logo';
 
 /**
  * Welcome guide component displayed on first visit to the dashboard.
@@ -48,8 +49,8 @@ export function WelcomeGuide() {
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-3">
-              <div className="rounded-lg bg-indigo-600 p-2">
-                <Vote className="h-6 w-6 text-white" />
+              <div className="rounded-lg bg-gray-100 dark:bg-gray-700 p-2">
+                <Logo size="sm" className="h-12 w-12" />
               </div>
               <div>
                 <CardTitle className="text-2xl">Welcome to BlockBallot!</CardTitle>
@@ -64,18 +65,8 @@ export function WelcomeGuide() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Alert className="border-yellow-200 bg-yellow-50">
-            <AlertDescription className="text-sm">
-              <strong>⚠️ Demo Environment:</strong> This is a demonstration platform. Do not use for
-              sensitive elections or real personal data.
-            </AlertDescription>
-          </Alert>
 
           <div className="space-y-4">
-            <h3 className="flex items-center">
-              <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
-              Quick Start Guide
-            </h3>
 
             <div className="space-y-4">
               <div className="flex items-start space-x-3 rounded-lg bg-blue-50 p-3">
@@ -118,44 +109,6 @@ export function WelcomeGuide() {
               </div>
             </div>
           </div>
-
-          <div className="border-t pt-4">
-            <h3 className="mb-3">Key Features</h3>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline">2FA</Badge>
-                <span className="text-gray-600">Email verification</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline">Anonymous</Badge>
-                <span className="text-gray-600">Private voting</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline">One Vote</Badge>
-                <span className="text-gray-600">Per person</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline">Receipts</Badge>
-                <span className="text-gray-600">Vote verification</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t pt-4">
-            <h3 className="mb-2">Ballot Types Supported</h3>
-            <ul className="space-y-1 text-sm text-gray-600">
-              <li>
-                • <strong>Single Choice:</strong> Vote for one candidate
-              </li>
-              <li>
-                • <strong>Multiple Choice:</strong> Vote for multiple candidates
-              </li>
-              <li>
-                • <strong>Ranked Choice:</strong> Rank candidates by preference
-              </li>
-            </ul>
-          </div>
-
           <Button onClick={handleClose} className="w-full">
             Get Started
           </Button>
