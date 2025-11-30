@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
-import { Lock, Mail } from 'lucide-react';
+import { Lock, Mail,Eye, EyeOff} from 'lucide-react';
 import { AuthLayout } from './layouts/AuthLayout';
 import { Logo } from './Logo';
 
@@ -30,6 +30,7 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSlidingOut, setIsSlidingOut] = useState(false);
 
@@ -132,13 +133,21 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="pl-10"
+                  className="pl-10 pr-10"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button> 
               </div>
             </div>
 
