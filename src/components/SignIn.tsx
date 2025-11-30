@@ -79,7 +79,7 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
         <CardHeader className="space-y-1 text-center">
           <div className="mb-4 flex justify-center">
             <div className="rounded-full bg-indigo-600 p-3">
-              <Vote className="h-8 w-8 text-white" />
+              <img src="logoicon.png" alt="BlockBallot Logo" className="h-8 w-8 text-white" />
             </div>
           </div>
           <CardTitle className="text-2xl">BlockBallot</CardTitle>
