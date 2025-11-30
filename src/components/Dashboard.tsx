@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
 import { WelcomeGuide } from './WelcomeGuide';
-import { Vote, Plus, Search, LogOut, Calendar, Users, TrendingUp } from 'lucide-react';
+import { Plus, Search, LogOut, Calendar, Users, TrendingUp } from 'lucide-react';
+import { Logo } from './Logo';
 import { Election } from '@/types/election';
 import { LoadingSpinner } from './ui/loading-spinner';
 
@@ -96,14 +97,14 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
   const participatingElections = elections.filter((e) => e.creator_id !== user?.id);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 page-container">
       <WelcomeGuide />
       <div className="border-b bg-white dark:bg-gray-800 dark:border-gray-700">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="rounded-lg bg-indigo-600 p-2">
-                <Vote className="h-6 w-6 text-white" />
+              <div className="rounded-lg bg-gray-100 dark:bg-gray-700 p-2">
+                <Logo size="sm" className="h-12 w-12" />
               </div>
               <div>
                 <h1 className="text-xl dark:text-white">BlockBallot</h1>
@@ -281,7 +282,7 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
         {!loading && elections.length === 0 && (
           <Card className="py-12 text-center">
             <CardContent>
-              <Vote className="mx-auto mb-4 h-16 w-16 text-gray-400 dark:text-gray-500" />
+              <Logo size="lg" className="mx-auto mb-4 opacity-50 h-28 w-28" />
               <h3 className="mb-2 text-xl dark:text-white">No Elections Yet</h3>
               <p className="mb-6 text-gray-600 dark:text-gray-400">
                 Create your first election or join one using a code

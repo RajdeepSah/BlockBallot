@@ -14,9 +14,9 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Vote,
   TrendingUp,
 } from 'lucide-react';
+import { Logo } from './Logo';
 import { Election, EligibilityStatus, Position, Candidate } from '@/types/election';
 import { VoteSelections } from '@/types/api';
 import { LoadingSpinner } from './ui/loading-spinner';
@@ -187,7 +187,7 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
 
   if (!election) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 page-container">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
@@ -251,7 +251,7 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
               </div>
             </div>
             <div className="flex items-center space-x-2 text-sm">
-              <Vote className="h-4 w-4 text-gray-500" />
+              <Logo size="sm" className="h-10 w-10 opacity-60" />
               <div>
                 <p className="text-gray-600">Code</p>
                 <p className="font-mono">{election.code}</p>

@@ -8,7 +8,8 @@ import { Textarea } from './ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { ArrowLeft, Plus, Trash2, Vote } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { Logo } from './Logo';
 import { getEtherscanUrl } from '@/utils/blockchain/utils';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Position } from '@/types/election';
@@ -395,7 +396,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 page-container">
       <Dialog open={deployInfo !== null && electionID !== ''} onOpenChange={() => {}}>
         <DialogContent>
           <DialogHeader>
@@ -444,8 +445,8 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
         <Card>
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="rounded-lg bg-indigo-600 p-2">
-                <Vote className="h-6 w-6 text-white" />
+              <div className="rounded-lg bg-gray-100 dark:bg-gray-700 p-2">
+                <Logo size="sm" className="h-12 w-12" />
               </div>
               <div>
                 <CardTitle className="text-2xl">Create New Election</CardTitle>
