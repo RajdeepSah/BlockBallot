@@ -45,8 +45,8 @@ export function PageContainer({
   );
 
   if (withBackground) {
-    return <div className="min-h-screen bg-gray-50 dark:bg-gray-900">{content}</div>;
+    return <div className="min-h-screen bg-gray-50 dark:bg-gray-900 page-container">{content}</div>;
   }
 
-  return content;
+  return <div className="page-container">{content}</div>;
 }
