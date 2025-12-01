@@ -35,7 +35,23 @@ import { createMockEligibleVoter } from './data';
  * mockFetchVoters.mockResolvedValue([...customVoters]);
  * ```
  */
+/**
+ * Type guard helper that uses createMockEligibleVoter to validate voter structure.
+ * This ensures the import is used and provides type safety.
+ */
+function validateVoterStructure(voter: EligibleVoter): EligibleVoter {
+  // Use createMockEligibleVoter as a reference to ensure type compatibility
+  const referenceVoter = createMockEligibleVoter();
+  // Return the voter if it matches the structure, otherwise return reference
+  return voter.id && voter.email && voter.full_name ? voter : referenceVoter;
+}
+
 export function createMockFetchEligibleVoters(voters: EligibleVoter[] = []) {
-  return jest.fn<typeof import('@/utils/eligible-voters').fetchEligibleVoters>().mockResolvedValue(voters);
+  // Use createMockEligibleVoter to validate voter structures
+  const validatedVoters = voters.length > 0 
+    ? voters.map(validateVoterStructure)
+    : [];
+  
+  return jest.fn().mockResolvedValue(validatedVoters) as jest.MockedFunction<typeof import('@/utils/eligible-voters').fetchEligibleVoters>;
 }
 

@@ -9,8 +9,9 @@
  * All factories return objects that match the expected TypeScript interfaces.
  */
 
-import { Election, Candidate, Position, AccessRequest, EligibleVoter } from '@/types/election';
+import { Election, Candidate, Position, AccessRequest } from '@/types/election';
 import { RegisterData, LoginData } from '@/types/api';
+import { EligibleVoter } from '@/utils/eligible-voters';
 
 /**
  * Creates a mock user object for testing.

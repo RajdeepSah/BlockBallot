@@ -88,7 +88,7 @@ export function createMockAuthContext(
  * ```
  */
 export function createMockGetValidAccessToken(token: string = 'test-access-token') {
-  return jest.fn<() => Promise<string | null>>().mockResolvedValue(token);
+  return jest.fn().mockResolvedValue(token) as jest.MockedFunction<() => Promise<string | null>>;
 }
 
 /**
@@ -110,11 +110,11 @@ export function createMockGetValidAccessToken(token: string = 'test-access-token
  * ```
  */
 export function createMockAuthenticatedFetch(responseData: unknown = {}, status: number = 200) {
-  return jest.fn<typeof import('@/utils/auth/errorHandler').authenticatedFetch>().mockResolvedValue(
+  return jest.fn().mockResolvedValue(
     new Response(JSON.stringify(responseData), {
       status,
       headers: { 'Content-Type': 'application/json' },
     })
-  );
+  ) as jest.MockedFunction<typeof import('@/utils/auth/errorHandler').authenticatedFetch>;
 }
 

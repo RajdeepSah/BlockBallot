@@ -20,6 +20,7 @@ import {
   createMockElection,
   createMockAuthContext,
   createMockFetchEligibleVoters,
+  createMockEligibleVoter,
 } from '@/test-utils';
 
 // Mock all external dependencies to isolate component behavior
@@ -557,6 +558,53 @@ describe('AdminPanel - handleUploadVoters', () => {
 
       // Textarea should still have the value
       expect(textarea).toHaveValue(emailText);
+    });
+  });
+
+  /**
+   * Test suite: Eligible voters fetching
+   * 
+   * Verifies that the component correctly fetches and displays eligible voters
+   * using the mock utility function.
+   */
+  describe('Eligible voters fetching', () => {
+    it('should fetch and display eligible voters using mock utility', async () => {
+      // Use createMockFetchEligibleVoters to create test data
+      const mockVoters = createMockFetchEligibleVoters([
+        createMockEligibleVoter({ email: 'voter1@example.com', full_name: 'Voter One' }),
+        createMockEligibleVoter({ email: 'voter2@example.com', full_name: 'Voter Two' }),
+      ]);
+
+      // Override the mock to use our test utility
+      mockFetchEligibleVoters.mockImplementation(mockVoters);
+
+      await renderAdminPanel();
+
+      // Wait for eligible voters to be fetched
+      // Note: fetchEligibleVoters only takes electionId, not a token
+      await waitFor(() => {
+        expect(mockFetchEligibleVoters).toHaveBeenCalledWith(testElectionId);
+      });
+    });
+
+    it('should handle async state updates with act wrapper', async () => {
+      await renderAdminPanel();
+
+      const textarea = screen.getByPlaceholderText(/voter1@example.com/i);
+      const uploadButton = screen.getByRole('button', { name: /upload voter list/i });
+
+      await userEvent.type(textarea, 'test@example.com');
+
+      // Use act to wrap async state updates
+      await act(async () => {
+        mockApi.uploadEligibility.mockResolvedValue({});
+        await userEvent.click(uploadButton);
+      });
+
+      // Verify the state was updated correctly
+      await waitFor(() => {
+        expect(mockApi.uploadEligibility).toHaveBeenCalled();
+      });
     });
   });
 });

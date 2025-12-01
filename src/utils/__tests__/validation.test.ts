@@ -16,7 +16,7 @@ describe('Validation Utilities', () => {
     });
 
     test('returns empty string for non-string input', () => {
-      // @ts-ignore - intentionally passing wrong type
+      // @ts-expect-error - intentionally passing wrong type
       const result = sanitizeString(null);
       expect(result).toBe('');
     });
