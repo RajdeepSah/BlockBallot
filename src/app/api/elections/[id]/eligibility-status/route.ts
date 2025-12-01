@@ -30,7 +30,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const eligibility = await kv.get<EligibilityRecord>(
       `eligibility:${electionId}:${userData.email}`
     );
-    const ballotLink = await kv.get(`ballot:link:${electionId}:${user.id}`);
+    /**
+     * Check if user has voted by looking up vote flag.
+     *
+     * Uses key pattern `vote:user:{electionId}:{userId}` which stores only a vote flag
+     * (no transaction hash) to preserve vote anonymity. The existence of this record
+     * indicates the user has voted, but does not reveal their transaction hash.
+     */
+    const ballotLink = await kv.get(`vote:user:${electionId}:${user.id}`);
 
     const accessRequest = await kv.get<AccessRequestRecord>(
       `access_request:${electionId}:${user.id}`

@@ -143,10 +143,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       ? election.positions
       : [];
 
+    /**
+     * Count total votes by querying user vote flags.
+     *
+     * Uses key pattern `vote:user:{electionId}:%` to count all users who have voted.
+     * Only counts keys (doesn't read values) and filters out lock keys (those with
+     * additional colons in the suffix). This preserves privacy as we only count votes,
+     * not link them to specific users or transaction hashes.
+     */
     const { data: voteKeys, error: voteKeysError } = await supabase
       .from('kv_store_b7b6fbd4')
       .select('key')
-      .like('key', `ballot:link:${electionId}:%`);
+      .like('key', `vote:user:${electionId}:%`);
 
     if (voteKeysError) {
       throw new Error(`Failed to query vote keys: ${voteKeysError.message}`);
@@ -156,9 +164,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       voteKeys?.filter((entry) => {
         if (!entry?.key) return false;
         const key = entry.key;
-        const prefix = `ballot:link:${electionId}:`;
+        const prefix = `vote:user:${electionId}:`;
         if (!key.startsWith(prefix)) return false;
         const suffix = key.substring(prefix.length);
+        // Filter out lock keys (those with additional colons from timestamp-uuid pattern)
         return !suffix.includes(':');
       }).length || 0;
 

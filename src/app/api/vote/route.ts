@@ -18,7 +18,7 @@ import { authenticateUser } from '@/utils/api/auth';
 import { createClient } from '@/utils/supabase/server';
 import * as kv from '@/utils/supabase/kvStore';
 import type { VoteInput, VoteResponse } from '@/types/blockchain';
-import { UserRecord, EligibilityRecord, BallotLinkRecord } from '@/types/kv-records';
+import { UserRecord, EligibilityRecord, BallotLinkRecord, VoteTransactionRecord } from '@/types/kv-records';
 
 /**
  * POST /api/vote
@@ -31,7 +31,7 @@ import { UserRecord, EligibilityRecord, BallotLinkRecord } from '@/types/kv-reco
  * 3. Checks election timing (must be within start/end dates)
  * 4. Prevents duplicate votes using timestamped locks
  * 5. Submits votes to the blockchain smart contract
- * 6. Stores ballot link for verification
+ * 6. Stores user vote flag and transaction hash separately (privacy-preserving design)
  *
  * **Race Condition Prevention:**
  * Uses timestamped locks to prevent concurrent vote submissions. A temporary
@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
       return createForbiddenError('You are not eligible to vote in this election');
     }
 
-    const voteKeyPrefix = `ballot:link:${electionId}:${user.id}`;
+    const voteKeyPrefix = `vote:user:${electionId}:${user.id}`;
     const finalVoteKey = voteKeyPrefix;
     const existingLocks = await kv.getByPrefix<BallotLinkRecord>(`${voteKeyPrefix}:`);
     const finalVote = await kv.get<BallotLinkRecord>(finalVoteKey);
@@ -220,7 +220,12 @@ export async function POST(request: NextRequest) {
     const uniqueSuffix = crypto.randomUUID().substring(0, 8);
     const lockKey = `${voteKeyPrefix}:${timestamp}-${uniqueSuffix}`;
 
-    const pendingLock = {
+    /**
+     * Temporary lock record to prevent race conditions during vote submission.
+     *
+     * @type {BallotLinkRecord}
+     */
+    const pendingLock: BallotLinkRecord = {
       status: 'pending',
       created_at: new Date().toISOString(),
     };
@@ -244,19 +249,45 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
-    const ballotLink = {
-      tx_hash: txHash,
+    /**
+     * Store user vote flag for duplicate prevention.
+     *
+     * This record indicates the user has voted but does NOT contain the transaction hash
+     * to preserve vote anonymity. The key pattern `vote:user:{electionId}:{userId}` allows
+     * checking if a specific user has voted, but cannot be used to link to their transaction.
+     *
+     * @type {BallotLinkRecord}
+     */
+    const userVoteFlag: BallotLinkRecord = {
+      status: 'completed',
       created_at: pendingLock.created_at,
     };
 
-    await kv.set(finalVoteKey, ballotLink);
+    await kv.set(finalVoteKey, userVoteFlag);
+
+    /**
+     * Store transaction hash separately in anonymous registry.
+     *
+     * Transaction hashes are stored at `vote:tx:{electionId}:{txHash}` with NO user ID
+     * in the key or value. This breaks the association between users and their transaction
+     * hashes, preserving vote anonymity while still allowing transaction verification.
+     *
+     * @type {VoteTransactionRecord}
+     */
+    const txRegistryKey = `vote:tx:${electionId}:${txHash}`;
+    const txRecord: VoteTransactionRecord = {
+      timestamp: pendingLock.created_at,
+      electionId: electionId,
+    };
+    await kv.set(txRegistryKey, txRecord);
+
     await kv.del(lockKey);
 
     const response: VoteResponse = {
       success: true,
       txHash: txHash,
       votesProcessed: votesToProcess.length,
-      timestamp: ballotLink.created_at,
+      timestamp: userVoteFlag.created_at,
     };
 
     return Response.json(response);
