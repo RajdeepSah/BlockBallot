@@ -12,7 +12,8 @@
  * - `user:` - User records
  * - `eligibility:` - Eligibility records
  * - `access_request:` - Access request records
- * - `ballot:link:` - Ballot link records
+ * - `vote:user:` - User vote flags (indicates if user has voted, no transaction hash)
+ * - `vote:tx:` - Transaction hash registry (anonymous, no user ID)
  * - `otp:` - OTP records
  */
 
@@ -85,18 +86,33 @@ export interface AccessRequestRecord {
 }
 
 /**
- * Ballot link record connecting a user to their vote without exposing vote content.
+ * User vote flag record indicating a user has voted in an election.
  *
- * This record provides proof of vote (transaction hash) without revealing
- * which candidates were selected. Stored with key: `ballot:link:{electionId}:{userId}`
+ * This record is used for duplicate vote prevention and checking if a user has voted.
+ * It does NOT contain the transaction hash to preserve vote anonymity.
+ * Transaction hashes are stored separately in VoteTransactionRecord.
+ *
+ * Stored with key: `vote:user:{electionId}:{userId}`
  */
 export interface BallotLinkRecord {
-  /** Ballot ID (optional) */
-  ballot_id?: string;
   /** Vote status */
   status: 'pending' | 'completed';
   /** ISO timestamp when vote was cast */
   created_at: string;
-  /** Blockchain transaction hash (proof of vote) */
-  tx_hash?: string;
+}
+
+/**
+ * Transaction hash registry record for anonymous vote verification.
+ *
+ * This record stores transaction hashes without any user-identifying information
+ * to preserve vote anonymity. Transaction hashes cannot be linked back to users
+ * through KV store queries.
+ *
+ * Stored with key: `vote:tx:{electionId}:{txHash}`
+ */
+export interface VoteTransactionRecord {
+  /** ISO timestamp when vote was cast */
+  timestamp: string;
+  /** Election ID */
+  electionId: string;
 }

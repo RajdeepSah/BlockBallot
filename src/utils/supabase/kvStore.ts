@@ -15,7 +15,8 @@
  * - `user:email:` - Email to user ID mapping
  * - `eligibility:` - Eligibility records
  * - `access_request:` - Access request records
- * - `ballot:link:` - Ballot link records
+ * - `vote:user:` - User vote flags (indicates if user has voted, no transaction hash)
+ * - `vote:tx:` - Transaction hash registry (anonymous, no user ID)
  * - `otp:` - OTP records
  * - `invite_history:` - Invitation history
  *
