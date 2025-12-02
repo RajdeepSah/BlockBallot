@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Alert, AlertDescription } from './ui/alert';
-import { UserPlus, Search, TrendingUp, CheckCircle, X } from 'lucide-react';
+import { UserPlus, Search, TrendingUp, X } from 'lucide-react';
 import { Logo } from './Logo';
 
 /**

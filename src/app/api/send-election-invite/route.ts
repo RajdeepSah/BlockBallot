@@ -291,8 +291,8 @@ async function saveInviteHistory(
  * @returns Resolved direct link URL
  */
 function resolveDirectLink(request: Request, electionId: string, provided?: string) {
-  const sanitized = typeof provided === 'string' && provided.trim() ? provided.trim() : null; 
-  return `https://blockballot.officialework.com/vote/${electionId}`;
+  const sanitized = typeof provided === 'string' && provided.trim() ? provided.trim() : null;
+  return sanitized ?? `https://blockballot.officialework.com/vote/${electionId}`;
 }
 /**
  * Sends an election invitation email via Resend API.

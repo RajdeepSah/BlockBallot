@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 interface LogoProps {
   className?: string;
@@ -12,6 +13,13 @@ const sizeClasses = {
   xl: 'h-48 w-48',
 };
 
+const sizeDimensions = {
+  sm: { width: 48, height: 48 },
+  md: { width: 64, height: 64 },
+  lg: { width: 112, height: 112 },
+  xl: { width: 192, height: 192 },
+};
+
 /**
  * Reusable Logo component for BlockBallot branding.
  * 
@@ -23,11 +31,14 @@ const sizeClasses = {
 export function Logo({ className = '', size }: LogoProps) {
   const sizeClass = size ? sizeClasses[size] : '';
   const combinedClassName = `logo-icon ${sizeClass} ${className}`.trim();
+  const dimensions = size ? sizeDimensions[size] : { width: 64, height: 64 };
 
   return (
-    <img 
+    <Image 
       src="/logoicon.png" 
       alt="BlockBallot Logo" 
+      width={dimensions.width}
+      height={dimensions.height}
       className={combinedClassName}
     />
   );

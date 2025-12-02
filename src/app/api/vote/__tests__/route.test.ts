@@ -17,7 +17,6 @@ import type {
   UserRecord,
   EligibilityRecord,
   BallotLinkRecord,
-  VoteTransactionRecord,
 } from '@/types/kv-records';
 
 // Mock all external dependencies
