@@ -15,10 +15,12 @@ jest.mock('@/utils/supabase/info', () => ({
   publicAnonKey: 'test-anon-key-for-testing-only',
 }));
 
-// Suppress React act() warnings in tests
+// Suppress React act() warnings and expected API error logs in tests
 // React Testing Library automatically wraps user interactions and async operations in act(),
 // but React 18+ still logs warnings for some internal state updates. These warnings are
 // false positives and don't indicate actual problems with the tests.
+// We also suppress "API Error" console.error messages from handleApiError since we're
+// intentionally testing error scenarios and don't want to clutter test output.
 const originalError = console.error;
 beforeAll(() => {
   console.error = (...args: unknown[]) => {
@@ -27,6 +29,13 @@ beforeAll(() => {
       typeof args[0] === 'string' &&
       (args[0].includes('Warning: An update to') ||
         args[0].includes('was not wrapped in act(...)'))
+    ) {
+      return;
+    }
+    // Filter out expected API error logs from handleApiError during tests
+    if (
+      typeof args[0] === 'string' &&
+      args[0].includes('API Error')
     ) {
       return;
     }
