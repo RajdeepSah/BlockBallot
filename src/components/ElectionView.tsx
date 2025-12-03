@@ -21,6 +21,24 @@ import { Election, EligibilityStatus, Position, Candidate } from '@/types/electi
 import { VoteSelections } from '@/types/api';
 import { LoadingSpinner } from './ui/loading-spinner';
 import { PageContainer } from './layouts/PageContainer';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
+import { getEtherscanUrl } from '@/utils/blockchain/utils';
 
 interface ElectionViewProps {
   electionId: string;
@@ -31,6 +49,11 @@ interface ElectionViewProps {
 /**
  * Election view component for displaying election details and casting votes.
  * Handles eligibility checking, access requests, and different ballot types.
+ *
+ * Features:
+ * - Confirmation dialog before vote submission (warns about irreversibility)
+ * - Success dialog with transaction hash and privacy warnings
+ * - Support for single choice, multiple choice, and ranked choice ballots
  *
  * @param props - Component props
  * @param props.electionId - The ID of the election to display
@@ -46,8 +69,13 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
   const [voting, setVoting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  /** Transaction hash from successful vote submission */
   const [receipt, setReceipt] = useState('');
   const [requestingAccess, setRequestingAccess] = useState(false);
+  /** Controls visibility of vote confirmation dialog */
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  /** Controls visibility of vote success dialog with transaction hash */
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const [selections, setSelections] = useState<VoteSelections>({});
 
@@ -123,23 +151,41 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
     }
   };
 
-  const handleVote = async () => {
+  /**
+   * Handles the initial vote submission request.
+   * Validates that all positions have selections and shows confirmation dialog.
+   */
+  const handleVote = () => {
     if (!election) return;
+    setError('');
+
+    // Validate all positions have selections
+    for (const position of election.positions) {
+      if (!selections[position.id]) {
+        setError(`Please make a selection for ${position.name}`);
+        return;
+      }
+    }
+
+    // Show confirmation dialog
+    setShowConfirmDialog(true);
+  };
+
+  /**
+   * Handles the confirmed vote submission after user confirms in the dialog.
+   * Performs the actual API call to cast the vote on the blockchain.
+   */
+  const handleConfirmVote = async () => {
+    if (!election) return;
+    setShowConfirmDialog(false);
     setError('');
     setVoting(true);
 
     try {
-      for (const position of election.positions) {
-        if (!selections[position.id]) {
-          setError(`Please make a selection for ${position.name}`);
-          setVoting(false);
-          return;
-        }
-      }
-
       const response = await api.castVote(electionId, selections, election, token!);
       setReceipt(response.receipt);
       setSuccess('Vote cast successfully!');
+      setShowSuccessDialog(true);
       await checkEligibility();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to cast vote';
@@ -283,24 +329,69 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
         </Alert>
       )}
 
-      {receipt && (
-        <Card className="mb-6 border-green-200 bg-green-50">
-          <CardHeader>
-            <CardTitle className="flex items-center text-green-800">
-              <CheckCircle className="mr-2 h-5 w-5" />
-              Vote Receipt
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-2 text-sm text-gray-700">
-              Your vote has been recorded. Save this receipt for your records:
-            </p>
-            <div className="rounded border border-green-300 bg-white p-3 font-mono text-sm">
-              {receipt}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Confirmation Dialog - Warns user that vote is irreversible */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Your Vote</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div>
+                <div className="mb-2">
+                  You are about to submit your vote. Please review your selections carefully.
+                </div>
+                <div className="font-semibold text-red-600">
+                  Your vote is final and cannot be changed after submission. This action is
+                  irreversible.
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmVote}>Confirm Vote</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Success Dialog - Shows transaction hash with privacy warning */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Vote Recorded Successfully!</DialogTitle>
+            <DialogDescription>Your vote has been recorded on the blockchain</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {receipt && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700">Transaction Hash</p>
+                <a
+                  href={getEtherscanUrl(receipt, 'tx')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="break-all text-sm text-indigo-600 hover:underline"
+                >
+                  {receipt}
+                </a>
+              </div>
+            )}
+            <Alert className="border-yellow-200 bg-yellow-50">
+              <AlertCircle className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800">
+                <p className="font-semibold mb-1">Important: Keep Your Transaction Hash Private</p>
+                <p className="text-sm">
+                  Your transaction hash is like a receipt that proves your vote was recorded.
+                  However, anyone who has this transaction hash can view your vote choices on
+                  Arbiscan (the blockchain explorer). Do not share this transaction hash with
+                  anyone you do not trust, as it reveals exactly who you voted for.
+                </p>
+              </AlertDescription>
+            </Alert>
+          </div>
+          <Button onClick={() => setShowSuccessDialog(false)} className="w-full">
+            Continue
+          </Button>
+        </DialogContent>
+      </Dialog>
 
       {!eligibility?.eligible && !eligibility?.accessRequest && !hasVoted && (
         <Card className="mb-6">

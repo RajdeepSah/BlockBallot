@@ -39,5 +39,9 @@ next-env.d.ts
 /artifacts/
 /cache/
 
+# docs
 /docs/
+
+# diagrams  
 /diagrams/
+!/diagrams/**/*.mmd

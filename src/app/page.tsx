@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 import { SignIn } from '@/components/SignIn';
@@ -34,23 +34,42 @@ function HomePageContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [screen, setScreen] = useState<'signin' | 'signup' | '2fa' | 'dashboard' | null>(null);
+  
+  const [manualScreen, setManualScreen] = useState<'signup' | '2fa' | null>(null);
   const [twoFAState, setTwoFAState] = useState<{ userId: string; email: string } | null>(null);
-
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        setScreen('signin');
-      } else {
-        const electionId = searchParams.get('election');
-        if (electionId) {
-          router.push(`/vote/${electionId}`);
-        } else {
-          setScreen('dashboard');
-        }
-      }
+  const hasNavigatedRef = useRef(false);
+  
+  const electionId = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      return searchParams.get('election');
+    } catch {
+      return null;
     }
-  }, [user, loading, searchParams, router]);
+  }, [searchParams]);
+  
+  const screen: 'signin' | 'signup' | '2fa' | 'dashboard' | null = (() => {
+    if (loading) return null;
+    
+    if (manualScreen) return manualScreen;
+    
+    if (!user) {
+      return 'signin';
+    } else {
+      return 'dashboard';
+    }
+  })();
+  
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    if (loading || !user) return;
+    
+    if (electionId && !hasNavigatedRef.current && screen === 'dashboard') {
+      hasNavigatedRef.current = true;
+      router.push(`/vote/${electionId}`);
+    }
+  }, [user, loading, electionId, router, screen]);
 
   if (loading || !screen) {
     return <LoadingSpinner />;
@@ -60,24 +79,35 @@ function HomePageContent() {
     if (screen === 'signin') {
       return (
         <SignIn
-          onToggleMode={() => setScreen('signup')}
-          onSuccess={() => setScreen('dashboard')}
+          onToggleMode={() => setManualScreen('signup')}
+          onSuccess={() => {
+            setManualScreen(null);
+          }}
           on2FARequired={({ userId, email }) => {
             setTwoFAState({ userId, email });
-            setScreen('2fa');
+            setManualScreen('2fa');
           }}
         />
       );
     } else if (screen === 'signup') {
       return (
-        <SignUp onToggleMode={() => setScreen('signin')} onSuccess={() => setScreen('signin')} />
+        <SignUp 
+          onToggleMode={() => setManualScreen(null)} 
+          onSuccess={() => setManualScreen(null)} 
+        />
       );
     } else if (screen === '2fa' && twoFAState) {
       return (
         <Verify2FA
           email={twoFAState.email}
-          onSuccess={() => setScreen('dashboard')}
-          onBack={() => setScreen('signin')}
+          onSuccess={() => {
+            setManualScreen(null);
+            setTwoFAState(null);
+          }}
+          onBack={() => {
+            setManualScreen(null);
+            setTwoFAState(null);
+          }}
         />
       );
     }

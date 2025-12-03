@@ -200,14 +200,23 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
             <Users className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <button
-              type="button"
-              onClick={() => setEligibleDialogOpen(true)}
-              className="text-3xl font-semibold text-indigo-600 hover:underline focus:outline-none"
-            >
-              {results.eligible_voters}
-            </button>
-            <p className="mt-1 text-xs text-gray-500">Click to view eligible voters</p>
+            {isCreator ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setEligibleDialogOpen(true)}
+                  className="text-3xl font-semibold text-indigo-600 hover:underline focus:outline-none"
+                >
+                  {results.eligible_voters}
+                </button>
+                <p className="mt-1 text-xs text-gray-500">Click to view eligible voters</p>
+              </>
+            ) : (
+              <>
+                <div className="text-3xl font-semibold">{results.eligible_voters}</div>
+                <p className="mt-1 text-xs text-gray-500">Total eligible voters</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -316,14 +325,16 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
         }
       )}
 
-      <Dialog open={eligibleDialogOpen} onOpenChange={setEligibleDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Eligible Voters</DialogTitle>
-            <DialogDescription>
-              These are the pre-approved voters uploaded for this election.
-            </DialogDescription>
-          </DialogHeader>
+      {/* Eligible Voters Dialog - Only accessible to election creators */}
+      {isCreator && (
+        <Dialog open={eligibleDialogOpen} onOpenChange={setEligibleDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Eligible Voters</DialogTitle>
+              <DialogDescription>
+                These are the pre-approved voters uploaded for this election.
+              </DialogDescription>
+            </DialogHeader>
           <div className="mt-4">
             {eligibleLoading ? (
               <div className="flex items-center justify-center py-6 text-gray-500">
@@ -351,6 +362,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
           </div>
         </DialogContent>
       </Dialog>
+      )}
     </PageContainer>
   );
 }
