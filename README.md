@@ -19,8 +19,6 @@ Run `npm run test:coverage` to run all tests and view coverage.
 Run `npx jest path/to/the/file_to.test.ts` to run one test suite
 
 
-Here you go, Rajdeep — the whole thing rewritten cleanly in **Markdown format**, ready for your presentation notes or GitHub docs.
-
 ---
 ---
 ---
