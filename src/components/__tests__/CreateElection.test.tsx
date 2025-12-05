@@ -1,9 +1,8 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test-utils/render';
 import { CreateElection } from '../CreateElection';
 import { useAuth } from '../AuthContext';
 import { createMockAuthContext } from '@/test-utils';
-import '@testing-library/jest-dom';
 
 // Mock AuthContext using standardized test utilities
 jest.mock('../AuthContext', () => ({

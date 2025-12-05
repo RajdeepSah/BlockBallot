@@ -1,6 +1,7 @@
 /**
  * @module test-utils/mocks/data
  * @category Testing
+ * @internal
  *
  * Mock data factories for creating test data structures.
  *
@@ -12,6 +13,12 @@
 import { Election, Candidate, Position, AccessRequest } from '@/types/election';
 import { RegisterData, LoginData } from '@/types/api';
 import { EligibleVoter } from '@/utils/eligible-voters';
+import type {
+  UserRecord,
+  EligibilityRecord,
+  BallotLinkRecord,
+  VoteTransactionRecord,
+} from '@/types/kv-records';
 
 /**
  * Creates a mock user object for testing.
@@ -206,3 +213,112 @@ export function createMockLoginData(overrides?: Partial<LoginData>): LoginData {
   };
 }
 
+/**
+ * Creates a mock user record for KV store testing.
+ *
+ * This factory creates UserRecord objects that match the structure
+ * stored in the Supabase KV store under the `user:` prefix.
+ *
+ * @param overrides - Optional properties to override default values
+ * @returns Mock user record object
+ *
+ * @example
+ * ```typescript
+ * const userRecord = createMockUserRecord({
+ *   id: 'user-123',
+ *   email: 'john@example.com'
+ * });
+ * ```
+ */
+export function createMockUserRecord(overrides?: Partial<UserRecord>): UserRecord {
+  return {
+    id: 'user-id-123',
+    email: 'test@example.com',
+    name: 'Test User',
+    phone: '+1234567890',
+    ...overrides,
+  };
+}
+
+/**
+ * Creates a mock eligibility record for KV store testing.
+ *
+ * This factory creates EligibilityRecord objects that match the structure
+ * stored in the Supabase KV store under the `eligibility:` prefix.
+ *
+ * @param overrides - Optional properties to override default values
+ * @returns Mock eligibility record object
+ *
+ * @example
+ * ```typescript
+ * const eligibility = createMockEligibilityRecord({
+ *   election_id: 'election-456',
+ *   status: 'approved'
+ * });
+ * ```
+ */
+export function createMockEligibilityRecord(
+  overrides?: Partial<EligibilityRecord>
+): EligibilityRecord {
+  return {
+    election_id: 'test-election-id',
+    contact: 'test@example.com',
+    status: 'approved',
+    created_at: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+/**
+ * Creates a mock ballot link record for KV store testing.
+ *
+ * This factory creates BallotLinkRecord objects that match the structure
+ * stored in the Supabase KV store under the `vote:user:` prefix.
+ * Used for duplicate vote prevention.
+ *
+ * @param overrides - Optional properties to override default values
+ * @returns Mock ballot link record object
+ *
+ * @example
+ * ```typescript
+ * const ballotLink = createMockBallotLinkRecord({
+ *   status: 'completed'
+ * });
+ * ```
+ */
+export function createMockBallotLinkRecord(
+  overrides?: Partial<BallotLinkRecord>
+): BallotLinkRecord {
+  return {
+    status: 'completed',
+    created_at: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+/**
+ * Creates a mock vote transaction record for KV store testing.
+ *
+ * This factory creates VoteTransactionRecord objects that match the structure
+ * stored in the Supabase KV store under the `vote:tx:` prefix.
+ * Used for anonymous vote verification.
+ *
+ * @param overrides - Optional properties to override default values
+ * @returns Mock vote transaction record object
+ *
+ * @example
+ * ```typescript
+ * const txRecord = createMockVoteTransactionRecord({
+ *   electionId: 'election-456'
+ * });
+ * ```
+ */
+export function createMockVoteTransactionRecord(
+  overrides?: Partial<VoteTransactionRecord>
+): VoteTransactionRecord {
+  return {
+    timestamp: new Date().toISOString(),
+    electionId: 'test-election-id',
+    ...overrides,
+  };
+}

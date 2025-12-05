@@ -1,6 +1,7 @@
 /**
  * @module test-utils
  * @category Testing
+ * @internal
  *
  * Central export point for all test utilities and mocks.
  *
@@ -10,16 +11,22 @@
  * ## Usage
  *
  * ```typescript
+ * // Import mock factories
  * import {
  *   createMockApi,
  *   createMockAuthContext,
  *   createMockElection,
  *   createMockToast,
+ *   createMockContract,
+ *   createMockUserRecord,
  * } from '@/test-utils';
+ *
+ * // Import render utilities (alternative to @testing-library/react)
+ * import { render, screen, fireEvent, userEvent } from '@/test-utils/render';
  * ```
  */
 
-// Data factories
+// Data factories (includes KV record factories)
 export * from './mocks/data';
 
 // API mocks
@@ -37,3 +44,5 @@ export * from './mocks/notifications';
 // Eligible voters mocks
 export * from './mocks/eligible-voters';
 
+// Blockchain mocks
+export * from './mocks/blockchain';

@@ -1,11 +1,11 @@
 /**
  * @jest-environment node
- * 
+ *
  * Comprehensive Jest unit test suite for POST /api/vote route handler.
- * 
+ *
  * This test suite achieves 100% statement coverage and high cyclomatic complexity
  * coverage by testing all code paths in the vote route handler.
- * 
+ *
  * @module app/api/vote/__tests__/route.test
  */
 
@@ -18,6 +18,13 @@ import type {
   EligibilityRecord,
   BallotLinkRecord,
 } from '@/types/kv-records';
+import {
+  createMockContract,
+  createMockUserRecord,
+  createMockEligibilityRecord,
+  createMockBallotLinkRecord,
+  type MockContract,
+} from '@/test-utils';
 
 // Mock all external dependencies
 jest.mock('@/utils/api/auth', () => ({
@@ -101,26 +108,14 @@ describe('POST /api/vote', () => {
     };
   };
 
-  // Type for transaction mock
-  type MockTransaction = {
-    hash: string;
-    wait: jest.Mock<Promise<unknown>>;
-  };
-
-  // Type for contract mock
-  type MockContract = {
-    castVotes: jest.Mock<Promise<MockTransaction>>;
-  };
-
-  // Mock blockchain contract
-  const createMockContract = (): MockContract => {
-    const mockTx: MockTransaction = {
-      hash: mockTxHash,
-      wait: jest.fn().mockResolvedValue({}),
-    };
-    return {
-      castVotes: jest.fn().mockResolvedValue(mockTx),
-    };
+  /**
+   * Creates a mock contract with the default transaction hash.
+   * Uses the shared createMockContract factory from test-utils.
+   *
+   * @returns Mock contract configured with mockTxHash
+   */
+  const createTestContract = (): MockContract => {
+    return createMockContract({ transaction: { hash: mockTxHash } });
   };
 
   // Helper to create NextRequest
@@ -152,20 +147,19 @@ describe('POST /api/vote', () => {
         ends_at: new Date(Date.now() + 86400000).toISOString(), // 1 day from now
       };
 
-      const mockUserData: UserRecord = {
+      const mockUserData: UserRecord = createMockUserRecord({
         id: mockUserId,
         email: mockUserEmail,
         name: 'Test User',
-      };
+      });
 
-      const mockEligibility: EligibilityRecord = {
+      const mockEligibility: EligibilityRecord = createMockEligibilityRecord({
         election_id: mockElectionId,
         contact: mockUserEmail,
         status: 'approved',
-        created_at: new Date().toISOString(),
-      };
+      });
 
-      const mockContract = createMockContract();
+      const mockContract = createTestContract();
       const mockSupabaseClient = createMockSupabaseClient();
 
       // Setup mocks
@@ -173,7 +167,7 @@ describe('POST /api/vote', () => {
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
       mockCreateWritableContract.mockReturnValue(mockContract as unknown as Contract);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -311,7 +305,7 @@ describe('POST /api/vote', () => {
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: null,
@@ -345,7 +339,7 @@ describe('POST /api/vote', () => {
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -379,7 +373,7 @@ describe('POST /api/vote', () => {
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -413,7 +407,7 @@ describe('POST /api/vote', () => {
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -443,17 +437,17 @@ describe('POST /api/vote', () => {
         ends_at: new Date(Date.now() + 86400000).toISOString(),
       };
 
-      const mockUserData: UserRecord = {
+      const mockUserData: UserRecord = createMockUserRecord({
         id: mockUserId,
         email: mockUserEmail,
-      };
+      });
 
       const mockSupabaseClient = createMockSupabaseClient();
 
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -485,24 +479,23 @@ describe('POST /api/vote', () => {
         ends_at: new Date(Date.now() + 86400000).toISOString(),
       };
 
-      const mockUserData: UserRecord = {
+      const mockUserData: UserRecord = createMockUserRecord({
         id: mockUserId,
         email: mockUserEmail,
-      };
+      });
 
-      const mockEligibility: EligibilityRecord = {
+      const mockEligibility: EligibilityRecord = createMockEligibilityRecord({
         election_id: mockElectionId,
         contact: mockUserEmail,
         status: 'denied',
-        created_at: new Date().toISOString(),
-      };
+      });
 
       const mockSupabaseClient = createMockSupabaseClient();
 
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -534,29 +527,27 @@ describe('POST /api/vote', () => {
         ends_at: new Date(Date.now() + 86400000).toISOString(),
       };
 
-      const mockUserData: UserRecord = {
+      const mockUserData: UserRecord = createMockUserRecord({
         id: mockUserId,
         email: mockUserEmail,
-      };
+      });
 
-      const mockEligibility: EligibilityRecord = {
+      const mockEligibility: EligibilityRecord = createMockEligibilityRecord({
         election_id: mockElectionId,
         contact: mockUserEmail,
         status: 'approved',
-        created_at: new Date().toISOString(),
-      };
+      });
 
-      const mockFinalVote: BallotLinkRecord = {
+      const mockFinalVote: BallotLinkRecord = createMockBallotLinkRecord({
         status: 'completed',
-        created_at: new Date().toISOString(),
-      };
+      });
 
       const mockSupabaseClient = createMockSupabaseClient();
 
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -590,29 +581,27 @@ describe('POST /api/vote', () => {
         ends_at: new Date(Date.now() + 86400000).toISOString(),
       };
 
-      const mockUserData: UserRecord = {
+      const mockUserData: UserRecord = createMockUserRecord({
         id: mockUserId,
         email: mockUserEmail,
-      };
+      });
 
-      const mockEligibility: EligibilityRecord = {
+      const mockEligibility: EligibilityRecord = createMockEligibilityRecord({
         election_id: mockElectionId,
         contact: mockUserEmail,
         status: 'approved',
-        created_at: new Date().toISOString(),
-      };
+      });
 
-      const mockExistingLock: BallotLinkRecord = {
+      const mockExistingLock: BallotLinkRecord = createMockBallotLinkRecord({
         status: 'pending',
-        created_at: new Date().toISOString(),
-      };
+      });
 
       const mockSupabaseClient = createMockSupabaseClient();
 
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -646,29 +635,27 @@ describe('POST /api/vote', () => {
         ends_at: new Date(Date.now() + 86400000).toISOString(),
       };
 
-      const mockUserData: UserRecord = {
+      const mockUserData: UserRecord = createMockUserRecord({
         id: mockUserId,
         email: mockUserEmail,
-      };
+      });
 
-      const mockEligibility: EligibilityRecord = {
+      const mockEligibility: EligibilityRecord = createMockEligibilityRecord({
         election_id: mockElectionId,
         contact: mockUserEmail,
         status: 'approved',
-        created_at: new Date().toISOString(),
-      };
+      });
 
-      const mockFinalVote: BallotLinkRecord = {
+      const mockFinalVote: BallotLinkRecord = createMockBallotLinkRecord({
         status: 'completed',
-        created_at: new Date().toISOString(),
-      };
+      });
 
       const mockSupabaseClient = createMockSupabaseClient();
 
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -708,19 +695,18 @@ describe('POST /api/vote', () => {
         ends_at: new Date(Date.now() + 86400000).toISOString(),
       };
 
-      const mockUserData: UserRecord = {
+      const mockUserData: UserRecord = createMockUserRecord({
         id: mockUserId,
         email: mockUserEmail,
-      };
+      });
 
-      const mockEligibility: EligibilityRecord = {
+      const mockEligibility: EligibilityRecord = createMockEligibilityRecord({
         election_id: mockElectionId,
         contact: mockUserEmail,
         status: 'approved',
-        created_at: new Date().toISOString(),
-      };
+      });
 
-      const mockContract = createMockContract();
+      const mockContract = createTestContract();
       const mockSupabaseClient = createMockSupabaseClient();
 
       // Make castVotes throw an error
@@ -732,7 +718,7 @@ describe('POST /api/vote', () => {
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
       mockCreateWritableContract.mockReturnValue(mockContract as unknown as Contract);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -772,26 +758,25 @@ describe('POST /api/vote', () => {
         ends_at: new Date(Date.now() + 86400000).toISOString(),
       };
 
-      const mockUserData: UserRecord = {
+      const mockUserData: UserRecord = createMockUserRecord({
         id: mockUserId,
         email: mockUserEmail,
-      };
+      });
 
-      const mockEligibility: EligibilityRecord = {
+      const mockEligibility: EligibilityRecord = createMockEligibilityRecord({
         election_id: mockElectionId,
         contact: mockUserEmail,
         status: 'approved',
-        created_at: new Date().toISOString(),
-      };
+      });
 
-      const mockContract = createMockContract();
+      const mockContract = createTestContract();
       const mockSupabaseClient = createMockSupabaseClient();
 
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
       mockCreateWritableContract.mockReturnValue(mockContract as unknown as Contract);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -838,26 +823,25 @@ describe('POST /api/vote', () => {
         ends_at: new Date(Date.now() + 86400000).toISOString(),
       };
 
-      const mockUserData: UserRecord = {
+      const mockUserData: UserRecord = createMockUserRecord({
         id: mockUserId,
         email: mockUserEmail,
-      };
+      });
 
-      const mockEligibility: EligibilityRecord = {
+      const mockEligibility: EligibilityRecord = createMockEligibilityRecord({
         election_id: mockElectionId,
         contact: mockUserEmail,
         status: 'approved',
-        created_at: new Date().toISOString(),
-      };
+      });
 
-      const mockContract = createMockContract();
+      const mockContract = createTestContract();
       const mockSupabaseClient = createMockSupabaseClient();
 
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
       mockCreateWritableContract.mockReturnValue(mockContract as unknown as Contract);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -902,26 +886,25 @@ describe('POST /api/vote', () => {
         ends_at: new Date(Date.now() + 86400000).toISOString(),
       };
 
-      const mockUserData: UserRecord = {
+      const mockUserData: UserRecord = createMockUserRecord({
         id: mockUserId,
         email: mockUserEmail,
-      };
+      });
 
-      const mockEligibility: EligibilityRecord = {
+      const mockEligibility: EligibilityRecord = createMockEligibilityRecord({
         election_id: mockElectionId,
         contact: mockUserEmail,
         status: 'approved',
-        created_at: new Date().toISOString(),
-      };
+      });
 
-      const mockContract = createMockContract();
+      const mockContract = createTestContract();
       const mockSupabaseClient = createMockSupabaseClient();
 
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
       mockCreateWritableContract.mockReturnValue(mockContract as unknown as Contract);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -963,26 +946,25 @@ describe('POST /api/vote', () => {
         ends_at: new Date(Date.now() + 86400000).toISOString(),
       };
 
-      const mockUserData: UserRecord = {
+      const mockUserData: UserRecord = createMockUserRecord({
         id: mockUserId,
         email: mockUserEmail,
-      };
+      });
 
-      const mockEligibility: EligibilityRecord = {
+      const mockEligibility: EligibilityRecord = createMockEligibilityRecord({
         election_id: mockElectionId,
         contact: mockUserEmail,
-        status: 'preapproved', // Preapproved status
-        created_at: new Date().toISOString(),
-      };
+        status: 'preapproved',
+      });
 
-      const mockContract = createMockContract();
+      const mockContract = createTestContract();
       const mockSupabaseClient = createMockSupabaseClient();
 
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
       mockCreateWritableContract.mockReturnValue(mockContract as unknown as Contract);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,

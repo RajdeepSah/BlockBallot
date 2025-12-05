@@ -10,8 +10,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor, act, userEvent } from '@/test-utils/render';
 import { AdminPanel } from '../AdminPanel';
 import { api } from '@/utils/api';
 import { fetchEligibleVoters } from '@/utils/eligible-voters';
