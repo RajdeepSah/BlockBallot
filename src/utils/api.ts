@@ -683,21 +683,17 @@ export const api = {
       throw new Error('Unauthorized');
     }
 
-    // Use the election data passed in (already loaded in component)
     if (!election || !election.contract_address) {
       throw new Error('Election not found or contract address missing');
     }
 
-    // Transform selections (positionId -> candidateId) to votes array (position name -> candidate name)
     const votes: Array<{ position: string; candidate: string }> = [];
 
     for (const position of election.positions) {
       const selection = selections[position.id];
       if (!selection) continue;
 
-      // Handle different ballot types
       if (Array.isArray(selection)) {
-        // Multiple choice or ranked choice - add each selection
         for (const candidateId of selection) {
           const candidate = position.candidates.find((c: Candidate) => c.id === candidateId);
           if (candidate) {
@@ -705,7 +701,6 @@ export const api = {
           }
         }
       } else {
-        // Single choice
         const candidate = position.candidates.find((c: Candidate) => c.id === selection);
         if (candidate) {
           votes.push({ position: position.name, candidate: candidate.name });

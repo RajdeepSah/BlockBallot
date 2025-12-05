@@ -141,7 +141,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
 
   if (error || !results) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 page-container">
+      <div className="page-container flex min-h-screen items-center justify-center bg-gray-50">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <Alert variant="destructive">
@@ -329,7 +329,7 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
         }
       )}
 
-      {/* Eligible Voters Dialog - Only accessible to election creators */}
+      {}
       {isCreator && (
         <Dialog open={eligibleDialogOpen} onOpenChange={setEligibleDialogOpen}>
           <DialogContent className="max-w-lg">
@@ -339,33 +339,35 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
                 These are the pre-approved voters uploaded for this election.
               </DialogDescription>
             </DialogHeader>
-          <div className="mt-4">
-            {eligibleLoading ? (
-              <div className="flex items-center justify-center py-6 text-gray-500">
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Loading eligible voters...
-              </div>
-            ) : eligibleError ? (
-              <Alert variant="destructive">
-                <AlertDescription>{eligibleError}</AlertDescription>
-              </Alert>
-            ) : eligibleVoters.length === 0 ? (
-              <div className="py-6 text-center text-gray-500">
-                No pre-approved voters found for this election.
-              </div>
-            ) : (
-              <div className="max-h-80 divide-y overflow-y-auto">
-                {eligibleVoters.map((voter) => (
-                  <div key={voter.id} className="py-3 text-sm text-gray-800">
-                    <span className="font-medium">{voter.full_name || 'Pending Registration'}</span>{' '}
-                    [{voter.email}]
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+            <div className="mt-4">
+              {eligibleLoading ? (
+                <div className="flex items-center justify-center py-6 text-gray-500">
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Loading eligible voters...
+                </div>
+              ) : eligibleError ? (
+                <Alert variant="destructive">
+                  <AlertDescription>{eligibleError}</AlertDescription>
+                </Alert>
+              ) : eligibleVoters.length === 0 ? (
+                <div className="py-6 text-center text-gray-500">
+                  No pre-approved voters found for this election.
+                </div>
+              ) : (
+                <div className="max-h-80 divide-y overflow-y-auto">
+                  {eligibleVoters.map((voter) => (
+                    <div key={voter.id} className="py-3 text-sm text-gray-800">
+                      <span className="font-medium">
+                        {voter.full_name || 'Pending Registration'}
+                      </span>{' '}
+                      [{voter.email}]
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </PageContainer>
   );

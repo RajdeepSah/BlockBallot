@@ -80,13 +80,18 @@ export async function POST(request: NextRequest) {
       return createValidationError('Missing OTP or user ID');
     }
 
-    const otpData = await kv.get<OtpRecord>(`otp:${userId}`);
+    const userData = await kv.get<UserRecord>(`user:${userId}`);
+    if (!userData) {
+      return createNotFoundError('User');
+    }
+
+    const otpData = await kv.get<OtpRecord>(`otp:${userData.email}`);
     if (!otpData) {
       return createNotFoundError('OTP');
     }
 
     if (Date.now() > otpData.expires_at) {
-      await kv.del(`otp:${userId}`);
+      await kv.del(`otp:${userData.email}`);
       return createUnauthorizedError();
     }
 
@@ -94,12 +99,7 @@ export async function POST(request: NextRequest) {
       return createUnauthorizedError();
     }
 
-    await kv.del(`otp:${userId}`);
-
-    const userData = await kv.get<UserRecord>(`user:${userId}`);
-    if (!userData) {
-      return createNotFoundError('User');
-    }
+    await kv.del(`otp:${userData.email}`);
 
     return Response.json({
       success: true,

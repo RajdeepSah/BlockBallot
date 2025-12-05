@@ -285,7 +285,6 @@ export function sanitizeString(input: string): string {
   if (typeof input !== 'string') {
     return '';
   }
-  // Trim whitespace and remove null bytes and other control characters (except newlines/tabs for descriptions)
   return input.trim().replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
 }
 
@@ -313,7 +312,6 @@ export function sanitizeText(input: string): string {
   if (typeof input !== 'string') {
     return '';
   }
-  // Trim whitespace but preserve newlines and tabs for descriptions
   return input.trim().replace(/[\x00-\x08\x0E-\x1F\x7F]/g, '');
 }
 
@@ -358,13 +356,12 @@ export function sanitizeText(input: string): string {
  */
 export function validateNoDuplicateCandidates(position: PositionInput): void {
   if (!position.candidates || !Array.isArray(position.candidates)) {
-    return; // Will be caught by validatePositionInput
+    return;
   }
 
   const candidateNames = position.candidates
     .map((c) => sanitizeString(c.name).toLowerCase())
-    .filter((name) => name.length > 0); // Only check non-empty names
-
+    .filter((name) => name.length > 0);
   const duplicates = candidateNames.filter((name, index) => candidateNames.indexOf(name) !== index);
 
   if (duplicates.length > 0) {
@@ -390,7 +387,7 @@ export function validateNoDuplicateCandidates(position: PositionInput): void {
  */
 export function validateNoDuplicateCandidatesInPositions(positions: PositionInput[]): void {
   if (!Array.isArray(positions)) {
-    return; // Will be caught by validatePositionsArray
+    return;
   }
 
   positions.forEach((position) => {
@@ -437,13 +434,12 @@ export function validateNoDuplicateCandidatesInPositions(positions: PositionInpu
  */
 export function validateNoDuplicatePositions(positions: PositionInput[]): void {
   if (!Array.isArray(positions)) {
-    return; // Will be caught by validatePositionsArray
+    return;
   }
 
   const positionNames = positions
     .map((p) => sanitizeString(p.name).toLowerCase())
-    .filter((name) => name.length > 0); // Only check non-empty names
-
+    .filter((name) => name.length > 0);
   const duplicates = positionNames.filter((name, index) => positionNames.indexOf(name) !== index);
 
   if (duplicates.length > 0) {

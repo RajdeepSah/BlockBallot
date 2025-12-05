@@ -78,10 +78,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { id: electionId } = await params;
     const authHeader = request.headers.get('Authorization');
 
-    // Authenticate user
     const user = await authenticateUser(authHeader);
 
-    // Get election from Supabase database
     const supabase = await createClient();
     const { data: election, error: electionError } = await supabase
       .from('elections')

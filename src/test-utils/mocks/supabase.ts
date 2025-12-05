@@ -93,9 +93,13 @@ export function createMockSupabaseClient(overrides?: Record<string, unknown>) {
  * ```
  */
 export function createMockGetServiceRoleClient() {
-  return jest.fn().mockReturnValue(
-    createMockSupabaseClient() as unknown as ReturnType<typeof import('@/utils/supabase/clients').getServiceRoleClient>
-  ) as jest.MockedFunction<typeof import('@/utils/supabase/clients').getServiceRoleClient>;
+  return jest
+    .fn()
+    .mockReturnValue(
+      createMockSupabaseClient() as unknown as ReturnType<
+        typeof import('@/utils/supabase/clients').getServiceRoleClient
+      >
+    ) as jest.MockedFunction<typeof import('@/utils/supabase/clients').getServiceRoleClient>;
 }
 
 /**
@@ -113,8 +117,11 @@ export function createMockGetServiceRoleClient() {
  * ```
  */
 export function createMockGetAnonServerClient() {
-  return jest.fn().mockReturnValue(
-    createMockSupabaseClient() as unknown as ReturnType<typeof import('@/utils/supabase/clients').getAnonServerClient>
-  ) as jest.MockedFunction<typeof import('@/utils/supabase/clients').getAnonServerClient>;
+  return jest
+    .fn()
+    .mockReturnValue(
+      createMockSupabaseClient() as unknown as ReturnType<
+        typeof import('@/utils/supabase/clients').getAnonServerClient
+      >
+    ) as jest.MockedFunction<typeof import('@/utils/supabase/clients').getAnonServerClient>;
 }
-

@@ -26,23 +26,16 @@
  * ```
  */
 
-// Data factories (includes KV record factories)
 export * from './mocks/data';
 
-// API mocks
 export * from './mocks/api';
 
-// Auth mocks
 export * from './mocks/auth';
 
-// Supabase mocks
 export * from './mocks/supabase';
 
-// Notification mocks
 export * from './mocks/notifications';
 
-// Eligible voters mocks
 export * from './mocks/eligible-voters';
 
-// Blockchain mocks
 export * from './mocks/blockchain';

@@ -40,7 +40,6 @@ async function retryWithBackoff<T>(
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
 
-      // Check if it's a rate limit error
       const err = error as Record<string, unknown>;
       const isRateLimit =
         (typeof err?.message === 'string' && err.message.includes('Too Many Requests')) ||
@@ -51,7 +50,6 @@ async function retryWithBackoff<T>(
         throw error;
       }
 
-      // Exponential backoff: 1s, 2s, 4s
       const delayMs = baseDelay * Math.pow(2, attempt);
       console.log(
         `Rate limit hit, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries + 1})`
@@ -227,7 +225,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         const prefix = `vote:user:${electionId}:`;
         if (!key.startsWith(prefix)) return false;
         const suffix = key.substring(prefix.length);
-        // Filter out lock keys (those with additional colons from timestamp-uuid pattern)
         return !suffix.includes(':');
       }).length || 0;
 

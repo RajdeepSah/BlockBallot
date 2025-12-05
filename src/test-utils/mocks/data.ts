@@ -31,7 +31,9 @@ import type {
  * const user = createMockUser({ email: 'custom@example.com' });
  * ```
  */
-export function createMockUser(overrides?: Partial<{ id: string; name: string; email: string; phone?: string }>) {
+export function createMockUser(
+  overrides?: Partial<{ id: string; name: string; email: string; phone?: string }>
+) {
   return {
     id: 'user-id-123',
     name: 'Test User',
@@ -102,9 +104,8 @@ export function createMockPosition(overrides?: Partial<Position>): Position {
  */
 export function createMockElection(overrides?: Partial<Election>): Election {
   const now = new Date();
-  const startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 1 day ago
-  const endDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
-
+  const startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const endDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   return {
     id: 'test-election-id',
     code: 'ABC1234',

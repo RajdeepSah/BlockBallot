@@ -111,7 +111,6 @@ export async function PATCH(
       return createNotFoundError('Election');
     }
 
-    // Verify user is the election creator
     if (election.creator_id !== user.id) {
       return createForbiddenError('Only election creator can manage access requests');
     }

@@ -15,7 +15,6 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-// Utility: Generate random code
 function generateCode(length = 7) {
   return Math.random()
     .toString(36)
@@ -23,17 +22,13 @@ function generateCode(length = 7) {
     .toUpperCase();
 }
 
-// Utility: Generate OTP
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Utility: Generate receipt hash
 function generateReceiptHash(ballotId: string, timestamp: number) {
   return `RCPT-${ballotId.substring(0, 8)}-${timestamp.toString(36).toUpperCase()}`;
 }
-
-// ========== AUTH ROUTES ==========
 
 app.post('/make-server-b7b6fbd4/auth/register', async (c) => {
   try {
@@ -47,13 +42,11 @@ app.post('/make-server-b7b6fbd4/auth/register', async (c) => {
       return c.json({ error: 'Password must be at least 8 characters' }, 400);
     }
 
-    // Check if user exists
     const existingUser = await kv.get(`user:email:${email}`);
     if (existingUser) {
       return c.json({ error: 'Email already registered' }, 400);
     }
 
-    // Create user in Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -68,7 +61,6 @@ app.post('/make-server-b7b6fbd4/auth/register', async (c) => {
 
     const userId = authData.user.id;
 
-    // Store user data
     const userData = {
       id: userId,
       name,
@@ -100,7 +92,6 @@ app.post('/make-server-b7b6fbd4/auth/login', async (c) => {
       return c.json({ error: 'Missing credentials' }, 400);
     }
 
-    // Sign in with Supabase
     const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -118,13 +109,12 @@ app.post('/make-server-b7b6fbd4/auth/login', async (c) => {
       return c.json({ error: 'User data not found' }, 404);
     }
 
-    // Generate and store OTP for 2FA
     const otp = generateOTP();
     const otpData = {
       otp,
       userId,
       created_at: Date.now(),
-      expires_at: Date.now() + 5 * 60 * 1000, // 5 minutes
+      expires_at: Date.now() + 5 * 60 * 1000,
       verified: false,
     };
 
@@ -138,7 +128,6 @@ app.post('/make-server-b7b6fbd4/auth/login', async (c) => {
       userId,
       accessToken: sessionData.session.access_token,
       requires2FA: true,
-      // In production, don't return OTP - send via email
       devOTP: otp,
     });
   } catch (error) {
@@ -170,7 +159,6 @@ app.post('/make-server-b7b6fbd4/auth/verify-2fa', async (c) => {
       return c.json({ error: 'Invalid OTP' }, 401);
     }
 
-    // Mark OTP as verified and delete
     await kv.del(`otp:${userId}`);
 
     const userData = await kv.get(`user:${userId}`);
@@ -204,7 +192,6 @@ app.post('/make-server-b7b6fbd4/auth/resend-otp', async (c) => {
       return c.json({ error: 'User not found' }, 404);
     }
 
-    // Generate new OTP
     const otp = generateOTP();
     const otpData = {
       otp,
@@ -263,8 +250,6 @@ app.get('/make-server-b7b6fbd4/auth/me', async (c) => {
   }
 });
 
-// ========== ELECTION ROUTES ==========
-
 app.post('/make-server-b7b6fbd4/elections', async (c) => {
   try {
     const accessToken = c.req.header('Authorization')?.split(' ')[1];
@@ -287,7 +272,6 @@ app.post('/make-server-b7b6fbd4/elections', async (c) => {
       return c.json({ error: 'Missing required fields' }, 400);
     }
 
-    // Generate unique election code
     let code = generateCode();
     let codeExists = await kv.get(`election:code:${code}`);
 
@@ -311,7 +295,6 @@ app.post('/make-server-b7b6fbd4/elections', async (c) => {
       positions: [],
     };
 
-    // Process positions and candidates
     const positionsData = [];
     for (const position of positions) {
       const positionId = crypto.randomUUID();
@@ -324,7 +307,6 @@ app.post('/make-server-b7b6fbd4/elections', async (c) => {
         candidates: [],
       };
 
-      // Process candidates
       if (position.candidates && position.candidates.length > 0) {
         for (const candidate of position.candidates) {
           const candidateId = crypto.randomUUID();
@@ -351,7 +333,6 @@ app.post('/make-server-b7b6fbd4/elections', async (c) => {
     await kv.set(`election:${electionId}`, election);
     await kv.set(`election:code:${code}`, electionId);
 
-    // Track creator's elections
     const creatorElections = (await kv.get(`user:${user.id}:elections`)) || [];
     creatorElections.push(electionId);
     await kv.set(`user:${user.id}:elections`, creatorElections);
@@ -381,7 +362,6 @@ app.get('/make-server-b7b6fbd4/elections/:id', async (c) => {
       return c.json({ error: 'Election not found' }, 404);
     }
 
-    // Load positions and candidates
     const positions = [];
     for (const positionId of election.positions) {
       const position = await kv.get(`position:${positionId}`);
@@ -421,7 +401,6 @@ app.get('/make-server-b7b6fbd4/elections', async (c) => {
     }
 
     if (code) {
-      // Search by code
       const electionId = await kv.get(`election:code:${code.toUpperCase()}`);
       if (!electionId) {
         return c.json({ elections: [] });
@@ -436,7 +415,6 @@ app.get('/make-server-b7b6fbd4/elections', async (c) => {
     }
 
     if (userId) {
-      // Get user's created elections
       const createdElections = (await kv.get(`user:${userId}:elections`)) || [];
       const elections = [];
 
@@ -447,7 +425,6 @@ app.get('/make-server-b7b6fbd4/elections', async (c) => {
         }
       }
 
-      // Get elections user is eligible for
       const eligibilityKeys = await kv.getByPrefix(`eligibility:`);
       const eligibleElectionIds = new Set();
 
@@ -518,7 +495,6 @@ app.post('/make-server-b7b6fbd4/elections/:id/eligibility', async (c) => {
       const email = voterEmail.trim().toLowerCase();
       const eligibilityId = crypto.randomUUID();
 
-      // Check if user exists with this email
       const existingUserId = await kv.get(`user:email:${email}`);
 
       const eligibility = {
@@ -666,7 +642,6 @@ app.get('/make-server-b7b6fbd4/elections/:id/access-requests', async (c) => {
     const allRequests = await kv.getByPrefix(`access_request:${electionId}:`);
     const requests = allRequests.filter((req) => req.election_id === electionId);
 
-    // Enrich with user data
     const enrichedRequests = [];
     for (const request of requests) {
       const userData = await kv.get(`user:${request.user_id}`);
@@ -844,13 +819,10 @@ app.get('/make-server-b7b6fbd4/elections/:id/eligibility-status', async (c) => {
       return c.json({ error: 'User not found' }, 404);
     }
 
-    // Check eligibility
     const eligibility = await kv.get(`eligibility:${electionId}:${userData.email}`);
 
-    // Check if already voted
     const ballotLink = await kv.get(`ballot:link:${electionId}:${user.id}`);
 
-    // Check access request
     let accessRequest = await kv.get(`access_request:${electionId}:${user.id}`);
 
     const isEligible =
@@ -907,7 +879,6 @@ app.post('/make-server-b7b6fbd4/elections/:id/cast-vote', async (c) => {
       return c.json({ error: 'Election not found' }, 404);
     }
 
-    // Check if election is active
     const now = new Date();
     const startsAt = new Date(election.starts_at);
     const endsAt = new Date(election.ends_at);
@@ -920,7 +891,6 @@ app.post('/make-server-b7b6fbd4/elections/:id/cast-vote', async (c) => {
       return c.json({ error: 'Election has ended' }, 400);
     }
 
-    // Check eligibility
     const userData = await kv.get(`user:${user.id}`);
     const eligibility = await kv.get(`eligibility:${electionId}:${userData.email}`);
 
@@ -931,13 +901,11 @@ app.post('/make-server-b7b6fbd4/elections/:id/cast-vote', async (c) => {
       return c.json({ error: 'You are not eligible to vote in this election' }, 403);
     }
 
-    // Check if already voted
     const existingBallotLink = await kv.get(`ballot:link:${electionId}:${user.id}`);
     if (existingBallotLink) {
       return c.json({ error: 'You have already voted in this election' }, 400);
     }
 
-    // Create ballot
     const ballotId = crypto.randomUUID();
     const timestamp = Date.now();
     const receiptHash = generateReceiptHash(ballotId, timestamp);
@@ -950,10 +918,8 @@ app.post('/make-server-b7b6fbd4/elections/:id/cast-vote', async (c) => {
       selections: [],
     };
 
-    // Store selections
     for (const [positionId, selection] of Object.entries(votes)) {
       if (Array.isArray(selection)) {
-        // Multiple or ranked choice
         for (let i = 0; i < selection.length; i++) {
           ballot.selections.push({
             position_id: positionId,
@@ -962,7 +928,6 @@ app.post('/make-server-b7b6fbd4/elections/:id/cast-vote', async (c) => {
           });
         }
       } else {
-        // Single choice
         ballot.selections.push({
           position_id: positionId,
           candidate_id: selection,
@@ -973,7 +938,6 @@ app.post('/make-server-b7b6fbd4/elections/:id/cast-vote', async (c) => {
 
     await kv.set(`ballot:${ballotId}`, ballot);
 
-    // Create ballot link (proof of voting without linking to selections)
     const ballotLink = {
       id: crypto.randomUUID(),
       election_id: electionId,
@@ -984,7 +948,6 @@ app.post('/make-server-b7b6fbd4/elections/:id/cast-vote', async (c) => {
 
     await kv.set(`ballot:link:${electionId}:${user.id}`, ballotLink);
 
-    // Audit trail
     const auditEntry = {
       id: crypto.randomUUID(),
       ballot_id: ballotId,
@@ -1025,7 +988,6 @@ app.get('/make-server-b7b6fbd4/elections/:id/results', async (c) => {
       isCreator = user && user.id === election.creator_id;
     }
 
-    // Check if election has ended or if user is creator
     const now = new Date();
     const endsAt = new Date(election.ends_at);
     const hasEnded = now > endsAt;
@@ -1034,11 +996,9 @@ app.get('/make-server-b7b6fbd4/elections/:id/results', async (c) => {
       return c.json({ error: 'Results not available yet' }, 403);
     }
 
-    // Get all ballots for this election
     const allBallots = await kv.getByPrefix(`ballot:`);
     const electionBallots = allBallots.filter((b) => b.election_id === electionId && b.id);
 
-    // Count votes by position and candidate
     const results = {};
     let totalVotes = 0;
 
@@ -1065,13 +1025,11 @@ app.get('/make-server-b7b6fbd4/elections/:id/results', async (c) => {
       }
     }
 
-    // Get eligibility count
     const eligibilityRecords = await kv.getByPrefix(`eligibility:${electionId}:`);
     const eligibleVoters = eligibilityRecords.filter(
       (e) => e.election_id === electionId && (e.status === 'approved' || e.status === 'preapproved')
     ).length;
 
-    // Format results with candidate details
     const formattedResults = {};
 
     for (const positionId of election.positions) {
@@ -1100,7 +1058,6 @@ app.get('/make-server-b7b6fbd4/elections/:id/results', async (c) => {
         });
       }
 
-      // Sort by votes descending
       formattedResults[positionId].candidates.sort((a, b) => b.votes - a.votes);
     }
 

@@ -46,7 +46,7 @@
   "includeVersion": true,
   "categorizeByGroup": true,
   "theme": "default",
-  "plugin":  ["typedoc-plugin-markdown"],
+  "plugin": ["typedoc-plugin-markdown"],
   "tsconfig": "tsconfig.json",
   "externalSymbolLinkMappings": {
     "@types/node": {

@@ -10,6 +10,7 @@ import {
   handleApiError,
   createUnauthorizedError,
   createNotFoundError,
+  createErrorResponse,
 } from '@/utils/api/errors';
 import * as kv from '@/utils/supabase/kvStore';
 import { getAnonServerClient } from '@/utils/supabase/clients';
@@ -97,7 +98,25 @@ export async function POST(request: NextRequest) {
     });
 
     if (signInError || !sessionData.user || !sessionData.session) {
-      return createUnauthorizedError();
+      if (signInError) {
+        if (signInError.message?.toLowerCase().includes('invalid login credentials')) {
+          return createErrorResponse(
+            'Invalid email or password. Please check your credentials and try again.',
+            401
+          );
+        }
+        if (signInError.message?.toLowerCase().includes('email not confirmed')) {
+          return createErrorResponse('Please verify your email address before logging in.', 401);
+        }
+        if (signInError.message?.toLowerCase().includes('user not found')) {
+          return createErrorResponse('No account found with this email address.', 401);
+        }
+        return createErrorResponse(
+          signInError.message || 'Login failed. Please check your credentials.',
+          401
+        );
+      }
+      return createErrorResponse('Login failed. Please check your credentials and try again.', 401);
     }
 
     const userId = sessionData.user.id;
@@ -109,13 +128,14 @@ export async function POST(request: NextRequest) {
     const otp = generateOTP();
     const otpData = {
       otp,
+      email: userData.email,
       userId,
       created_at: Date.now(),
       expires_at: Date.now() + OTP_EXPIRY_MS,
       verified: false,
     };
 
-    await kv.set(`otp:${userId}`, otpData);
+    await kv.set(`otp:${userData.email}`, otpData);
 
     return Response.json({
       success: true,

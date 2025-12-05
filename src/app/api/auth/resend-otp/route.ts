@@ -90,13 +90,14 @@ export async function POST(request: NextRequest) {
     const otp = generateOTP();
     const otpData = {
       otp,
+      email: userData.email,
       userId,
       created_at: Date.now(),
       expires_at: Date.now() + OTP_EXPIRY_MS,
       verified: false,
     };
 
-    await kv.set(`otp:${userId}`, otpData);
+    await kv.set(`otp:${userData.email}`, otpData);
 
     return Response.json({
       success: true,

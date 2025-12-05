@@ -75,10 +75,7 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
  * });
  * ```
  */
-function customRender(
-  ui: ReactElement,
-  options?: CustomRenderOptions
-): RenderResult {
+function customRender(ui: ReactElement, options?: CustomRenderOptions): RenderResult {
   const { wrapper: Wrapper = AllProviders, ...restOptions } = options || {};
 
   return render(ui, {
@@ -87,12 +84,8 @@ function customRender(
   });
 }
 
-// Re-export everything from React Testing Library
 export * from '@testing-library/react';
 
-// Override the render export with our custom version
 export { customRender as render };
 
-// Export userEvent for convenience (commonly used with RTL)
 export { default as userEvent } from '@testing-library/user-event';
-

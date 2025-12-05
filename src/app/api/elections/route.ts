@@ -93,7 +93,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // If token is provided, get user's elections
     if (token) {
       let userId: string | null = null;
 

@@ -83,9 +83,7 @@ export interface MockContractOptions {
  * });
  * ```
  */
-export function createMockTransaction(
-  options?: MockTransactionOptions
-): MockTransaction {
+export function createMockTransaction(options?: MockTransactionOptions): MockTransaction {
   const {
     hash = '0xabc123def456789',
     waitResult = {},
@@ -149,4 +147,3 @@ export function createMockContract(options?: MockContractOptions): MockContract 
  * Useful for TypeScript type checking in tests.
  */
 export type { MockContract as MockBlockchainContract };
-

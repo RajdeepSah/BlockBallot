@@ -81,7 +81,7 @@ export function Verify2FA({ email, onSuccess, onBack }: Verify2FAProps) {
 
   return (
     <AuthLayout>
-      <Card className={`w-full max-w-md page-card ${isSlidingOut ? 'slide-out' : ''}`}>
+      <Card className={`page-card w-full max-w-md ${isSlidingOut ? 'slide-out' : ''}`}>
         <CardHeader className="space-y-1 text-center">
           <div className="mb-4 flex justify-center">
             <div className="rounded-full bg-indigo-600 p-3">

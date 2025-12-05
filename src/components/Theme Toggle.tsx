@@ -1,13 +1,10 @@
-
-
- 
 'use client';
- 
+
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
- 
+
 /**
  * Theme toggle component that switches between light and dark modes.
  * Shows a loading state while the theme is being determined.
@@ -17,12 +14,11 @@ import { Button } from './ui/button';
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
- 
-  // Prevent hydration mismatch
+
   useEffect(() => {
     setMounted(true);
   }, []);
- 
+
   if (!mounted) {
     return (
       <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -30,7 +26,7 @@ export function ThemeToggle() {
       </Button>
     );
   }
- 
+
   return (
     <Button
       variant="ghost"
@@ -45,5 +41,3 @@ export function ThemeToggle() {
     </Button>
   );
 }
- 
- 

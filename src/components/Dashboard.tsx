@@ -101,13 +101,13 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
   const participatingElections = elections.filter((e) => e.creator_id !== user?.id);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 page-container">
+    <div className="page-container min-h-screen bg-gray-50 dark:bg-gray-900">
       <WelcomeGuide />
-      <div className="border-b bg-white dark:bg-gray-800 dark:border-gray-700">
+      <div className="border-b bg-white dark:border-gray-700 dark:bg-gray-800">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="rounded-lg bg-gray-100 dark:bg-gray-700 p-2">
+              <div className="rounded-lg bg-gray-100 p-2 dark:bg-gray-700">
                 <Logo size="sm" className="h-12 w-12" />
               </div>
               <div>
@@ -206,7 +206,7 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
                           {new Date(election.starts_at).toLocaleDateString()}
                         </div>
                         <div className="flex items-center">
-                          <span className="rounded bg-gray-100 dark:bg-gray-700 px-2 py-1 text-xs">
+                          <span className="rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-700">
                             Code: <strong>{election.code}</strong>
                           </span>
                         </div>
@@ -286,7 +286,7 @@ export function Dashboard({ onCreateElection, onViewElection, onManageElection }
         {!loading && elections.length === 0 && (
           <Card className="py-12 text-center">
             <CardContent>
-              <Logo size="lg" className="mx-auto mb-4 opacity-50 h-28 w-28" />
+              <Logo size="lg" className="mx-auto mb-4 h-28 w-28 opacity-50" />
               <h3 className="mb-2 text-xl dark:text-white">No Elections Yet</h3>
               <p className="mb-6 text-gray-600 dark:text-gray-400">
                 Create your first election or join one using a code

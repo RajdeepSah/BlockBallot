@@ -29,7 +29,6 @@ function extractProjectId(): string {
 
   try {
     const url = new URL(supabaseUrl);
-    // Extract project ID from hostname (e.g., "abc123.supabase.co" -> "abc123")
     const hostname = url.hostname;
     const match = hostname.match(/^([^.]+)\.supabase\.co$/);
 

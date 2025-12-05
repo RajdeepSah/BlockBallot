@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
         const tally: bigint = await contract.getVoteCount(positionName, candidateName);
         candidateTallies.push({
           name: candidateName,
-          votes: tally.toString(), // Convert BigInt to string
+          votes: tally.toString(),
         });
       }
 

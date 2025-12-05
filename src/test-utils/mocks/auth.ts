@@ -118,4 +118,3 @@ export function createMockAuthenticatedFetch(responseData: unknown = {}, status:
     })
   ) as jest.MockedFunction<typeof import('@/utils/auth/errorHandler').authenticatedFetch>;
 }
-

@@ -11,7 +11,14 @@
  */
 
 import { Election, AccessRequest } from '@/types/election';
-import { RegisterData, LoginData, Verify2FAData, ResendOTPData, VoteSelections, LoginResponse } from '@/types/api';
+import {
+  RegisterData,
+  LoginData,
+  Verify2FAData,
+  ResendOTPData,
+  VoteSelections,
+  LoginResponse,
+} from '@/types/api';
 import { createMockElection, createMockAccessRequest } from './data';
 
 /**
@@ -67,7 +74,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
      * Mock implementation of `api.register`.
      * Returns a successful registration response by default.
      * Uses RegisterData type for parameter validation via validateRegisterData helper.
-     * 
+     *
      * @param data - Registration data (RegisterData type)
      * @internal
      */
@@ -80,7 +87,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
      * Mock implementation of `api.login`.
      * Returns a login response requiring 2FA by default.
      * Uses LoginData type for parameter validation via validateLoginData helper.
-     * 
+     *
      * @param data - Login credentials (LoginData type)
      * @internal
      */
@@ -94,7 +101,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
      * Mock implementation of `api.verify2FA`.
      * Returns successful verification with tokens by default.
      * Uses Verify2FAData type for parameter validation via validateVerify2FAData helper.
-     * 
+     *
      * @param data - 2FA verification data (Verify2FAData type)
      * @internal
      */
@@ -108,7 +115,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
      * Mock implementation of `api.resendOTP`.
      * Returns successful resend confirmation by default.
      * Uses ResendOTPData type for parameter validation via validateResendOTPData helper.
-     * 
+     *
      * @param data - OTP resend data (ResendOTPData type)
      * @internal
      */
@@ -132,14 +139,18 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
      * Returns a mock election by default.
      * @internal
      */
-    getElection: jest.fn().mockResolvedValue(defaultElection) as jest.MockedFunction<typeof import('@/utils/api').api.getElection>,
+    getElection: jest.fn().mockResolvedValue(defaultElection) as jest.MockedFunction<
+      typeof import('@/utils/api').api.getElection
+    >,
 
     /**
      * Mock implementation of `api.searchElections`.
      * Returns an array with the default mock election by default.
      * @internal
      */
-    searchElections: jest.fn().mockResolvedValue([defaultElection]) as jest.MockedFunction<typeof import('@/utils/api').api.searchElections>,
+    searchElections: jest.fn().mockResolvedValue([defaultElection]) as jest.MockedFunction<
+      typeof import('@/utils/api').api.searchElections
+    >,
 
     /**
      * Mock implementation of `api.uploadEligibility`.
@@ -210,7 +221,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
      * Mock implementation of `api.castVote`.
      * Returns successful vote receipt by default.
      * Uses VoteSelections type for parameter validation via validateVoteSelections helper.
-     * 
+     *
      * @internal
      */
     castVote: jest.fn().mockResolvedValue({
@@ -228,4 +239,3 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
  * Useful for TypeScript type checking in tests.
  */
 export type MockApi = ReturnType<typeof createMockApi>;
-

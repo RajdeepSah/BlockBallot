@@ -66,10 +66,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { id: electionId } = await params;
     const authHeader = request.headers.get('Authorization');
 
-    // Authenticate user
     const user = await authenticateUser(authHeader);
 
-    // Get user data from KV store
     const userData = await kv.get<UserRecord>(`user:${user.id}`);
     if (!userData) {
       return createNotFoundError('User');

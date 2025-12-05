@@ -85,4 +85,3 @@ export function createMockToast() {
  * Useful for TypeScript type checking in tests.
  */
 export type MockToast = ReturnType<typeof createMockToast>;
-

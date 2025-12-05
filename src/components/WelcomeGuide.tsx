@@ -47,7 +47,7 @@ export function WelcomeGuide() {
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-3">
-              <div className="rounded-lg bg-gray-100 dark:bg-gray-700 p-2">
+              <div className="rounded-lg bg-gray-100 p-2 dark:bg-gray-700">
                 <Logo size="sm" className="h-12 w-12" />
               </div>
               <div>
@@ -63,12 +63,10 @@ export function WelcomeGuide() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-
           <div className="space-y-4">
-
             <div className="space-y-4">
-              <div className="flex items-start space-x-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 p-3">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 dark:bg-blue-500 text-sm text-white">
+              <div className="flex items-start space-x-3 rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm text-white dark:bg-blue-500">
                   1
                 </div>
                 <div className="flex-1">
@@ -80,8 +78,8 @@ export function WelcomeGuide() {
                 <Search className="mt-1 h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
 
-              <div className="flex items-start space-x-3 rounded-lg bg-green-50 dark:bg-green-900/20 p-3">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-600 dark:bg-green-500 text-sm text-white">
+              <div className="flex items-start space-x-3 rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-600 text-sm text-white dark:bg-green-500">
                   2
                 </div>
                 <div className="flex-1">
@@ -93,8 +91,8 @@ export function WelcomeGuide() {
                 <UserPlus className="mt-1 h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
 
-              <div className="flex items-start space-x-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 p-3">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-purple-600 dark:bg-purple-500 text-sm text-white">
+              <div className="flex items-start space-x-3 rounded-lg bg-purple-50 p-3 dark:bg-purple-900/20">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-purple-600 text-sm text-white dark:bg-purple-500">
                   3
                 </div>
                 <div className="flex-1">

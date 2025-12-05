@@ -55,7 +55,7 @@ interface CreateElectionProps {
 export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
   const { token } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(''); // api error messages
+  const [error, setError] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [startsAt, setStartsAt] = useState(currentLocalTime(new Date()));

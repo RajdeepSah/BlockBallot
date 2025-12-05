@@ -18,7 +18,12 @@ import { authenticateUser } from '@/utils/api/auth';
 import { createClient } from '@/utils/supabase/server';
 import * as kv from '@/utils/supabase/kvStore';
 import type { VoteInput, VoteResponse } from '@/types/blockchain';
-import { UserRecord, EligibilityRecord, BallotLinkRecord, VoteTransactionRecord } from '@/types/kv-records';
+import {
+  UserRecord,
+  EligibilityRecord,
+  BallotLinkRecord,
+  VoteTransactionRecord,
+} from '@/types/kv-records';
 
 /**
  * POST /api/vote

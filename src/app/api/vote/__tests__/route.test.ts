@@ -13,11 +13,7 @@ import { NextRequest } from 'next/server';
 import { POST } from '../route';
 import type { Contract } from 'ethers';
 import type { VoteInput } from '@/types/blockchain';
-import type {
-  UserRecord,
-  EligibilityRecord,
-  BallotLinkRecord,
-} from '@/types/kv-records';
+import type { UserRecord, EligibilityRecord, BallotLinkRecord } from '@/types/kv-records';
 import {
   createMockContract,
   createMockUserRecord,
@@ -167,7 +163,9 @@ describe('POST /api/vote', () => {
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
       mockCreateWritableContract.mockReturnValue(mockContract as unknown as Contract);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(
+        mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>
+      );
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -272,7 +270,9 @@ describe('POST /api/vote', () => {
       const responseData = await response.json();
 
       expect(response.status).toBe(400);
-      expect(responseData.error).toBe("Either 'position' and 'candidate' or 'votes' array is required.");
+      expect(responseData.error).toBe(
+        "Either 'position' and 'candidate' or 'votes' array is required."
+      );
     });
   });
 
@@ -305,7 +305,9 @@ describe('POST /api/vote', () => {
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(
+        mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>
+      );
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: null,
@@ -339,7 +341,9 @@ describe('POST /api/vote', () => {
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(
+        mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>
+      );
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -373,7 +377,9 @@ describe('POST /api/vote', () => {
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(
+        mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>
+      );
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -407,7 +413,9 @@ describe('POST /api/vote', () => {
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(
+        mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>
+      );
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -447,7 +455,9 @@ describe('POST /api/vote', () => {
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(
+        mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>
+      );
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -495,7 +505,9 @@ describe('POST /api/vote', () => {
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(
+        mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>
+      );
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -547,7 +559,9 @@ describe('POST /api/vote', () => {
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(
+        mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>
+      );
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -601,7 +615,9 @@ describe('POST /api/vote', () => {
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(
+        mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>
+      );
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -655,7 +671,9 @@ describe('POST /api/vote', () => {
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(
+        mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>
+      );
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -710,15 +728,15 @@ describe('POST /api/vote', () => {
       const mockSupabaseClient = createMockSupabaseClient();
 
       // Make castVotes throw an error
-      mockContract.castVotes.mockRejectedValue(
-        new Error('Transaction failed: insufficient gas')
-      );
+      mockContract.castVotes.mockRejectedValue(new Error('Transaction failed: insufficient gas'));
 
       mockAuthenticateUser.mockResolvedValue({ id: mockUserId, email: mockUserEmail });
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
       mockCreateWritableContract.mockReturnValue(mockContract as unknown as Contract);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(
+        mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>
+      );
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -776,7 +794,9 @@ describe('POST /api/vote', () => {
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
       mockCreateWritableContract.mockReturnValue(mockContract as unknown as Contract);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(
+        mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>
+      );
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -841,7 +861,9 @@ describe('POST /api/vote', () => {
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
       mockCreateWritableContract.mockReturnValue(mockContract as unknown as Contract);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(
+        mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>
+      );
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -904,7 +926,9 @@ describe('POST /api/vote', () => {
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
       mockCreateWritableContract.mockReturnValue(mockContract as unknown as Contract);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(
+        mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>
+      );
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -964,7 +988,9 @@ describe('POST /api/vote', () => {
       mockValidateContractAddress.mockReturnValue(undefined);
       mockValidateVotesArray.mockReturnValue(undefined);
       mockCreateWritableContract.mockReturnValue(mockContract as unknown as Contract);
-      mockCreateClient.mockResolvedValue(mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockCreateClient.mockResolvedValue(
+        mockSupabaseClient as unknown as Awaited<ReturnType<typeof createClient>>
+      );
       const mockQueryBuilder = mockSupabaseClient.from();
       mockQueryBuilder.single.mockResolvedValue({
         data: mockElection,
@@ -994,4 +1020,3 @@ describe('POST /api/vote', () => {
     });
   });
 });
-

@@ -28,7 +28,6 @@ const requiredEnvVars = {
   ORGANIZER_PRIVATE_KEY: process.env.ORGANIZER_PRIVATE_KEY,
 } as const;
 
-// Validate required environment variables
 for (const [key, value] of Object.entries(requiredEnvVars)) {
   if (!value) {
     throw new Error(

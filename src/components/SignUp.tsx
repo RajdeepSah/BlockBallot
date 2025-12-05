@@ -88,7 +88,7 @@ export function SignUp({ onToggleMode, onSuccess: _onSuccess }: SignUpProps) {
   if (success) {
     return (
       <AuthLayout>
-        <Card className={`w-full max-w-md page-card ${isSlidingOut ? 'slide-out' : ''}`}>
+        <Card className={`page-card w-full max-w-md ${isSlidingOut ? 'slide-out' : ''}`}>
           <CardContent className="pt-6">
             <div className="space-y-4 text-center">
               <div className="flex justify-center">
@@ -119,10 +119,10 @@ export function SignUp({ onToggleMode, onSuccess: _onSuccess }: SignUpProps) {
 
   return (
     <AuthLayout>
-      <Card className={`w-full max-w-md page-card ${isSlidingOut ? 'slide-out' : ''}`}>
+      <Card className={`page-card w-full max-w-md ${isSlidingOut ? 'slide-out' : ''}`}>
         <CardHeader className="space-y-1 text-center">
           <div className="mb-4 flex justify-center">
-            <div className="rounded-full bg-gray-100 dark:bg-gray-700 p-4">
+            <div className="rounded-full bg-gray-100 p-4 dark:bg-gray-700">
               <Logo size="md" className="h-16 w-16" />
             </div>
           </div>
@@ -226,7 +226,7 @@ export function SignUp({ onToggleMode, onSuccess: _onSuccess }: SignUpProps) {
               <button
                 type="button"
                 onClick={handleToggleMode}
-                className="text-indigo-600 dark:text-indigo-400 hover:underline"
+                className="text-indigo-600 hover:underline dark:text-indigo-400"
               >
                 Sign In
               </button>

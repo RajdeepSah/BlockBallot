@@ -175,7 +175,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Determine election status based on current time and election dates
     const now = new Date();
     const startsAt = new Date(electionPayload.starts_at);
     const endsAt = new Date(electionPayload.ends_at);

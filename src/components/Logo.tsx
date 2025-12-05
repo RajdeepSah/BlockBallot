@@ -26,7 +26,7 @@ const sizeDimensions = {
 
 /**
  * Reusable Logo component for BlockBallot branding.
- * 
+ *
  * @param props - Component props
  * @param props.className - Additional CSS classes
  * @param props.size - Predefined size variant (sm, md, lg, xl)
@@ -38,13 +38,12 @@ export function Logo({ className = '', size }: LogoProps) {
   const dimensions = size ? sizeDimensions[size] : { width: 64, height: 64 };
 
   return (
-    <Image 
-      src="/logoicon.png" 
-      alt="BlockBallot Logo" 
+    <Image
+      src="/logoicon.png"
+      alt="BlockBallot Logo"
       width={dimensions.width}
       height={dimensions.height}
       className={combinedClassName}
     />
   );
 }
-

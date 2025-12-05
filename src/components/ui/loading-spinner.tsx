@@ -35,7 +35,9 @@ export function LoadingSpinner({
 
   if (fullScreen) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">{content}</div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+        {content}
+      </div>
     );
   }
 
