@@ -10,16 +10,50 @@
     "**/*.spec.tsx",
     "node_modules/**",
     ".next/**",
-    "src/supabase/functions/**"
+    "src/supabase/functions/**",
+    "src/**/__tests__/*.test.ts",
+    "src/**/__tests__/*.test.tsx",
+    "src/test-utils/**"
   ],
   "excludePrivate": true,
   "excludeProtected": false,
-  "excludeInternal": false,
+  "excludeInternal": true,
+  "intentionallyNotExported": [
+    "ABIFragment",
+    "AdminPanelProps",
+    "ApiOptions",
+    "AuthContextType",
+    "AuthLayoutProps",
+    "CarouselProps",
+    "ContractArtifact",
+    "CreateElectionProps",
+    "DashboardProps",
+    "ElectionViewProps",
+    "LoadingSpinnerProps",
+    "LogoProps",
+    "OtpEmailOptions",
+    "PageContainerProps",
+    "PaginationLinkProps",
+    "ResultsViewProps",
+    "SidebarContextProps",
+    "SignInProps",
+    "SignUpProps",
+    "THEMES",
+    "Verify2FAProps"
+  ],
   "readme": "README.md",
   "name": "BlockBallot API Documentation",
   "includeVersion": true,
   "categorizeByGroup": true,
   "theme": "default",
-  "plugin": [],
-  "tsconfig": "tsconfig.json"
+  "plugin":  ["typedoc-plugin-markdown"],
+  "tsconfig": "tsconfig.json",
+  "externalSymbolLinkMappings": {
+    "@types/node": {
+      "__global.module": "#"
+    },
+    "react-hook-form": {
+      "useFormContext": "#"
+    }
+  }
 }

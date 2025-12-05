@@ -9,26 +9,34 @@ sequenceDiagram
     participant VerifyOTP
     participant MeAPI
     
+    Note over User,MeAPI: Login Flow with 2FA
+    
     User->>SignIn: Enter email/password
     SignIn->>AuthContext: login(email, password)
     AuthContext->>LoginAPI: POST /api/auth/login
     LoginAPI->>SupabaseAuth: signInWithPassword()
     SupabaseAuth-->>LoginAPI: Session + User
-    LoginAPI->>KVStore: Get user data (user:userId)
+    LoginAPI->>KVStore: Get user data (user:{userId})
     KVStore-->>LoginAPI: User record
-    LoginAPI->>KVStore: Store OTP (otp:userId)
+    LoginAPI->>KVStore: Store OTP (otp:{userId})
+    Note over LoginAPI,KVStore: Plain-text OTP storage:<br/>{otp, userId, created_at, expires_at, verified}
     LoginAPI-->>AuthContext: requires2FA: true, accessToken, refreshToken, devOTP
     AuthContext->>AuthContext: Store tempToken in localStorage
     AuthContext-->>SignIn: 2FA required
     SignIn->>User: Show 2FA form
     
     User->>Verify2FA: Enter OTP
-    Verify2FA->>VerifyOTP: POST /api/verify-otp
-    VerifyOTP->>KVStore: Get OTP record
-    VerifyOTP->>VerifyOTP: Verify OTP hash
-    KVStore-->>VerifyOTP: OTP valid
-    VerifyOTP->>KVStore: Delete OTP record
-    VerifyOTP-->>Verify2FA: Success
+    Verify2FA->>AuthContext: verify2FA(otp)
+    AuthContext->>VerifyOTP: POST /api/verify-otp {email, otp}
+    Note over VerifyOTP,KVStore: KNOWN ISSUE: verify-otp expects<br/>otp:{email} with hashed OTP,<br/>but login stored at otp:{userId}<br/>with plain-text OTP
+    VerifyOTP->>KVStore: Get OTP record (otp:{email})
+    alt OTP Found (send-otp flow)
+        VerifyOTP->>VerifyOTP: Verify OTP hash with timing-safe compare
+        VerifyOTP->>KVStore: Delete OTP record
+        VerifyOTP-->>Verify2FA: Success
+    else OTP Not Found (login flow mismatch)
+        VerifyOTP-->>Verify2FA: 404 - No active verification request
+    end
     
     Verify2FA->>AuthContext: Get tempToken from localStorage
     Verify2FA->>MeAPI: GET /api/auth/me (with tempToken)
@@ -37,4 +45,3 @@ sequenceDiagram
     MeAPI-->>Verify2FA: User data
     Verify2FA->>AuthContext: Store token & user in localStorage
     AuthContext-->>User: Authenticated
-

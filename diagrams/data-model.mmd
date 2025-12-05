@@ -2,12 +2,13 @@ erDiagram
     SUPABASE_AUTH_USERS ||--o{ KV_USER_RECORDS : "maps to"
     KV_USER_RECORDS ||--o{ KV_ELIGIBILITY : "has"
     KV_USER_RECORDS ||--o{ KV_ACCESS_REQUESTS : "makes"
-    KV_USER_RECORDS ||--o{ KV_BALLOT_LINKS : "has"
+    KV_USER_RECORDS ||--o{ KV_VOTE_FLAGS : "has"
     KV_USER_RECORDS ||--o{ KV_OTP_RECORDS : "has"
     
     SUPABASE_ELECTIONS ||--o{ KV_ELIGIBILITY : "has"
     SUPABASE_ELECTIONS ||--o{ KV_ACCESS_REQUESTS : "receives"
-    SUPABASE_ELECTIONS ||--o{ KV_BALLOT_LINKS : "contains"
+    SUPABASE_ELECTIONS ||--o{ KV_VOTE_FLAGS : "contains"
+    SUPABASE_ELECTIONS ||--o{ KV_VOTE_TX_REGISTRY : "contains"
     SUPABASE_ELECTIONS ||--|| BLOCKCHAIN_CONTRACTS : "deployed as"
     
     BLOCKCHAIN_CONTRACTS ||--o{ BLOCKCHAIN_VOTES : "stores"
@@ -35,42 +36,49 @@ erDiagram
     }
     
     KV_USER_RECORDS {
-        string key PK "user:userId"
+        string key PK "user:{userId}"
         json value "id, name, email, phone, twofa_method, created_at"
     }
     
     KV_EMAIL_MAPPING {
-        string key PK "user:email:email"
+        string key PK "user:email:{email}"
         string value "userId"
     }
     
     KV_ELIGIBILITY {
-        string key PK "eligibility:electionId:email"
+        string key PK "eligibility:{electionId}:{email}"
         json value "id, election_id, contact, user_id, status, created_at"
     }
     
     KV_ACCESS_REQUESTS {
-        string key PK "access_request:electionId:userId"
+        string key PK "access_request:{electionId}:{userId}"
         json value "id, election_id, user_id, contact, status, created_at, decided_by, decided_at"
     }
     
-    KV_BALLOT_LINKS {
-        string key PK "ballot:link:electionId:userId"
-        json value "tx_hash, created_at"
+    KV_VOTE_FLAGS {
+        string key PK "vote:user:{electionId}:{userId}"
+        json value "status, created_at"
+        string note "NO tx_hash - preserves anonymity"
+    }
+    
+    KV_VOTE_TX_REGISTRY {
+        string key PK "vote:tx:{electionId}:{txHash}"
+        json value "timestamp, electionId"
+        string note "NO userId - anonymous transaction registry"
     }
     
     KV_OTP_RECORDS {
-        string key PK "otp:userId"
-        json value "otp, userId, created_at, expires_at, verified"
+        string key PK "otp:{email}"
+        json value "email, otpHash, salt, expiresAt, createdAt, attemptCount, lastSentAt"
     }
     
     KV_INVITE_HISTORY {
-        string key PK "invite_history:electionId"
+        string key PK "invite_history:{electionId}"
         json value "emails: {email: timestamp}"
     }
     
     KV_RATE_LIMITS {
-        string key PK "invite_rate:electionId"
+        string key PK "invite_rate:{electionId}"
         json value "lastSentAt"
     }
     
@@ -87,4 +95,3 @@ erDiagram
         string candidateName
         uint256 voteCount
     }
-

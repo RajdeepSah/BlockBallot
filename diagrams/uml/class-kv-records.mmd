@@ -5,7 +5,7 @@ classDiagram
         +string? name
         +string? phone
         +string? twofa_method
-        +string created_at
+        +string? created_at
     }
     
     class EligibilityRecord {
@@ -29,19 +29,27 @@ classDiagram
     }
     
     class BallotLinkRecord {
-        +string? ballot_id
         +string status
         +string created_at
-        +string? tx_hash
     }
+    note for BallotLinkRecord "NO tx_hash field - preserves vote anonymity.\nStored at vote:user:{electionId}:{userId}"
+    
+    class VoteTransactionRecord {
+        +string timestamp
+        +string electionId
+    }
+    note for VoteTransactionRecord "Anonymous transaction registry.\nStored at vote:tx:{electionId}:{txHash}\nNO userId - cannot link votes to users"
     
     class OtpRecord {
-        +string otp
-        +number created_at
-        +number expires_at
-        +boolean verified
-        +string userId
+        +string email
+        +string otpHash
+        +string salt
+        +number expiresAt
+        +number createdAt
+        +number attemptCount
+        +number lastSentAt
     }
+    note for OtpRecord "Stored at otp:{email}\nUses HMAC-SHA256 hashing"
     
     class InviteHistoryRecord {
         +Record~string, number~ emails
@@ -53,6 +61,5 @@ classDiagram
     
     UserRecord "1" --> "0..*" EligibilityRecord : has
     UserRecord "1" --> "0..*" AccessRequestRecord : makes
-    UserRecord "1" --> "0..1" BallotLinkRecord : has
+    UserRecord "1" --> "0..1" BallotLinkRecord : has vote flag
     UserRecord "1" --> "0..1" OtpRecord : has
-
