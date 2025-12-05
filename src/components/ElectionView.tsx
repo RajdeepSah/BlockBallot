@@ -318,7 +318,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
         </Alert>
       )}
 
-      {}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -342,7 +341,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
         </AlertDialogContent>
       </AlertDialog>
 
-      {}
       <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
         <DialogContent>
           <DialogHeader>

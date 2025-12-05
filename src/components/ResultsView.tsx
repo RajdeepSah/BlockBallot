@@ -328,8 +328,6 @@ export function ResultsView({ electionId, onBack, onManage }: ResultsViewProps) 
           );
         }
       )}
-
-      {}
       {isCreator && (
         <Dialog open={eligibleDialogOpen} onOpenChange={setEligibleDialogOpen}>
           <DialogContent className="max-w-lg">
