@@ -23,7 +23,10 @@ const config = {
   },
   // This is to make sure Hardhat's artifacts are in a known location
   paths: {
+    sources: './contracts',
     artifacts: './artifacts',
+    cache: './cache',
+    tests: './contracts/__tests__',
   },
 };
 
