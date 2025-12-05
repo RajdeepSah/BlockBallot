@@ -11,6 +11,10 @@ interface User {
   phone?: string;
 }
 
+/**
+ * Authentication context type definition.
+ * @internal
+ */
 interface AuthContextType {
   user: User | null;
   token: string | null;

@@ -1,6 +1,7 @@
 /**
  * @module test-utils/mocks/api
  * @category Testing
+ * @internal
  *
  * Mock implementations of the API client for testing.
  *
@@ -68,6 +69,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
      * Uses RegisterData type for parameter validation via validateRegisterData helper.
      * 
      * @param data - Registration data (RegisterData type)
+     * @internal
      */
     register: jest.fn().mockResolvedValue({
       userId: 'user-id-123',
@@ -80,6 +82,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
      * Uses LoginData type for parameter validation via validateLoginData helper.
      * 
      * @param data - Login credentials (LoginData type)
+     * @internal
      */
     login: jest.fn().mockResolvedValue({
       requires2FA: true,
@@ -93,6 +96,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
      * Uses Verify2FAData type for parameter validation via validateVerify2FAData helper.
      * 
      * @param data - 2FA verification data (Verify2FAData type)
+     * @internal
      */
     verify2FA: jest.fn().mockResolvedValue({
       accessToken: 'test-access-token',
@@ -106,6 +110,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
      * Uses ResendOTPData type for parameter validation via validateResendOTPData helper.
      * 
      * @param data - OTP resend data (ResendOTPData type)
+     * @internal
      */
     resendOTP: jest.fn().mockResolvedValue({
       message: 'OTP sent successfully',
@@ -114,6 +119,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
     /**
      * Mock implementation of `api.getMe`.
      * Returns mock user data by default.
+     * @internal
      */
     getMe: jest.fn().mockResolvedValue({
       id: 'user-id-123',
@@ -124,18 +130,21 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
     /**
      * Mock implementation of `api.getElection`.
      * Returns a mock election by default.
+     * @internal
      */
     getElection: jest.fn().mockResolvedValue(defaultElection) as jest.MockedFunction<typeof import('@/utils/api').api.getElection>,
 
     /**
      * Mock implementation of `api.searchElections`.
      * Returns an array with the default mock election by default.
+     * @internal
      */
     searchElections: jest.fn().mockResolvedValue([defaultElection]) as jest.MockedFunction<typeof import('@/utils/api').api.searchElections>,
 
     /**
      * Mock implementation of `api.uploadEligibility`.
      * Returns successful upload response by default.
+     * @internal
      */
     uploadEligibility: jest.fn().mockResolvedValue({
       success: true,
@@ -146,6 +155,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
     /**
      * Mock implementation of `api.checkEligibility`.
      * Returns eligible status by default.
+     * @internal
      */
     checkEligibility: jest.fn().mockResolvedValue({
       eligible: true,
@@ -155,6 +165,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
     /**
      * Mock implementation of `api.requestAccess`.
      * Returns pending access request by default.
+     * @internal
      */
     requestAccess: jest.fn().mockResolvedValue({
       requestId: 'request-id-123',
@@ -164,6 +175,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
     /**
      * Mock implementation of `api.getAccessRequests`.
      * Returns array with default mock access request by default.
+     * @internal
      */
     getAccessRequests: jest.fn().mockResolvedValue({
       requests: [defaultAccessRequest],
@@ -172,6 +184,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
     /**
      * Mock implementation of `api.updateAccessRequest`.
      * Returns updated access request by default.
+     * @internal
      */
     updateAccessRequest: jest.fn().mockResolvedValue({
       ...defaultAccessRequest,
@@ -181,6 +194,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
     /**
      * Mock implementation of `api.getResults`.
      * Returns mock election results by default.
+     * @internal
      */
     getResults: jest.fn().mockResolvedValue({
       election_id: defaultElection.id!,
@@ -197,9 +211,7 @@ export function createMockApi(overrides?: Partial<typeof import('@/utils/api').a
      * Returns successful vote receipt by default.
      * Uses VoteSelections type for parameter validation via validateVoteSelections helper.
      * 
-     * @param electionId - Election ID
-     * @param votes - Vote selections (VoteSelections type)
-     * @param token - Authentication token
+     * @internal
      */
     castVote: jest.fn().mockResolvedValue({
       receipt: 'tx-hash-123',

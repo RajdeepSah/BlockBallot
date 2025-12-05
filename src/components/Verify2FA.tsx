@@ -8,6 +8,10 @@ import { Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { AuthLayout } from './layouts/AuthLayout';
 
+/**
+ * Props for the Verify2FA component.
+ * @internal
+ */
 interface Verify2FAProps {
   email: string;
   onSuccess: () => void;

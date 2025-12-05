@@ -77,8 +77,7 @@ function generateOTP() {
  * - `500` - Server error
  *
  * @param request - Next.js request object containing login credentials
- * @returns JSON response with 2FA requirement, access token, and dev OTP
- * @throws Returns error response (400/401/404/500) if authentication fails
+ * @returns JSON response with 2FA requirement, access token, and dev OTP, or error response (400/401/404/500) if authentication fails
  *
  * @see POST /api/auth/verify-2fa to complete authentication
  * @category API Routes

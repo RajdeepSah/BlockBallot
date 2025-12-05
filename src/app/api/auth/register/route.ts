@@ -1,3 +1,8 @@
+/**
+ * @module app/api/auth/register/route
+ * @category API Routes
+ */
+
 import { NextRequest } from 'next/server';
 
 import { createValidationError, handleApiError } from '@/utils/api/errors';
@@ -8,17 +13,67 @@ import { getServiceRoleClient } from '@/utils/supabase/clients';
  * POST /api/auth/register
  *
  * Registers a new user account with email and password.
- * Creates user in Supabase Auth and stores user data in KV store.
  *
- * Request body:
- * - name: User's full name (required)
- * - email: User email address (required)
- * - password: User password, minimum 8 characters (required)
- * - phone: User phone number (optional)
+ * This endpoint:
+ * 1. Validates registration data (name, email, password)
+ * 2. Checks if email is already registered
+ * 3. Creates user in Supabase Auth
+ * 4. Stores user profile in KV store
+ * 5. Creates email-to-userId mapping for lookups
+ *
+ * ## Request
+ *
+ * **Body:**
+ * ```json
+ * {
+ *   "name": "John Doe",
+ *   "email": "john@example.com",
+ *   "password": "SecurePassword123!",
+ *   "phone": "+1234567890"
+ * }
+ * ```
+ *
+ * | Field | Type | Required | Description |
+ * |-------|------|----------|-------------|
+ * | name | string | Yes | User's full name |
+ * | email | string | Yes | User email address (must be unique) |
+ * | password | string | Yes | Password (minimum 8 characters) |
+ * | phone | string | No | User phone number |
+ *
+ * ## Response
+ *
+ * **Success (200):**
+ * ```json
+ * {
+ *   "success": true,
+ *   "message": "User registered successfully",
+ *   "userId": "user-uuid"
+ * }
+ * ```
+ *
+ * **Error Responses:**
+ * - `400` - Missing required fields, password too short, or email already registered
+ * - `500` - Server error or Supabase Auth failure
  *
  * @param request - Next.js request object containing registration data
- * @returns JSON response with success status and user ID
- * @throws Returns error response if registration fails, validation fails, or email already exists
+ * @returns JSON response with success status and user ID, or error response (400/500)
+ *
+ * @example
+ * ```typescript
+ * const response = await fetch('/api/auth/register', {
+ *   method: 'POST',
+ *   headers: { 'Content-Type': 'application/json' },
+ *   body: JSON.stringify({
+ *     name: 'John Doe',
+ *     email: 'john@example.com',
+ *     password: 'SecurePassword123!'
+ *   })
+ * });
+ * const { userId } = await response.json();
+ * ```
+ *
+ * @see POST /api/auth/login to login after registration
+ * @category API Routes
  */
 export async function POST(request: NextRequest) {
   try {

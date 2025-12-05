@@ -40,6 +40,10 @@ import {
 } from './ui/dialog';
 import { getEtherscanUrl } from '@/utils/blockchain/utils';
 
+/**
+ * Props for the ElectionView component.
+ * @internal
+ */
 interface ElectionViewProps {
   electionId: string;
   onBack: () => void;
@@ -233,11 +237,11 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
 
   if (!election) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 page-container">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 page-container">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-            <h3 className="mb-2 text-xl">Election Not Found</h3>
+            <h3 className="mb-2 text-xl text-gray-900 dark:text-white">Election Not Found</h3>
             <Button onClick={onBack}>Back to Dashboard</Button>
           </CardContent>
         </Card>

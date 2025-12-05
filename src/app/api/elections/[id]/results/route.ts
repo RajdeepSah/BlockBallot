@@ -1,3 +1,8 @@
+/**
+ * @module app/api/elections/[id]/results/route
+ * @category API Routes
+ */
+
 import { NextRequest } from 'next/server';
 
 import { authenticateUser } from '@/utils/api/auth';
@@ -19,6 +24,8 @@ import { getServiceRoleClient } from '@/utils/supabase/clients';
  * @param baseDelay - Base delay in milliseconds (default: 1000)
  * @returns The result of the function
  * @throws The last error if all retries fail
+ *
+ * @internal
  */
 async function retryWithBackoff<T>(
   fn: () => Promise<T>,
@@ -61,6 +68,8 @@ async function retryWithBackoff<T>(
  *
  * @param ms - Delay duration in milliseconds
  * @returns Promise that resolves after the delay
+ *
+ * @internal
  */
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -85,16 +94,67 @@ interface PositionRecord {
  * GET /api/elections/[id]/results
  *
  * Retrieves election results from the blockchain contract.
- * Results are only available to the election creator before the election ends,
- * and publicly available after the election ends.
  *
- * Headers:
- * - Authorization: Bearer token (optional, required for creator access before end)
+ * This endpoint queries the blockchain smart contract to get vote counts
+ * for each candidate. Results are:
+ * - **Before election ends**: Only visible to the election creator
+ * - **After election ends**: Publicly available to anyone
+ *
+ * ## Request
+ *
+ * **Path Parameters:**
+ * - `id` - Election UUID
+ *
+ * **Headers:**
+ * - `Authorization: Bearer <token>` (optional) - Required for creator access before election ends
+ *
+ * ## Response
+ *
+ * **Success (200):**
+ * ```json
+ * {
+ *   "election_id": "election-uuid",
+ *   "election_title": "Election Title",
+ *   "total_votes": 150,
+ *   "eligible_voters": 200,
+ *   "turnout_percentage": "75.00",
+ *   "results": {
+ *     "position-uuid": {
+ *       "position_name": "President",
+ *       "ballot_type": "single",
+ *       "candidates": [
+ *         {
+ *           "id": "candidate-uuid",
+ *           "name": "John Doe",
+ *           "votes": 80,
+ *           "percentage": "53.33"
+ *         }
+ *       ]
+ *     }
+ *   },
+ *   "has_ended": true
+ * }
+ * ```
+ *
+ * **Error Responses:**
+ * - `400` - Election contract address missing
+ * - `403` - Results not available yet (election ongoing, non-creator access)
+ * - `404` - Election not found
+ * - `500` - Server error or blockchain query failure
  *
  * @param request - Next.js request object
  * @param params - Route parameters containing election ID
- * @returns JSON response with election results including vote counts and percentages
- * @throws Returns error response if election not found, contract missing, or access denied
+ * @returns JSON response with election results, or error response (400/403/404/500)
+ *
+ * @example
+ * ```typescript
+ * const response = await fetch('/api/elections/election-uuid/results', {
+ *   headers: { Authorization: `Bearer ${token}` }
+ * });
+ * const results = await response.json();
+ * ```
+ *
+ * @category API Routes
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

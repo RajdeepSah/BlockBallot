@@ -12,6 +12,10 @@ type UseCarouselParameters = Parameters<typeof useEmblaCarousel>;
 type CarouselOptions = UseCarouselParameters[0];
 type CarouselPlugin = UseCarouselParameters[1];
 
+/**
+ * Carousel component props.
+ * @internal
+ */
 type CarouselProps = {
   opts?: CarouselOptions;
   plugins?: CarouselPlugin;
@@ -19,6 +23,10 @@ type CarouselProps = {
   setApi?: (api: CarouselApi) => void;
 };
 
+/**
+ * Carousel context props type.
+ * @internal
+ */
 type CarouselContextProps = {
   carouselRef: ReturnType<typeof useEmblaCarousel>[0];
   api: ReturnType<typeof useEmblaCarousel>[1];

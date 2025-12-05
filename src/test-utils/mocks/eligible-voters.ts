@@ -1,6 +1,7 @@
 /**
  * @module test-utils/mocks/eligible-voters
  * @category Testing
+ * @internal
  *
  * Mock implementations of eligible voters utilities for testing.
  *

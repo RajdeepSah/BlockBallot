@@ -39,11 +39,13 @@ const ARTIFACTS_PATH = path.join(
 
 /**
  * ABI fragment representing a contract function, event, or other element.
+ * @internal
  */
 type ABIFragment = Record<string, unknown>;
 
 /**
  * Contract artifact containing ABI and bytecode.
+ * @internal
  */
 interface ContractArtifact {
   abi: ABIFragment[];

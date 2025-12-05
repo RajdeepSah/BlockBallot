@@ -2,6 +2,10 @@
 
 import React from 'react';
 
+/**
+ * Props for the AuthLayout component.
+ * @internal
+ */
 interface AuthLayoutProps {
   children: React.ReactNode;
 }

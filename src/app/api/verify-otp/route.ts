@@ -1,3 +1,8 @@
+/**
+ * @module app/api/verify-otp/route
+ * @category API Routes
+ */
+
 import { NextResponse } from 'next/server';
 import {
   OTP_MAX_VERIFY_ATTEMPTS,
@@ -14,11 +19,57 @@ export const runtime = 'nodejs';
 
 /**
  * POST /api/verify-otp
+ *
  * Verifies an OTP code for email verification.
- * Enforces maximum attempt limits and expiration checks.
+ *
+ * Validates the OTP code using timing-safe comparison to prevent
+ * timing attacks. Enforces:
+ * - Maximum 5 verification attempts per OTP
+ * - 5-minute expiration window
+ *
+ * On successful verification, the OTP record is deleted to prevent reuse.
+ *
+ * ## Request
+ *
+ * **Body:**
+ * ```json
+ * {
+ *   "email": "user@example.com",
+ *   "otp": "123456"
+ * }
+ * ```
+ *
+ * ## Response
+ *
+ * **Success (200):**
+ * ```json
+ * {
+ *   "success": true
+ * }
+ * ```
+ *
+ * **Error Responses:**
+ * - `400` - Invalid email or OTP format
+ * - `401` - Invalid verification code
+ * - `404` - No active verification request found
+ * - `410` - Verification code expired
+ * - `429` - Too many invalid attempts
+ * - `500` - Server error
  *
  * @param request - Request object containing email and otp in JSON body
- * @returns JSON response with success status, or error response
+ * @returns JSON response with success status, or error response (400/401/404/410/429/500)
+ *
+ * @example
+ * ```typescript
+ * const response = await fetch('/api/verify-otp', {
+ *   method: 'POST',
+ *   headers: { 'Content-Type': 'application/json' },
+ *   body: JSON.stringify({ email: 'user@example.com', otp: '123456' })
+ * });
+ * ```
+ *
+ * @see POST /api/send-otp to request an OTP code
+ * @category API Routes
  */
 export async function POST(request: Request) {
   try {

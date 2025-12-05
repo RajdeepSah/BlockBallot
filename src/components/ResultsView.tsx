@@ -25,6 +25,10 @@ import { Election, ElectionResults, PositionResult, CandidateResult } from '@/ty
 import { LoadingSpinner } from './ui/loading-spinner';
 import { PageContainer } from './layouts/PageContainer';
 
+/**
+ * Props for the ResultsView component.
+ * @internal
+ */
 interface ResultsViewProps {
   electionId: string;
   onBack: () => void;

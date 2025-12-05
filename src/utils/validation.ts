@@ -165,10 +165,7 @@ export function validateVotesArray(votes: VoteInput[]): void {
  * - A `candidates` array with at least one candidate
  * - Each candidate has a non-empty `name` string
  *
- * @param position - The position input object to validate
- * @param position.name - Position name (must be non-empty string)
- * @param position.candidates - Array of candidate objects (must have at least one)
- * @param position.candidates[].name - Candidate name (must be non-empty string)
+ * @param position - The position input object to validate (must have `name` string and `candidates` array)
  * @throws {Error} If position is missing name, has no candidates, or any candidate is invalid
  *
  * @example

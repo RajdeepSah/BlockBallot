@@ -1,6 +1,7 @@
 /**
  * @module test-utils/mocks/notifications
  * @category Testing
+ * @internal
  *
  * Mock implementations of notification/toast utilities for testing.
  *

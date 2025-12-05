@@ -9,6 +9,10 @@ import { User, Mail, Lock, Phone } from 'lucide-react';
 import { AuthLayout } from './layouts/AuthLayout';
 import { Logo } from './Logo';
 
+/**
+ * Props for the SignUp component.
+ * @internal
+ */
 interface SignUpProps {
   onToggleMode: () => void;
   onSuccess: () => void;

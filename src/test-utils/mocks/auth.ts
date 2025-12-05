@@ -1,6 +1,7 @@
 /**
  * @module test-utils/mocks/auth
  * @category Testing
+ * @internal
  *
  * Mock implementations of authentication utilities and context for testing.
  *

@@ -1,3 +1,36 @@
+/**
+ * @module lib/server/otp
+ * @category Authentication
+ *
+ * Server-side OTP (One-Time Password) management utilities.
+ *
+ * This module provides secure OTP generation, storage, and verification
+ * for two-factor authentication. Features include:
+ * - Secure OTP generation (6-digit codes)
+ * - HMAC-SHA256 hashing with random salts
+ * - Rate limiting to prevent abuse
+ * - Timing-safe comparison to prevent timing attacks
+ * - Configurable expiration and attempt limits
+ *
+ * OTP records are stored in the KV store with the key pattern `otp:{email}`.
+ *
+ * ## Usage
+ *
+ * ```typescript
+ * import { generateOtp, createOtpHash, setOtpRecord, getOtpRecord } from '@/lib/server/otp';
+ *
+ * // Generate and store OTP
+ * const otp = generateOtp();
+ * const { hash, salt } = createOtpHash(otp);
+ * await setOtpRecord({ email, otpHash: hash, salt, ... });
+ *
+ * // Verify OTP
+ * const record = await getOtpRecord(email);
+ * const { hash: inputHash } = createOtpHash(inputOtp, record.salt);
+ * const isValid = timingSafeCompare(inputHash, record.otpHash);
+ * ```
+ */
+
 import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { projectId } from '@/utils/supabase/info';

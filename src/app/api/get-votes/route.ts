@@ -1,3 +1,8 @@
+/**
+ * @module app/api/get-votes/route
+ * @category API Routes
+ */
+
 import { NextRequest } from 'next/server';
 import { createReadOnlyContract } from '@/utils/blockchain/contract';
 import { validateContractAddress } from '@/utils/validation';
@@ -7,11 +12,57 @@ import { createClient } from '@/utils/supabase/server';
 
 /**
  * GET /api/get-votes
+ *
  * Retrieves all vote tallies from a blockchain contract.
- * Can accept either contractAddress or electionId query parameter.
+ *
+ * Queries the blockchain smart contract directly to get raw vote counts
+ * for all positions and candidates. Can look up by contract address or
+ * election ID.
+ *
+ * ## Request
+ *
+ * **Query Parameters:**
+ * - `contractAddress` - Ethereum contract address (0x...)
+ * - `electionId` - Election UUID (alternative to contractAddress)
+ *
+ * At least one of `contractAddress` or `electionId` is required.
+ *
+ * ## Response
+ *
+ * **Success (200):**
+ * ```json
+ * {
+ *   "positions": [
+ *     {
+ *       "name": "President",
+ *       "candidates": [
+ *         { "name": "John Doe", "votes": "80" },
+ *         { "name": "Jane Smith", "votes": "70" }
+ *       ]
+ *     }
+ *   ],
+ *   "contractAddress": "0x742d35Cc..."
+ * }
+ * ```
+ *
+ * **Error Responses:**
+ * - `400` - Missing parameters or invalid contract address
+ * - `500` - Server error or blockchain query failure
  *
  * @param request - Next.js request object with query parameters
- * @returns JSON response with positions, candidates, and vote counts, or error response
+ * @returns JSON response with positions and vote counts, or error response (400/500)
+ *
+ * @example
+ * ```typescript
+ * // By contract address
+ * const response = await fetch('/api/get-votes?contractAddress=0x742d35Cc...');
+ *
+ * // By election ID
+ * const response = await fetch('/api/get-votes?electionId=election-uuid');
+ * ```
+ *
+ * @see GET /api/elections/[id]/results for formatted results with percentages
+ * @category API Routes
  */
 export async function GET(request: NextRequest) {
   try {

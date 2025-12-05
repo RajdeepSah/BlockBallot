@@ -84,8 +84,7 @@ import { UserRecord, EligibilityRecord, BallotLinkRecord, VoteTransactionRecord 
  * - `500` - Server error or blockchain transaction failure
  *
  * @param request - Next.js request object containing vote data
- * @returns JSON response with transaction hash and vote details
- * @throws Returns error response (400/401/403/404/500) if voting fails
+ * @returns JSON response with transaction hash and vote details, or error response (400/401/403/404/500) if voting fails
  *
  * @example
  * ```typescript

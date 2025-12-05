@@ -1,6 +1,7 @@
 /**
  * @module test-utils/mocks/supabase
  * @category Testing
+ * @internal
  *
  * Mock implementations of Supabase client utilities for testing.
  *

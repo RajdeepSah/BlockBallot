@@ -12,6 +12,10 @@ import { Logo } from './Logo';
 import { Election } from '@/types/election';
 import { LoadingSpinner } from './ui/loading-spinner';
 
+/**
+ * Props for the Dashboard component.
+ * @internal
+ */
 interface DashboardProps {
   onCreateElection: () => void;
   onViewElection: (electionId: string) => void;

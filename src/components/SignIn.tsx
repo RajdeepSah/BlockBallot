@@ -9,6 +9,10 @@ import { Lock, Mail,Eye, EyeOff} from 'lucide-react';
 import { AuthLayout } from './layouts/AuthLayout';
 import { Logo } from './Logo';
 
+/**
+ * Props for the SignIn component.
+ * @internal
+ */
 interface SignInProps {
   onToggleMode: () => void;
   onSuccess: () => void;

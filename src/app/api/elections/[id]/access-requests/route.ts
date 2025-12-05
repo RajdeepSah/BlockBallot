@@ -1,3 +1,8 @@
+/**
+ * @module app/api/elections/[id]/access-requests/route
+ * @category API Routes
+ */
+
 import { NextRequest } from 'next/server';
 import { authenticateUser } from '@/utils/api/auth';
 import { createClient } from '@/utils/supabase/server';
@@ -12,12 +17,61 @@ import { UserRecord, AccessRequestRecord } from '@/types/kv-records';
 
 /**
  * GET /api/elections/[id]/access-requests
+ *
  * Retrieves all access requests for an election (admin only).
- * Only the election creator can view access requests.
+ *
+ * Returns all access requests (pending, approved, denied) enriched with
+ * user profile data. Only the election creator can access this endpoint.
+ *
+ * ## Request
+ *
+ * **Path Parameters:**
+ * - `id` - Election UUID
+ *
+ * **Headers:**
+ * - `Authorization: Bearer <token>` - Required, must be election creator
+ *
+ * ## Response
+ *
+ * **Success (200):**
+ * ```json
+ * {
+ *   "requests": [
+ *     {
+ *       "id": "request-uuid",
+ *       "election_id": "election-uuid",
+ *       "user_id": "user-uuid",
+ *       "contact": "voter@example.com",
+ *       "status": "pending",
+ *       "created_at": "2024-01-01T00:00:00Z",
+ *       "user_name": "John Doe",
+ *       "user_email": "voter@example.com"
+ *     }
+ *   ]
+ * }
+ * ```
+ *
+ * **Error Responses:**
+ * - `401` - Unauthorized (missing or invalid token)
+ * - `403` - Only election creator can view access requests
+ * - `404` - Election not found
+ * - `500` - Server error
  *
  * @param request - Next.js request object with Authorization header
  * @param params - Route parameters containing election id
- * @returns JSON response with array of access requests enriched with user data, or error response
+ * @returns JSON response with access requests array, or error response (401/403/404/500)
+ *
+ * @example
+ * ```typescript
+ * const response = await fetch('/api/elections/election-uuid/access-requests', {
+ *   headers: { Authorization: `Bearer ${token}` }
+ * });
+ * const { requests } = await response.json();
+ * const pending = requests.filter(r => r.status === 'pending');
+ * ```
+ *
+ * @see PATCH /api/elections/[id]/access-requests/[requestId] to approve/deny
+ * @category API Routes
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

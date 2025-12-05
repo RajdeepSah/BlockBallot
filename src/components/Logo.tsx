@@ -1,6 +1,10 @@
 import React from 'react';
 import Image from 'next/image';
 
+/**
+ * Props for the Logo component.
+ * @internal
+ */
 interface LogoProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
