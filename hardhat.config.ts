@@ -1,8 +1,11 @@
-const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL;
-const ORGANIZER_PRIVATE_KEY = process.env.ORGANIZER_PRIVATE_KEY;
+import { HardhatUserConfig } from 'hardhat/config';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
-/** @type import('hardhat/config').HardhatUserConfig */
-const config = {
+const SEPOLIA_RPC_URL: string | undefined = process.env.SEPOLIA_RPC_URL;
+const ORGANIZER_PRIVATE_KEY: string | undefined = process.env.ORGANIZER_PRIVATE_KEY;
+
+const config: HardhatUserConfig = {
   solidity: '0.8.24',
   networks: {
     hardhat: {
@@ -23,7 +26,10 @@ const config = {
   },
   // This is to make sure Hardhat's artifacts are in a known location
   paths: {
+    sources: './contracts',
     artifacts: './artifacts',
+    cache: './cache',
+    tests: './contracts/__tests__',
   },
 };
 

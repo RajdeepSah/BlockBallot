@@ -20,7 +20,7 @@ graph TB
     end
     
     subgraph Blockchain["Blockchain Layer"]
-        Ethereum["Ethereum Network<br/>(Sepolia Testnet)"]
+        Arbitrum["Arbitrum Network<br/>(Sepolia Testnet)"]
         SmartContract["BlockBallotSingle<br/>Smart Contract<br/>(Vote Storage)"]
         Ethers["Ethers.js<br/>(Provider & Wallet)"]
         Hardhat["Hardhat<br/>(Contract Compilation)"]
@@ -37,8 +37,8 @@ graph TB
     APIRoutes --> SupabaseKV
     APIRoutes --> ResendAPI
     APIRoutes --> Ethers
-    Ethers --> Ethereum
-    Ethereum --> SmartContract
+    Ethers --> Arbitrum
+    Arbitrum --> SmartContract
     Hardhat --> SmartContract
     AuthUtils --> LocalStorage
     AuthUtils --> APIRoutes
@@ -48,4 +48,3 @@ graph TB
     style SupabaseDB fill:#fff4e1
     style SupabaseKV fill:#fff4e1
     style ResendAPI fill:#fff4e1
-

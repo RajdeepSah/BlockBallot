@@ -2644,7 +2644,8 @@ html {
 }
 
 @keyframes pulse-gentle {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -2653,7 +2654,9 @@ html {
 }
 
 .logo-icon {
-  animation: scale-in 0.6s ease-out, fade-in 0.6s ease-out;
+  animation:
+    scale-in 0.6s ease-out,
+    fade-in 0.6s ease-out;
   transition: transform 0.3s ease-in-out;
 }
 

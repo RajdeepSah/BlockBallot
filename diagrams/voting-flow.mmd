@@ -13,7 +13,7 @@ sequenceDiagram
     EligibilityAPI->>EligibilityAPI: Authenticate user
     EligibilityAPI->>KVStore: Get user data
     EligibilityAPI->>KVStore: Check eligibility record
-    EligibilityAPI->>KVStore: Check ballot link (hasVoted)
+    EligibilityAPI->>KVStore: Check vote flag (hasVoted)
     EligibilityAPI->>KVStore: Check access request
     KVStore-->>EligibilityAPI: Eligibility status
     EligibilityAPI-->>ElectionView: {eligible, hasVoted, accessRequest}
@@ -22,7 +22,7 @@ sequenceDiagram
         ElectionView->>VoteAPI: POST /api/elections/:id/access-request
         VoteAPI->>KVStore: Check existing request
         VoteAPI->>KVStore: Create access request
-        Note over VoteAPI,KVStore: access_request:electionId:userId<br/>status: pending
+        Note over VoteAPI,KVStore: access_request:{electionId}:{userId}<br/>status: pending
         VoteAPI-->>ElectionView: Request submitted
         ElectionView->>Voter: Show pending message
     else Eligible & Not Voted & Election Active
@@ -34,16 +34,18 @@ sequenceDiagram
         VoteAPI->>VoteAPI: Check election dates (start/end)
         VoteAPI->>KVStore: Get user data
         VoteAPI->>KVStore: Verify eligibility
-        VoteAPI->>KVStore: Check ballot link (prevent duplicate)
+        VoteAPI->>KVStore: Check vote flag (prevent duplicate)
         VoteAPI->>KVStore: Create timestamped lock
-        Note over VoteAPI,KVStore: ballot:link:electionId:userId:timestamp-uuid<br/>status: pending
+        Note over VoteAPI,KVStore: vote:user:{electionId}:{userId}:{timestamp}-{uuid}<br/>status: pending
         VoteAPI->>KVStore: Double-check no final vote exists
         VoteAPI->>Blockchain: castVotes(positions[], candidates[])
         Blockchain->>SmartContract: castVotes()
         SmartContract-->>Blockchain: Transaction receipt
         Blockchain-->>VoteAPI: Transaction hash
-        VoteAPI->>KVStore: Store final ballot link
-        Note over VoteAPI,KVStore: ballot:link:electionId:userId<br/>tx_hash: hash
+        VoteAPI->>KVStore: Store user vote flag (NO tx_hash for privacy)
+        Note over VoteAPI,KVStore: vote:user:{electionId}:{userId}<br/>status: completed, created_at
+        VoteAPI->>KVStore: Store tx in anonymous registry
+        Note over VoteAPI,KVStore: vote:tx:{electionId}:{txHash}<br/>timestamp, electionId (NO userId)
         VoteAPI->>KVStore: Remove lock
         VoteAPI-->>ElectionView: {txHash, success}
         ElectionView->>Voter: Show vote confirmation with receipt
@@ -52,4 +54,3 @@ sequenceDiagram
     else Election Not Active
         ElectionView->>Voter: Show election status message
     end
-

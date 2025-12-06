@@ -1,3 +1,8 @@
+/**
+ * @module app/api/elections/[id]/access-requests/[requestId]/route
+ * @category API Routes
+ */
+
 import { NextRequest } from 'next/server';
 import { authenticateUser } from '@/utils/api/auth';
 import { createClient } from '@/utils/supabase/server';
@@ -13,12 +18,72 @@ import { UserRecord, AccessRequestRecord } from '@/types/kv-records';
 
 /**
  * PATCH /api/elections/[id]/access-requests/[requestId]
- * Approves or denies an access request (admin only).
- * If approved, automatically creates an eligibility record for the user.
  *
- * @param request - Next.js request object with Authorization header and action in body
+ * Approves or denies an access request (admin only).
+ *
+ * When approved, an eligibility record is automatically created for the user,
+ * allowing them to vote immediately. Only the election creator can manage
+ * access requests.
+ *
+ * ## Request
+ *
+ * **Path Parameters:**
+ * - `id` - Election UUID
+ * - `requestId` - Access request UUID
+ *
+ * **Headers:**
+ * - `Authorization: Bearer <token>` - Required, must be election creator
+ *
+ * **Body:**
+ * ```json
+ * {
+ *   "action": "approve"
+ * }
+ * ```
+ *
+ * | Field | Type | Required | Values |
+ * |-------|------|----------|--------|
+ * | action | string | Yes | `"approve"` or `"deny"` |
+ *
+ * ## Response
+ *
+ * **Success (200):**
+ * ```json
+ * {
+ *   "success": true,
+ *   "message": "Access request approved"
+ * }
+ * ```
+ *
+ * **Error Responses:**
+ * - `400` - Invalid action (must be 'approve' or 'deny')
+ * - `401` - Unauthorized (missing or invalid token)
+ * - `403` - Only election creator can manage access requests
+ * - `404` - Election, access request, or user data not found
+ * - `500` - Server error
+ *
+ * @param request - Next.js request object with action in body
  * @param params - Route parameters containing election id and requestId
- * @returns JSON response with success status, or error response
+ * @returns JSON response with success status, or error response (400/401/403/404/500)
+ *
+ * @example
+ * ```typescript
+ * // Approve a request
+ * const response = await fetch(
+ *   '/api/elections/election-uuid/access-requests/request-uuid',
+ *   {
+ *     method: 'PATCH',
+ *     headers: {
+ *       'Content-Type': 'application/json',
+ *       Authorization: `Bearer ${token}`
+ *     },
+ *     body: JSON.stringify({ action: 'approve' })
+ *   }
+ * );
+ * ```
+ *
+ * @see GET /api/elections/[id]/access-requests to view all requests
+ * @category API Routes
  */
 export async function PATCH(
   request: NextRequest,
@@ -46,7 +111,6 @@ export async function PATCH(
       return createNotFoundError('Election');
     }
 
-    // Verify user is the election creator
     if (election.creator_id !== user.id) {
       return createForbiddenError('Only election creator can manage access requests');
     }

@@ -51,7 +51,7 @@ import { projectId, publicAnonKey } from '@/utils/supabase/info';
  * }
  * ```
  *
- * @see {@link createUnauthorizedError} to return 401 response
+ * @see {@link module:utils/api/errors.createUnauthorizedError} to return 401 response
  * @category Authentication
  */
 export async function authenticateUser(

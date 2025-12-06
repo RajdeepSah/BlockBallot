@@ -38,22 +38,48 @@ export type TransactionHash = string;
 /**
  * Candidate vote tally from blockchain.
  *
- * Vote counts are returned as strings from the blockchain contract.
+ * Vote counts are returned as strings from the blockchain contract because
+ * Ethereum uses BigInt values that may exceed JavaScript's Number.MAX_SAFE_INTEGER.
+ *
+ * @example
+ * ```typescript
+ * const tally: CandidateTally = {
+ *   name: 'John Doe',
+ *   votes: '150'
+ * };
+ *
+ * // Convert to number for display
+ * const voteCount = parseInt(tally.votes, 10);
+ * ```
  */
 export interface CandidateTally {
-  /** Candidate name */
+  /** Candidate name as stored in the smart contract */
   name: string;
-  /** Vote count as string (from blockchain) */
+  /** Vote count as string (from blockchain BigInt) */
   votes: string;
 }
 
 /**
  * Position result with candidate tallies from blockchain.
+ *
+ * Represents all vote counts for a single position, including
+ * tallies for each candidate in that position.
+ *
+ * @example
+ * ```typescript
+ * const result: PositionResult = {
+ *   name: 'President',
+ *   candidates: [
+ *     { name: 'John Doe', votes: '150' },
+ *     { name: 'Jane Smith', votes: '120' }
+ *   ]
+ * };
+ * ```
  */
 export interface PositionResult {
-  /** Position name */
+  /** Position name as stored in the smart contract */
   name: string;
-  /** Array of candidate vote tallies */
+  /** Array of candidate vote tallies, one per candidate */
   candidates: CandidateTally[];
 }
 

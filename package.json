@@ -82,6 +82,8 @@
     "postcss": "^8.4.49",
     "prettier-plugin-tailwindcss": "^0.7.1",
     "tailwindcss": "^3.4.17",
+    "typedoc": "^0.28.15",
+    "typedoc-plugin-markdown": "^4.9.0",
     "typescript": "^5.6.3"
   },
   "scripts": {
@@ -101,7 +103,7 @@
     "render-diagrams:dark": "node scripts/render-diagrams.js png dark",
     "render-diagrams:forest": "node scripts/render-diagrams.js png forest",
     "render-diagrams:neutral": "node scripts/render-diagrams.js png neutral",
-    "docs": "typedoc --entryPointStrategy expand src --out ./docs --name \"BlockBallot API Documentation\" --readme README.md --tsconfig tsconfig.json",
-    "docs:watch": "typedoc --watch --entryPointStrategy expand src --out ./docs --name \"BlockBallot API Documentation\" --readme README.md --tsconfig tsconfig.json"
+    "docs": "typedoc --entryPointStrategy expand src  --plugin typedoc-plugin-markdown --out ./docs --name \"BlockBallot API Documentation\" --readme README.md --tsconfig tsconfig.json",
+    "docs:watch": "typedoc --watch --entryPointStrategy expand src  --plugin typedoc-plugin-markdown --out ./docs --name \"BlockBallot API Documentation\" --readme README.md --tsconfig tsconfig.json"
   }
 }

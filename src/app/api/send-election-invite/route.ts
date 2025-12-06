@@ -1,7 +1,21 @@
+/**
+ * @module app/api/send-election-invite/route
+ * @category API Routes
+ *
+ * Election invitation email sending endpoint.
+ *
+ * This module provides the API for sending invitation emails to all pre-approved
+ * voters for an election. Features include:
+ * - Rate limiting (2 minutes between batch sends)
+ * - Invitation history tracking (prevents duplicate emails for 30 days)
+ * - Automatic deduplication of voter emails
+ */
+
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { projectId } from '@/utils/supabase/info';
 import { createClient as createServerClient } from '@/utils/supabase/server';
+import type { EligibilityRecord } from '@/types/kv-records';
 import {
   buildElectionInviteEmail,
   getElectionInvitePlainText,
@@ -26,7 +40,9 @@ const supabaseServerClient = serviceRoleKey ? createClient(supabaseUrl, serviceR
  * Ensures Supabase service role client is available.
  *
  * @returns Supabase client with service role
- * @throws HttpError if service role credentials are missing
+ * @throws {HttpError} If service role credentials are missing
+ *
+ * @internal
  */
 function requireSupabase() {
   if (!supabaseServerClient) {
@@ -52,12 +68,6 @@ interface InviteHistoryRecord {
   emails: Record<string, number>;
 }
 
-type EligibilityRecord = {
-  id: string;
-  contact: string;
-  status: string;
-};
-
 type VerifiedVoter = {
   id: string;
   email: string;
@@ -69,6 +79,15 @@ interface HttpError extends Error {
   status: number;
 }
 
+/**
+ * Creates an HTTP error with status code.
+ *
+ * @param status - HTTP status code
+ * @param message - Error message
+ * @returns HttpError instance
+ *
+ * @internal
+ */
 function httpError(status: number, message: string): HttpError {
   const error = new Error(message) as HttpError;
   error.status = status;
@@ -80,7 +99,9 @@ function httpError(status: number, message: string): HttpError {
  *
  * @param key - The key to look up
  * @returns The value if found, null otherwise
- * @throws HttpError if KV read fails
+ * @throws {HttpError} If KV read fails
+ *
+ * @internal
  */
 async function getKvValue<T>(key: string): Promise<T | null> {
   const client = requireSupabase();
@@ -98,7 +119,9 @@ async function getKvValue<T>(key: string): Promise<T | null> {
  *
  * @param key - The key to store the value under
  * @param value - The value to store
- * @throws HttpError if KV write fails
+ * @throws {HttpError} If KV write fails
+ *
+ * @internal
  */
 async function setKvValue<T>(key: string, value: T): Promise<void> {
   const client = requireSupabase();
@@ -113,7 +136,9 @@ async function setKvValue<T>(key: string, value: T): Promise<void> {
  *
  * @param request - The incoming request object
  * @returns The authenticated user ID
- * @throws HttpError if authorization header is missing or invalid
+ * @throws {HttpError} If authorization header is missing or invalid
+ *
+ * @internal
  */
 async function getAuthedUserId(request: Request): Promise<string> {
   const authorization =
@@ -144,7 +169,9 @@ async function getAuthedUserId(request: Request): Promise<string> {
  * Prevents sending invitations more than once per rate limit window.
  *
  * @param electionId - The election ID to check rate limit for
- * @throws HttpError with 429 status if rate limit is exceeded
+ * @throws {HttpError} With 429 status if rate limit is exceeded
+ *
+ * @internal
  */
 async function enforceRateLimit(electionId: string) {
   const key = `${RATE_LIMIT_KEY_PREFIX}${electionId}`;
@@ -163,6 +190,8 @@ async function enforceRateLimit(electionId: string) {
  * Updates the rate limit timestamp for an election.
  *
  * @param electionId - The election ID to update rate limit for
+ *
+ * @internal
  */
 async function updateRateLimit(electionId: string) {
   const key = `${RATE_LIMIT_KEY_PREFIX}${electionId}`;
@@ -174,7 +203,9 @@ async function updateRateLimit(electionId: string) {
  *
  * @param electionId - The election ID to get voters for
  * @returns Array of verified voters
- * @throws HttpError if voter loading fails
+ * @throws {HttpError} If voter loading fails
+ *
+ * @internal
  */
 async function getPreapprovedVoters(electionId: string): Promise<VerifiedVoter[]> {
   const client = requireSupabase();
@@ -208,6 +239,8 @@ async function getPreapprovedVoters(electionId: string): Promise<VerifiedVoter[]
  *
  * @param electionId - The election ID to get history for
  * @returns Invitation history record with pruned entries
+ *
+ * @internal
  */
 async function getInviteHistory(electionId: string): Promise<InviteHistoryRecord> {
   const key = `${HISTORY_KEY_PREFIX}${electionId}`;
@@ -231,6 +264,8 @@ async function getInviteHistory(electionId: string): Promise<InviteHistoryRecord
  * @param voters - Array of verified voters
  * @param history - Invitation history record
  * @returns Object with voters to send and count of skipped voters
+ *
+ * @internal
  */
 function filterVoters(
   voters: VerifiedVoter[],
@@ -266,6 +301,8 @@ function filterVoters(
  * @param electionId - The election ID
  * @param history - Current invitation history
  * @param sentVoters - Voters who received invitations
+ *
+ * @internal
  */
 async function saveInviteHistory(
   electionId: string,
@@ -289,6 +326,8 @@ async function saveInviteHistory(
  * @param electionId - The election ID
  * @param provided - Optional provided direct link
  * @returns Resolved direct link URL
+ *
+ * @internal
  */
 function resolveDirectLink(request: Request, electionId: string, provided?: string) {
   const sanitized = typeof provided === 'string' && provided.trim() ? provided.trim() : null;
@@ -299,7 +338,9 @@ function resolveDirectLink(request: Request, electionId: string, provided?: stri
  *
  * @param to - Recipient email address
  * @param payload - Election invite email options
- * @throws HttpError if email sending fails or API key is missing
+ * @throws {HttpError} If email sending fails or API key is missing
+ *
+ * @internal
  */
 async function sendInvitationEmail(to: string, payload: ElectionInviteEmailOptions): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
@@ -341,18 +382,71 @@ async function sendInvitationEmail(to: string, payload: ElectionInviteEmailOptio
  * POST /api/send-election-invite
  *
  * Sends election invitation emails to all pre-approved voters for an election.
- * Implements rate limiting and tracks invitation history to prevent duplicate sends.
  *
- * Request body:
- * - electionId: The election ID (required)
- * - directLink: Optional direct link to override default resolution
+ * This endpoint:
+ * - Retrieves all pre-approved/approved voters for the election
+ * - Filters out voters who have already received invitations (within 30 days)
+ * - Sends personalized invitation emails with election details and direct voting link
+ * - Tracks invitation history to prevent duplicate sends
  *
- * Headers:
- * - Authorization: Bearer token (required)
+ * Rate limiting: 2 minutes between batch sends for the same election.
+ *
+ * ## Request
+ *
+ * **Headers:**
+ * - `Authorization: Bearer <token>` - Required, must be election creator
+ *
+ * **Body:**
+ * ```json
+ * {
+ *   "electionId": "election-uuid",
+ *   "directLink": "https://custom-domain.com/vote/election-uuid"
+ * }
+ * ```
+ *
+ * | Field | Type | Required | Description |
+ * |-------|------|----------|-------------|
+ * | electionId | string | Yes | Election UUID |
+ * | directLink | string | No | Custom voting link (overrides default) |
+ *
+ * ## Response
+ *
+ * **Success (200):**
+ * ```json
+ * {
+ *   "success": true,
+ *   "sent": 25,
+ *   "skipped": 5,
+ *   "message": "Sent 25 invitation(s) (5 already invited)"
+ * }
+ * ```
+ *
+ * **Error Responses:**
+ * - `400` - Missing electionId
+ * - `401` - Unauthorized
+ * - `403` - Only election creator can send invitations
+ * - `404` - Election not found
+ * - `429` - Rate limited (wait before sending again)
+ * - `500` - Server error
+ * - `502` - Email sending failure
  *
  * @param request - The incoming request object
- * @returns JSON response with success status and sent count
- * @throws Returns error response if sending fails or validation fails
+ * @returns JSON response with success status and counts, or error response
+ *
+ * @example
+ * ```typescript
+ * const response = await fetch('/api/send-election-invite', {
+ *   method: 'POST',
+ *   headers: {
+ *     'Content-Type': 'application/json',
+ *     Authorization: `Bearer ${token}`
+ *   },
+ *   body: JSON.stringify({ electionId: 'election-uuid' })
+ * });
+ * const { sent, skipped } = await response.json();
+ * ```
+ *
+ * @category API Routes
  */
 export async function POST(request: Request) {
   try {

@@ -4,11 +4,15 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Alert, AlertDescription } from './ui/alert';
-import { Lock, Mail,Eye, EyeOff} from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import { toast } from 'sonner';
 import { AuthLayout } from './layouts/AuthLayout';
 import { Logo } from './Logo';
 
+/**
+ * Props for the SignIn component.
+ * @internal
+ */
 interface SignInProps {
   onToggleMode: () => void;
   onSuccess: () => void;
@@ -29,7 +33,6 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSlidingOut, setIsSlidingOut] = useState(false);
@@ -52,12 +55,11 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
     setIsSlidingOut(true);
     setTimeout(() => {
       callback();
-    }, 400); // Match animation duration
+    }, 400);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -81,8 +83,10 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
         onSuccess();
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Login failed';
-      setError(message);
+      const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      toast.error(message, {
+        duration: 5000,
+      });
       setLoading(false);
     }
   };
@@ -95,7 +99,7 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
 
   return (
     <AuthLayout>
-      <Card className={`w-full max-w-md page-card ${isSlidingOut ? 'slide-out' : ''}`}>
+      <Card className={`page-card w-full max-w-md ${isSlidingOut ? 'slide-out' : ''}`}>
         <CardHeader className="space-y-1 text-center">
           <div className="mb-4 flex justify-center">
             <Logo size="xl" className="h-48 w-48" />
@@ -105,12 +109,6 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -147,7 +145,7 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button> 
+                </button>
               </div>
             </div>
 
@@ -170,7 +168,7 @@ export function SignIn({ onToggleMode, onSuccess, on2FARequired }: SignInProps) 
               <button
                 type="button"
                 onClick={handleToggleMode}
-                className="text-indigo-600 dark:text-indigo-400 hover:underline"
+                className="text-indigo-600 hover:underline dark:text-indigo-400"
               >
                 Sign Up
               </button>

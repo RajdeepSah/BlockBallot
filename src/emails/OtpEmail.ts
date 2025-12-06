@@ -1,5 +1,26 @@
 /**
+ * @module emails/OtpEmail
+ * @category Email Templates
+ *
+ * OTP verification email template generation.
+ *
+ * This module provides functions to generate HTML and plain text email templates
+ * for sending one-time password (OTP) verification codes to users during
+ * two-factor authentication.
+ *
+ * ## Usage
+ *
+ * ```typescript
+ * import { buildOtpEmail, getOtpPlainText } from '@/emails/OtpEmail';
+ *
+ * const html = buildOtpEmail({ code: '123456', expiresInMinutes: 5 });
+ * const text = getOtpPlainText('123456', 5);
+ * ```
+ */
+
+/**
  * Options for building an OTP email.
+ * @internal
  */
 interface OtpEmailOptions {
   code: string;

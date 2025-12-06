@@ -10,6 +10,7 @@ import {
   handleApiError,
   createUnauthorizedError,
   createNotFoundError,
+  createErrorResponse,
 } from '@/utils/api/errors';
 import * as kv from '@/utils/supabase/kvStore';
 import { getAnonServerClient } from '@/utils/supabase/clients';
@@ -77,8 +78,7 @@ function generateOTP() {
  * - `500` - Server error
  *
  * @param request - Next.js request object containing login credentials
- * @returns JSON response with 2FA requirement, access token, and dev OTP
- * @throws Returns error response (400/401/404/500) if authentication fails
+ * @returns JSON response with 2FA requirement, access token, and dev OTP, or error response (400/401/404/500) if authentication fails
  *
  * @see POST /api/auth/verify-2fa to complete authentication
  * @category API Routes
@@ -98,7 +98,25 @@ export async function POST(request: NextRequest) {
     });
 
     if (signInError || !sessionData.user || !sessionData.session) {
-      return createUnauthorizedError();
+      if (signInError) {
+        if (signInError.message?.toLowerCase().includes('invalid login credentials')) {
+          return createErrorResponse(
+            'Invalid email or password. Please check your credentials and try again.',
+            401
+          );
+        }
+        if (signInError.message?.toLowerCase().includes('email not confirmed')) {
+          return createErrorResponse('Please verify your email address before logging in.', 401);
+        }
+        if (signInError.message?.toLowerCase().includes('user not found')) {
+          return createErrorResponse('No account found with this email address.', 401);
+        }
+        return createErrorResponse(
+          signInError.message || 'Login failed. Please check your credentials.',
+          401
+        );
+      }
+      return createErrorResponse('Login failed. Please check your credentials and try again.', 401);
     }
 
     const userId = sessionData.user.id;
@@ -110,13 +128,14 @@ export async function POST(request: NextRequest) {
     const otp = generateOTP();
     const otpData = {
       otp,
+      email: userData.email,
       userId,
       created_at: Date.now(),
       expires_at: Date.now() + OTP_EXPIRY_MS,
       verified: false,
     };
 
-    await kv.set(`otp:${userId}`, otpData);
+    await kv.set(`otp:${userData.email}`, otpData);
 
     return Response.json({
       success: true,

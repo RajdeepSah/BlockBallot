@@ -1,6 +1,7 @@
 /**
  * @module test-utils/mocks/notifications
  * @category Testing
+ * @internal
  *
  * Mock implementations of notification/toast utilities for testing.
  *
@@ -84,4 +85,3 @@ export function createMockToast() {
  * Useful for TypeScript type checking in tests.
  */
 export type MockToast = ReturnType<typeof createMockToast>;
-

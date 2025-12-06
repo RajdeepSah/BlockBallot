@@ -12,7 +12,7 @@ import { handleApiError, createValidationError, createUnauthorizedError } from '
 import type { PositionInput, DeploymentResponse } from '@/types/blockchain';
 import { createClient } from '@/utils/supabase/server';
 import { authenticateUser } from '@/utils/api/auth';
-import { Election } from '@/types/election';
+import type { ElectionInsert } from '@/types/election';
 
 /**
  * Generates a random alphanumeric election code.
@@ -89,8 +89,7 @@ function generateCode(length = 7): string {
  * - `500` - Server error or blockchain deployment failure
  *
  * @param request - Next.js request object containing election payload
- * @returns JSON response with deployment details (txHash, contractAddress, electionId)
- * @throws Returns error response (400/401/500) if deployment fails
+ * @returns JSON response with deployment details (txHash, contractAddress, electionId), or error response (400/401/500) if deployment fails
  *
  * @example
  * ```typescript
@@ -176,7 +175,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Determine election status based on current time and election dates
     const now = new Date();
     const startsAt = new Date(electionPayload.starts_at);
     const endsAt = new Date(electionPayload.ends_at);
@@ -188,7 +186,7 @@ export async function POST(request: NextRequest) {
       status = 'ended';
     }
 
-    const election: Election = {
+    const election: ElectionInsert = {
       code,
       title: electionPayload.title,
       description: electionPayload.description || '',

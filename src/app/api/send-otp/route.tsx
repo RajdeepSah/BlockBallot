@@ -1,3 +1,8 @@
+/**
+ * @module app/api/send-otp/route
+ * @category API Routes
+ */
+
 import { NextResponse } from 'next/server';
 import { buildOtpEmail, getOtpPlainText } from '@/emails/OtpEmail';
 import {
@@ -22,7 +27,9 @@ const RESEND_API_URL = 'https://api.resend.com/emails';
  *
  * @param email - Recipient email address
  * @param code - OTP code to send
- * @throws Error if API key is missing or email sending fails
+ * @throws {Error} If API key is missing or email sending fails
+ *
+ * @internal
  */
 async function sendOtpEmail(email: string, code: string) {
   const apiKey = process.env.RESEND_API_KEY;
@@ -57,11 +64,50 @@ async function sendOtpEmail(email: string, code: string) {
 
 /**
  * POST /api/send-otp
+ *
  * Generates and sends an OTP code to the provided email address.
- * Enforces rate limiting to prevent abuse.
+ *
+ * Creates a secure 6-digit OTP, hashes it with HMAC-SHA256, stores the
+ * hash in the KV store, and sends the plain OTP via email. Enforces
+ * rate limiting (1 minute) to prevent abuse.
+ *
+ * ## Request
+ *
+ * **Body:**
+ * ```json
+ * {
+ *   "email": "user@example.com"
+ * }
+ * ```
+ *
+ * ## Response
+ *
+ * **Success (200):**
+ * ```json
+ * {
+ *   "success": true
+ * }
+ * ```
+ *
+ * **Error Responses:**
+ * - `400` - Invalid email address
+ * - `429` - Rate limited (OTP already sent recently)
+ * - `500` - Server error or email sending failure
  *
  * @param request - Request object containing email in JSON body
- * @returns JSON response with success status, or error response
+ * @returns JSON response with success status, or error response (400/429/500)
+ *
+ * @example
+ * ```typescript
+ * const response = await fetch('/api/send-otp', {
+ *   method: 'POST',
+ *   headers: { 'Content-Type': 'application/json' },
+ *   body: JSON.stringify({ email: 'user@example.com' })
+ * });
+ * ```
+ *
+ * @see POST /api/verify-otp to verify the OTP code
+ * @category API Routes
  */
 export async function POST(request: Request) {
   try {

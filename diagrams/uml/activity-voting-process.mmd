@@ -37,8 +37,9 @@ flowchart TD
     WaitConfirmation --> TxSuccess{Transaction Success?}
     TxSuccess -->|No| RemoveLock2[Remove Lock]
     RemoveLock2 --> ShowError3[Show Transaction Error]
-    TxSuccess -->|Yes| StoreBallotLink[Store Ballot Link]
-    StoreBallotLink --> RemoveLock3[Remove Lock]
+    TxSuccess -->|Yes| StoreVoteFlag[Store Vote Flag<br/>vote:user:electionId:userId<br/>NO tx_hash for privacy]
+    StoreVoteFlag --> StoreTxRegistry[Store in Anonymous Registry<br/>vote:tx:electionId:txHash<br/>NO userId for anonymity]
+    StoreTxRegistry --> RemoveLock3[Remove Lock]
     RemoveLock3 --> ShowSuccess[Show Vote Confirmation]
     ShowSuccess --> ShowReceipt[Display Transaction Receipt]
     
@@ -47,4 +48,5 @@ flowchart TD
     style ShowError fill:#ffcccc
     style ShowError2 fill:#ffcccc
     style ShowError3 fill:#ffcccc
-
+    style StoreVoteFlag fill:#fff4e1
+    style StoreTxRegistry fill:#fff4e1

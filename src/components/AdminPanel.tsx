@@ -25,6 +25,10 @@ import { Election, AccessRequest } from '@/types/election';
 import { LoadingSpinner } from './ui/loading-spinner';
 import { PageContainer } from './layouts/PageContainer';
 
+/**
+ * Props for the AdminPanel component.
+ * @internal
+ */
 interface AdminPanelProps {
   electionId: string;
   onBack: () => void;
@@ -236,7 +240,7 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
 
   if (!election) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 page-container">
+      <div className="page-container flex min-h-screen items-center justify-center bg-gray-50">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <h3 className="mb-2 text-xl">Election Not Found</h3>
@@ -264,21 +268,27 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
         <CardContent>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
-              <p className="text-sm text-gray-600">Election Code</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Election Code</p>
               <div className="flex items-center space-x-2">
-                <p className="font-mono text-lg">{election.code}</p>
+                <p className="border-input bg-input-background dark:bg-input/30 rounded-md border px-3 py-1 font-mono text-lg text-gray-900 dark:text-white">
+                  {election.code}
+                </p>
                 <Button variant="ghost" size="sm" onClick={() => copyToClipboard(election.code)}>
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Starts</p>
-              <p>{new Date(election.starts_at).toLocaleString()}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Starts</p>
+              <p className="text-gray-900 dark:text-white">
+                {new Date(election.starts_at).toLocaleString()}
+              </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Ends</p>
-              <p>{new Date(election.ends_at).toLocaleString()}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Ends</p>
+              <p className="text-gray-900 dark:text-white">
+                {new Date(election.ends_at).toLocaleString()}
+              </p>
             </div>
           </div>
           <div className="mt-4">
@@ -297,18 +307,20 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
       )}
 
       {success && (
-        <Alert className="mb-6 border-green-200 bg-green-50">
-          <AlertDescription className="text-green-800">{success}</AlertDescription>
+        <Alert className="mb-6 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
+          <AlertDescription className="text-green-800 dark:text-green-200">
+            {success}
+          </AlertDescription>
         </Alert>
       )}
 
       <Tabs defaultValue="voters" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="voters">
+          <TabsTrigger value="voters" className="dark:text-white">
             <Users className="mr-2 h-4 w-4" />
             Voter Eligibility
           </TabsTrigger>
-          <TabsTrigger value="requests">
+          <TabsTrigger value="requests" className="dark:text-white">
             <UserCheck className="mr-2 h-4 w-4" />
             Access Requests
             {pendingRequests.length > 0 && (
@@ -317,7 +329,7 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="share">
+          <TabsTrigger value="share" className="dark:text-white">
             <Copy className="mr-2 h-4 w-4" />
             Share
           </TabsTrigger>
@@ -343,7 +355,7 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
                   rows={10}
                   className="font-mono text-sm"
                 />
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Voters with these email addresses will be automatically eligible to vote
                 </p>
               </div>
@@ -357,9 +369,11 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
                 {uploading ? 'Uploading...' : 'Upload Voter List'}
               </Button>
 
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                <h4 className="mb-2 text-sm">📋 CSV/Excel Instructions</h4>
-                <p className="text-xs text-gray-700">
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+                <h4 className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">
+                  📋 CSV/Excel Instructions
+                </h4>
+                <p className="text-xs text-gray-700 dark:text-gray-300">
                   For large lists, prepare your emails in a spreadsheet, copy the email column, and
                   paste it above. Each email should be on a new line.
                 </p>
@@ -378,8 +392,8 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
             </CardHeader>
             <CardContent>
               {accessRequests.length === 0 ? (
-                <div className="py-8 text-center text-gray-500">
-                  <UserCheck className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+                  <UserCheck className="mx-auto mb-4 h-12 w-12 text-gray-400 dark:text-gray-500" />
                   <p>No access requests yet</p>
                 </div>
               ) : (
@@ -390,9 +404,11 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
                       className="flex items-center justify-between rounded-lg border p-4"
                     >
                       <div className="flex-1">
-                        <p>{request.user_name}</p>
-                        <p className="text-sm text-gray-600">{request.user_email}</p>
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="text-gray-900 dark:text-white">{request.user_name}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                          {request.user_email}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                           Requested: {new Date(request.created_at).toLocaleString()}
                         </p>
                       </div>
@@ -439,20 +455,20 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
             </CardHeader>
             <CardContent>
               {loadingPreapproved ? (
-                <div className="flex items-center justify-center py-8 text-gray-500">
+                <div className="flex items-center justify-center py-8 text-gray-500 dark:text-gray-400">
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Loading pre-approved voters...
                 </div>
               ) : preapprovedVoters.length === 0 ? (
-                <div className="py-8 text-center text-gray-500">
-                  <Users className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+                  <Users className="mx-auto mb-4 h-12 w-12 text-gray-400 dark:text-gray-500" />
                   <p>No pre-approved voters uploaded yet</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {preapprovedVoters.map((voter) => (
                     <div key={voter.id} className="flex flex-col rounded-lg border p-4">
-                      <span className="font-medium text-gray-900">
+                      <span className="font-medium text-gray-900 dark:text-white">
                         {voter.full_name || 'Pending Registration'} [{voter.email}]
                       </span>
                     </div>
@@ -473,31 +489,37 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <label className="mb-2 block text-sm text-gray-600">Election Code</label>
+                <label className="mb-2 block text-sm text-gray-600 dark:text-gray-300">
+                  Election Code
+                </label>
                 <div className="flex items-center space-x-2">
-                  <div className="flex-1 rounded-lg border bg-gray-50 p-3 text-center font-mono text-xl">
+                  <div className="border-input bg-input-background dark:bg-input/30 flex-1 rounded-md border px-3 py-2 text-center font-mono text-xl text-gray-900 dark:text-white">
                     {election.code}
                   </div>
                   <Button onClick={() => copyToClipboard(election.code)} variant="outline">
                     {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
-                <p className="mt-2 text-xs text-gray-500">
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                   Voters can enter this code on the dashboard to find your election
                 </p>
               </div>
 
               <div>
-                <label className="mb-2 block text-sm text-gray-600">Direct Link</label>
+                <label className="mb-2 block text-sm text-gray-600 dark:text-gray-300">
+                  Direct Link
+                </label>
                 <div className="flex items-center space-x-2">
-                  <div className="flex-1 break-all rounded-lg border bg-gray-50 p-3 text-sm">
+                  <div className="border-input bg-input-background dark:bg-input/30 flex-1 break-all rounded-md border px-3 py-2 text-sm text-gray-900 dark:text-white">
                     {invitationLink}
                   </div>
                   <Button onClick={() => copyToClipboard(invitationLink)} variant="outline">
                     {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
-                <p className="mt-2 text-xs text-gray-500">Share this link directly with voters</p>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  Share this link directly with voters
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -511,17 +533,19 @@ export function AdminPanel({ electionId, onBack, onViewResults }: AdminPanelProp
                     'Send Email Invitation'
                   )}
                 </Button>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Emails are only sent to verified voters and include the latest election details.
                 </p>
               </div>
 
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                <h4 className="mb-1 text-sm">📧 Email Template</h4>
-                <p className="mb-3 text-xs text-gray-600">
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+                <h4 className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
+                  📧 Email Template
+                </h4>
+                <p className="mb-3 text-xs text-gray-600 dark:text-gray-300">
                   Preview of the invitation voters receive.
                 </p>
-                <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-gray-800">
+                <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-gray-800 dark:text-gray-200">
                   {emailPreview}
                 </pre>
               </div>

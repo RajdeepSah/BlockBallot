@@ -1,4 +1,31 @@
 /**
+ * @module emails/ElectionInviteEmail
+ * @category Email Templates
+ *
+ * Election invitation email template generation.
+ *
+ * This module provides functions to generate HTML and plain text email templates
+ * for inviting voters to participate in elections. The emails include:
+ * - Election name and code
+ * - Direct voting link
+ * - Voting period dates
+ *
+ * ## Usage
+ *
+ * ```typescript
+ * import { buildElectionInviteEmail, getElectionInvitePlainText } from '@/emails/ElectionInviteEmail';
+ *
+ * const html = buildElectionInviteEmail({
+ *   electionName: 'Annual Board Election',
+ *   electionCode: 'ABC1234',
+ *   directLink: 'https://example.com/vote/...',
+ *   startTime: '2024-01-01T00:00:00Z',
+ *   endTime: '2024-01-31T23:59:59Z'
+ * });
+ * ```
+ */
+
+/**
  * Options for building an election invitation email.
  */
 export interface ElectionInviteEmailOptions {

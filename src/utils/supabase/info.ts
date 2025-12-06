@@ -1,8 +1,16 @@
 /**
+ * @module utils/supabase/info
+ * @category Configuration
+ *
  * Supabase configuration values extracted from environment variables.
  *
  * This module provides the project ID and public anonymous key
  * for constructing Supabase API URLs and making authenticated requests.
+ *
+ * ## Exports
+ *
+ * - `projectId` - Supabase project ID extracted from URL
+ * - `publicAnonKey` - Public anonymous key for client-side requests
  */
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -21,7 +29,6 @@ function extractProjectId(): string {
 
   try {
     const url = new URL(supabaseUrl);
-    // Extract project ID from hostname (e.g., "abc123.supabase.co" -> "abc123")
     const hostname = url.hostname;
     const match = hostname.match(/^([^.]+)\.supabase\.co$/);
 

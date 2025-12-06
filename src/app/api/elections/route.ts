@@ -1,3 +1,8 @@
+/**
+ * @module app/api/elections/route
+ * @category API Routes
+ */
+
 import { NextRequest } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
@@ -9,15 +14,58 @@ import { handleApiError } from '@/utils/api/errors';
  *
  * Searches for elections by code or returns elections created by the authenticated user.
  *
- * Query parameters:
- * - code (optional): 7-digit election code to search for
+ * This endpoint supports two modes:
+ * - **Search by code**: Public search using a 7-digit election code
+ * - **Get user's elections**: Returns elections created by the authenticated user
  *
- * Headers:
- * - Authorization (optional): Bearer token for authenticated requests
+ * ## Request
  *
- * @param request - Next.js request object
- * @returns JSON response with elections array
- * @throws Returns error response if request fails
+ * **Query Parameters:**
+ * - `code` (optional) - 7-digit alphanumeric election code to search for
+ *
+ * **Headers:**
+ * - `Authorization: Bearer <token>` (optional) - For retrieving user's elections
+ *
+ * ## Response
+ *
+ * **Success (200):**
+ * ```json
+ * {
+ *   "elections": [
+ *     {
+ *       "id": "election-uuid",
+ *       "code": "ABC1234",
+ *       "title": "Election Title",
+ *       "description": "Election description",
+ *       "starts_at": "2024-01-01T00:00:00Z",
+ *       "ends_at": "2024-01-31T23:59:59Z",
+ *       "creator_id": "user-uuid",
+ *       "status": "active",
+ *       "positions": [...],
+ *       "contract_address": "0x..."
+ *     }
+ *   ]
+ * }
+ * ```
+ *
+ * **Error Responses:**
+ * - `500` - Server error
+ *
+ * @param request - Next.js request object with optional query params and auth header
+ * @returns JSON response with elections array (may be empty)
+ *
+ * @example
+ * ```typescript
+ * // Search by code
+ * const response = await fetch('/api/elections?code=ABC1234');
+ *
+ * // Get user's elections
+ * const response = await fetch('/api/elections', {
+ *   headers: { Authorization: `Bearer ${token}` }
+ * });
+ * ```
+ *
+ * @category API Routes
  */
 export async function GET(request: NextRequest) {
   try {
@@ -45,7 +93,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // If token is provided, get user's elections
     if (token) {
       let userId: string | null = null;
 

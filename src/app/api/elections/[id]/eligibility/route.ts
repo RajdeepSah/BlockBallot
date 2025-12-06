@@ -1,3 +1,8 @@
+/**
+ * @module app/api/elections/[id]/eligibility/route
+ * @category API Routes
+ */
+
 import { NextRequest } from 'next/server';
 import { authenticateUser } from '@/utils/api/auth';
 import { createClient } from '@/utils/supabase/server';
@@ -14,18 +19,67 @@ import {
  * POST /api/elections/[id]/eligibility
  *
  * Uploads a voter eligibility list for an election.
- * Only the election creator can upload eligibility lists.
  *
- * Request body:
- * - voters: Array of email addresses to add to eligibility list (required)
+ * Allows the election creator to pre-approve voters by email address.
+ * Pre-approved voters can vote immediately without requesting access.
+ * If the email is already registered, the eligibility record is linked
+ * to their user ID.
  *
- * Headers:
- * - Authorization: Bearer token (required)
+ * ## Request
+ *
+ * **Path Parameters:**
+ * - `id` - Election UUID
+ *
+ * **Headers:**
+ * - `Authorization: Bearer <token>` - Required, must be election creator
+ *
+ * **Body:**
+ * ```json
+ * {
+ *   "voters": [
+ *     "voter1@example.com",
+ *     "voter2@example.com",
+ *     "voter3@example.com"
+ *   ]
+ * }
+ * ```
+ *
+ * ## Response
+ *
+ * **Success (200):**
+ * ```json
+ * {
+ *   "success": true,
+ *   "message": "Added 3 voters to eligibility list"
+ * }
+ * ```
+ *
+ * **Error Responses:**
+ * - `400` - Invalid voter list format
+ * - `401` - Unauthorized (missing or invalid token)
+ * - `403` - Only election creator can upload eligibility list
+ * - `404` - Election not found
+ * - `500` - Server error
  *
  * @param request - Next.js request object containing voter list
  * @param params - Route parameters containing election ID
- * @returns JSON response with success status and count of added voters
- * @throws Returns error response if election not found, user is not creator, or validation fails
+ * @returns JSON response with success status, or error response (400/401/403/404/500)
+ *
+ * @example
+ * ```typescript
+ * const response = await fetch('/api/elections/election-uuid/eligibility', {
+ *   method: 'POST',
+ *   headers: {
+ *     'Content-Type': 'application/json',
+ *     Authorization: `Bearer ${token}`
+ *   },
+ *   body: JSON.stringify({
+ *     voters: ['voter1@example.com', 'voter2@example.com']
+ *   })
+ * });
+ * ```
+ *
+ * @category API Routes
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

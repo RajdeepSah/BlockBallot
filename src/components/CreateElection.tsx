@@ -34,6 +34,10 @@ function currentLocalTime(date: Date): string {
   return `${date.toLocaleDateString('en-CA')}T${date.toTimeString().slice(0, 5)}`;
 }
 
+/**
+ * Props for the CreateElection component.
+ * @internal
+ */
 interface CreateElectionProps {
   onBack: () => void;
   onSuccess: (electionId: string) => void;
@@ -51,7 +55,7 @@ interface CreateElectionProps {
 export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
   const { token } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(''); // api error messages
+  const [error, setError] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [startsAt, setStartsAt] = useState(currentLocalTime(new Date()));
@@ -396,7 +400,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 page-container">
+    <div className="page-container min-h-screen bg-gray-50 dark:bg-gray-900">
       <Dialog open={deployInfo !== null && electionID !== ''} onOpenChange={() => {}}>
         <DialogContent>
           <DialogHeader>
@@ -407,23 +411,27 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
             {deployInfo && (
               <>
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700">Transaction Hash</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Transaction Hash
+                  </p>
                   <a
                     href={getEtherscanUrl(deployInfo.txHash, 'tx')}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="break-all text-sm text-indigo-600 hover:underline"
+                    className="break-all text-sm text-indigo-600 hover:underline dark:text-indigo-400"
                   >
                     {deployInfo.txHash}
                   </a>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700">Contract Address</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Contract Address
+                  </p>
                   <a
                     href={getEtherscanUrl(deployInfo.contractAddress, 'address')}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="break-all text-sm text-indigo-600 hover:underline"
+                    className="break-all text-sm text-indigo-600 hover:underline dark:text-indigo-400"
                   >
                     {deployInfo.contractAddress}
                   </a>
@@ -445,7 +453,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
         <Card>
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="rounded-lg bg-gray-100 dark:bg-gray-700 p-2">
+              <div className="rounded-lg bg-gray-100 p-2 dark:bg-gray-900">
                 <Logo size="sm" className="h-12 w-12" />
               </div>
               <div>
@@ -463,7 +471,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
               )}
 
               <div className="space-y-4">
-                <h3 className="text-lg">Election Details</h3>
+                <h3 className="text-lg text-gray-900 dark:text-white">Election Details</h3>
 
                 <div className="space-y-2">
                   <Label htmlFor="title">Title *</Label>
@@ -516,7 +524,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg">Positions & Candidates</h3>
+                  <h3 className="text-lg text-gray-900 dark:text-white">Positions & Candidates</h3>
                   <Button type="button" onClick={addPosition} variant="outline" size="sm">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Position
@@ -558,7 +566,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                               }
                             />
                             {isPositionDuplicate(position.id) && (
-                              <p className="text-xs text-red-600">
+                              <p className="text-xs text-red-600 dark:text-red-400">
                                 This position name is already used
                               </p>
                             )}
@@ -617,7 +625,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                           return (
                             <div
                               key={candidate.id}
-                              className="flex items-start space-x-2 rounded-lg bg-gray-50 p-3"
+                              className="flex items-start space-x-2 rounded-lg border p-3"
                             >
                               <div className="flex-1 space-y-2">
                                 <div className="space-y-1">
@@ -641,7 +649,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                                     }
                                   />
                                   {isDuplicate && (
-                                    <p className="text-xs text-red-600">
+                                    <p className="text-xs text-red-600 dark:text-red-400">
                                       This candidate name is already used in this position
                                     </p>
                                   )}
@@ -675,7 +683,7 @@ export function CreateElection({ onBack, onSuccess }: CreateElectionProps) {
                         })}
 
                         {position.candidates.length === 0 && (
-                          <p className="py-4 text-center text-sm text-gray-500">
+                          <p className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                             No candidates added yet
                           </p>
                         )}

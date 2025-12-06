@@ -8,14 +8,7 @@ import { Alert, AlertDescription } from './ui/alert';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
-import {
-  ArrowLeft,
-  Calendar,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  TrendingUp,
-} from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
 import { Logo } from './Logo';
 import { Election, EligibilityStatus, Position, Candidate } from '@/types/election';
 import { VoteSelections } from '@/types/api';
@@ -31,15 +24,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from './ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from './ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { getEtherscanUrl } from '@/utils/blockchain/utils';
 
+/**
+ * Props for the ElectionView component.
+ * @internal
+ */
 interface ElectionViewProps {
   electionId: string;
   onBack: () => void;
@@ -159,7 +150,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
     if (!election) return;
     setError('');
 
-    // Validate all positions have selections
     for (const position of election.positions) {
       if (!selections[position.id]) {
         setError(`Please make a selection for ${position.name}`);
@@ -167,7 +157,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
       }
     }
 
-    // Show confirmation dialog
     setShowConfirmDialog(true);
   };
 
@@ -233,11 +222,11 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
 
   if (!election) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 page-container">
+      <div className="page-container flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-            <h3 className="mb-2 text-xl">Election Not Found</h3>
+            <h3 className="mb-2 text-xl text-gray-900 dark:text-white">Election Not Found</h3>
             <Button onClick={onBack}>Back to Dashboard</Button>
           </CardContent>
         </Card>
@@ -329,7 +318,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
         </Alert>
       )}
 
-      {/* Confirmation Dialog - Warns user that vote is irreversible */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -353,7 +341,6 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Success Dialog - Shows transaction hash with privacy warning */}
       <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
         <DialogContent>
           <DialogHeader>
@@ -377,12 +364,12 @@ export function ElectionView({ electionId, onBack, onViewResults }: ElectionView
             <Alert className="border-yellow-200 bg-yellow-50">
               <AlertCircle className="h-4 w-4 text-yellow-600" />
               <AlertDescription className="text-yellow-800">
-                <p className="font-semibold mb-1">Important: Keep Your Transaction Hash Private</p>
+                <p className="mb-1 font-semibold">Important: Keep Your Transaction Hash Private</p>
                 <p className="text-sm">
                   Your transaction hash is like a receipt that proves your vote was recorded.
                   However, anyone who has this transaction hash can view your vote choices on
-                  Arbiscan (the blockchain explorer). Do not share this transaction hash with
-                  anyone you do not trust, as it reveals exactly who you voted for.
+                  Arbiscan (the blockchain explorer). Do not share this transaction hash with anyone
+                  you do not trust, as it reveals exactly who you voted for.
                 </p>
               </AlertDescription>
             </Alert>

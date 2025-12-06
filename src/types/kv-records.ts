@@ -20,24 +20,65 @@
 /**
  * User record stored in KV store.
  *
+ * Contains user profile information. Created during registration and
+ * used throughout the application for user identification.
+ *
  * Stored with key: `user:{userId}`
+ *
+ * @example
+ * ```typescript
+ * const user: UserRecord = {
+ *   id: 'user-uuid',
+ *   email: 'john@example.com',
+ *   name: 'John Doe',
+ *   phone: '+1234567890'
+ * };
+ *
+ * // Store in KV
+ * await kv.set(`user:${user.id}`, user);
+ * ```
  */
 export interface UserRecord {
-  /** User ID (optional, may be in key) */
+  /** User ID (UUID from Supabase Auth) */
   id?: string;
-  /** User's email address */
+  /** User's email address (normalized to lowercase) */
   email: string;
   /** User's full name */
   name?: string;
-  /** User's phone number */
+  /** User's phone number (optional) */
   phone?: string;
+  /** Preferred 2FA delivery method */
+  twofa_method?: 'email' | 'sms' | 'totp' | null;
+  /** ISO timestamp when the user record was created */
+  created_at?: string;
 }
 
 /**
  * OTP record stored in KV store (legacy format).
+ *
+ * **Note:** This is a simplified legacy format. The complete OTP record
+ * with security fields is defined in `@/lib/server/otp` and includes
+ * additional fields like `otpHash`, `salt`, `attemptCount`, and `lastSentAt`.
+ *
+ * This interface is maintained for backward compatibility with older
+ * auth routes that use the simplified format.
+ *
+ * @deprecated Use the complete `OtpRecord` from `@/lib/server/otp` for new code
+ *
+ * @example
+ * ```typescript
+ * const legacyOtp: OtpRecord = {
+ *   otp: '123456',
+ *   expires_at: Date.now() + 5 * 60 * 1000
+ * };
+ * ```
+ *
+ * @see {@link module:lib/server/otp.OtpRecord} for the complete OtpRecord type
  */
 export interface OtpRecord {
+  /** The OTP code (plain text - legacy format only) */
   otp: string;
+  /** Unix timestamp when OTP expires */
   expires_at: number;
 }
 

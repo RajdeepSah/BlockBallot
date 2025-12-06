@@ -29,8 +29,20 @@ import { authenticatedFetch, handleUnauthorizedError } from './auth/errorHandler
 import { RegisterData, LoginData, Verify2FAData, ResendOTPData, VoteSelections } from '@/types/api';
 import { Election, Candidate } from '@/types/election';
 
+/**
+ * Base URL for Supabase Edge Function calls.
+ *
+ * @deprecated Most API calls now use Next.js API routes (`/api/...`) via `authenticatedFetch`.
+ * This constant is only used by `apiCall` for legacy edge function calls.
+ *
+ * @internal
+ */
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-b7b6fbd4`;
 
+/**
+ * Options for API call function.
+ * @internal
+ */
 interface ApiOptions {
   method?: string;
   body?: unknown;
@@ -40,10 +52,10 @@ interface ApiOptions {
 /**
  * Makes an API call to the Supabase Edge Function.
  *
- * This is a low-level function for direct API calls. Most use cases should use
- * the methods in the `api` object which provide better error handling and token management.
+ * @deprecated Most API calls should use `authenticatedFetch` with Next.js API routes instead.
+ * This function is retained for backward compatibility with specific edge function endpoints.
  *
- * @param endpoint - API endpoint path (e.g., `/auth/login`)
+ * @param endpoint - API endpoint path (e.g., `/auth/me`)
  * @param options - Request configuration options
  * @param options.method - HTTP method (default: `'GET'`)
  * @param options.body - Request body to send (will be JSON stringified)
@@ -159,8 +171,7 @@ export const api = {
    * @param data - User login credentials
    * @param data.email - User's email address
    * @param data.password - User's password
-   * @returns Promise resolving to login response
-   * @returns Returns object with `requires2FA: boolean` and optional `accessToken`/`userId` if 2FA is disabled
+   * @returns Promise resolving to login response object with `requires2FA: boolean` and optional `accessToken`/`userId` if 2FA is disabled
    * @throws {Error} If login fails (invalid credentials, user not found, etc.)
    *
    * @example
@@ -672,21 +683,17 @@ export const api = {
       throw new Error('Unauthorized');
     }
 
-    // Use the election data passed in (already loaded in component)
     if (!election || !election.contract_address) {
       throw new Error('Election not found or contract address missing');
     }
 
-    // Transform selections (positionId -> candidateId) to votes array (position name -> candidate name)
     const votes: Array<{ position: string; candidate: string }> = [];
 
     for (const position of election.positions) {
       const selection = selections[position.id];
       if (!selection) continue;
 
-      // Handle different ballot types
       if (Array.isArray(selection)) {
-        // Multiple choice or ranked choice - add each selection
         for (const candidateId of selection) {
           const candidate = position.candidates.find((c: Candidate) => c.id === candidateId);
           if (candidate) {
@@ -694,7 +701,6 @@ export const api = {
           }
         }
       } else {
-        // Single choice
         const candidate = position.candidates.find((c: Candidate) => c.id === selection);
         if (candidate) {
           votes.push({ position: position.name, candidate: candidate.name });

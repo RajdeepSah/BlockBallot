@@ -54,7 +54,7 @@ import { blockchainConfig } from '@/config/blockchain';
  * ```
  *
  * @see {@link createWallet} for write operations
- * @see {@link createReadOnlyContract} which uses this provider
+ * @see {@link module:utils/blockchain/contract.createReadOnlyContract} which uses this provider
  * @category Blockchain
  */
 export function createProvider(): JsonRpcProvider {
@@ -86,7 +86,7 @@ export function createProvider(): JsonRpcProvider {
  * const balance = await wallet.provider.getBalance(wallet.address);
  * ```
  *
- * @see {@link createWritableContract} which uses this wallet
+ * @see {@link module:utils/blockchain/contract.createWritableContract} which uses this wallet
  * @see {@link createWalletWithProvider} to use a custom provider
  * @category Blockchain
  */

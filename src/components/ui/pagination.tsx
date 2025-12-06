@@ -30,6 +30,10 @@ function PaginationItem({ ...props }: React.ComponentProps<'li'>) {
   return <li data-slot="pagination-item" {...props} />;
 }
 
+/**
+ * Props for PaginationLink component.
+ * @internal
+ */
 type PaginationLinkProps = {
   isActive?: boolean;
 } & Pick<React.ComponentProps<typeof Button>, 'size'> &

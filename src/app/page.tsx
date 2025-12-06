@@ -34,11 +34,11 @@ function HomePageContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [manualScreen, setManualScreen] = useState<'signup' | '2fa' | null>(null);
   const [twoFAState, setTwoFAState] = useState<{ userId: string; email: string } | null>(null);
   const hasNavigatedRef = useRef(false);
-  
+
   const electionId = useMemo(() => {
     if (typeof window === 'undefined') return null;
     try {
@@ -47,24 +47,24 @@ function HomePageContent() {
       return null;
     }
   }, [searchParams]);
-  
+
   const screen: 'signin' | 'signup' | '2fa' | 'dashboard' | null = (() => {
     if (loading) return null;
-    
+
     if (manualScreen) return manualScreen;
-    
+
     if (!user) {
       return 'signin';
     } else {
       return 'dashboard';
     }
   })();
-  
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     if (loading || !user) return;
-    
+
     if (electionId && !hasNavigatedRef.current && screen === 'dashboard') {
       hasNavigatedRef.current = true;
       router.push(`/vote/${electionId}`);
@@ -91,9 +91,9 @@ function HomePageContent() {
       );
     } else if (screen === 'signup') {
       return (
-        <SignUp 
-          onToggleMode={() => setManualScreen(null)} 
-          onSuccess={() => setManualScreen(null)} 
+        <SignUp
+          onToggleMode={() => setManualScreen(null)}
+          onSuccess={() => setManualScreen(null)}
         />
       );
     } else if (screen === '2fa' && twoFAState) {

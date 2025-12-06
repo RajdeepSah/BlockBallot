@@ -38,7 +38,7 @@ import { NextResponse } from 'next/server';
 export interface ApiErrorResponse {
   error: string;
   details?: string;
-  message?: string; // For backward compatibility
+  message?: string;
 }
 
 /**
@@ -74,7 +74,6 @@ export function createErrorResponse(
     response.details = details;
   }
 
-  // Include message for backward compatibility
   response.message = error;
 
   return NextResponse.json(response, { status });
@@ -121,12 +120,10 @@ export function handleApiError(error: unknown, context?: string): NextResponse<A
   } else if (typeof error === 'string') {
     errorMessage = error;
   } else if (error && typeof error === 'object') {
-    // Type guard for ethers.js and similar error objects
     const err = error as Record<string, unknown>;
 
-    // Handle ethers.js errors
     if (typeof err.reason === 'string') {
-      errorMessage = err.reason; // Contract require() messages
+      errorMessage = err.reason;
     } else if (typeof err.message === 'string') {
       errorMessage = err.message;
     }

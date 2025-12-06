@@ -82,7 +82,9 @@ if (mmdFiles.length === 0) {
 }
 
 console.log(`Found ${mmdFiles.length} diagram(s) to render...`);
-console.log(`Format: ${format}, Theme: ${theme}${format.toLowerCase() === 'png' ? `, Scale: ${scale}x` : ''}\n`);
+console.log(
+  `Format: ${format}, Theme: ${theme}${format.toLowerCase() === 'png' ? `, Scale: ${scale}x` : ''}\n`
+);
 
 // Render each diagram
 let successCount = 0;
