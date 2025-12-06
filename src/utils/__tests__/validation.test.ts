@@ -15,7 +15,7 @@ describe('Validation Utilities', () => {
     });
 
     test('returns empty string for non-string input', () => {
-      const result = sanitizeString(null);
+      const result = sanitizeString(null!);
       expect(result).toBe('');
     });
   });
